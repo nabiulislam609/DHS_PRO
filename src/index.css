@@ -1,0 +1,194 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Hind Siliguri', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* Custom scrollbar for admin and modals */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Prominent Custom Scrollbar for Sidebar Navigation */
+.custom-sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #15803d #07261b;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-track {
+  background: #07261b;
+  border-radius: 9999px;
+  margin: 4px 0;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: #15803d;
+  border-radius: 9999px;
+  border: 1px solid #07261b;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #22c55e;
+}
+
+aside::-webkit-scrollbar,
+aside *::-webkit-scrollbar {
+  width: 6px;
+}
+aside::-webkit-scrollbar-track,
+aside *::-webkit-scrollbar-track {
+  background: #07261b;
+}
+aside::-webkit-scrollbar-thumb,
+aside *::-webkit-scrollbar-thumb {
+  background: #15803d;
+  border-radius: 4px;
+}
+aside::-webkit-scrollbar-thumb:hover,
+aside *::-webkit-scrollbar-thumb:hover {
+  background: #22c55e;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: inline-flex;
+  animation: marquee 70s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Print and PDF Styles */
+@media print {
+  @page {
+    size: portrait !important;
+    size: A4 portrait !important;
+    size: 210mm 297mm !important;
+    margin: 10mm !important;
+  }
+
+  html,
+  body {
+    width: 210mm !important;
+    max-width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* When printing active notice, completely hide the app root to avoid modal overlays or CSS clashes */
+  body.printing-active-notice #root {
+    display: none !important;
+  }
+
+  body.printing-active-notice #printable-notice-direct {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-sizing: border-box !important;
+  }
+
+  body.printing-active-notice #printable-notice-direct * {
+    visibility: visible !important;
+  }
+
+  /* When printing student cards, admit cards, or marksheets */
+  body:not(.printing-active-notice) * {
+    visibility: hidden;
+  }
+
+  body:not(.printing-active-notice) #printable-admit-card,
+  body:not(.printing-active-notice) #printable-admit-card *,
+  body:not(.printing-active-notice) #marksheet-printable-card,
+  body:not(.printing-active-notice) #marksheet-printable-card *,
+  body:not(.printing-active-notice) #printable-student-sheet,
+  body:not(.printing-active-notice) #printable-student-sheet *,
+  body:not(.printing-active-notice) #printable-student-profile,
+  body:not(.printing-active-notice) #printable-student-profile *,
+  body:not(.printing-active-notice) #printable-single-student-card,
+  body:not(.printing-active-notice) #printable-single-student-card *,
+  body:not(.printing-active-notice) #printable-admission-card,
+  body:not(.printing-active-notice) #printable-admission-card *,
+  body:not(.printing-active-notice) #printable-admission-slip,
+  body:not(.printing-active-notice) #printable-admission-slip *,
+  body:not(.printing-active-notice) #printable-teacher-sheet,
+  body:not(.printing-active-notice) #printable-teacher-sheet *,
+  body:not(.printing-active-notice) #printable-staff-sheet,
+  body:not(.printing-active-notice) #printable-staff-sheet * {
+    visibility: visible;
+  }
+
+  body:not(.printing-active-notice) #printable-admit-card,
+  body:not(.printing-active-notice) #marksheet-printable-card,
+  body:not(.printing-active-notice) #printable-student-sheet,
+  body:not(.printing-active-notice) #printable-student-profile,
+  body:not(.printing-active-notice) #printable-single-student-card,
+  body:not(.printing-active-notice) #printable-admission-card,
+  body:not(.printing-active-notice) #printable-admission-slip,
+  body:not(.printing-active-notice) #printable-teacher-sheet,
+  body:not(.printing-active-notice) #printable-staff-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    margin: 0 auto !important;
+    padding: 10mm !important;
+    background: white !important;
+    color: black !important;
+    font-size: 11pt !important;
+    display: block !important;
+    box-shadow: none !important;
+    border: none !important;
+    box-sizing: border-box !important;
+  }
+
+  .no-print,
+  .print\:hidden {
+    display: none !important;
+  }
+}
+
+/* Dynamic Full Screen Hero Section */
+#hero {
+  height: calc(100dvh - var(--site-header-height, 140px));
+  min-height: calc(100dvh - var(--site-header-height, 140px));
+}
+
