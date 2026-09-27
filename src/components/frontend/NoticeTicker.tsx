@@ -3,12 +3,28 @@ import { useSchool } from '../../context/SchoolContext';
 import { Bell } from 'lucide-react';
 
 export const NoticeTicker: React.FC = () => {
-  const { notices, siteSettings } = useSchool();
+  const { notices, siteSettings, admitCardConfig, setCurrentFrontendPage } = useSchool();
 
   // If set to hidden from settings, do not render
   if (siteSettings.showNoticeTicker === false) {
     return null;
   }
+
+  // Active exams configured by admin (shows custom and standard exams)
+  const activeExams =
+    admitCardConfig?.isActive !== false
+      ? (admitCardConfig?.availableExams || []).filter((e) => e.isActive)
+      : [];
+
+  const examTickerItems = activeExams.map((e) => ({
+    id: `exam-${e.id}`,
+    category: 'পরীক্ষা',
+    code: 'পরীক্ষা',
+    title: `[প্রবেশপত্র উন্মুক্ত] ${e.examTerm} - অনলাইনে প্রবেশপত্র বিতরণ শুরু হয়েছে (পরীক্ষা শুরুর তারিখ: ${e.examStartDate})`,
+    isExam: true,
+  }));
+
+  const allTickerItems = [...examTickerItems, ...notices];
 
   const speedDuration = siteSettings.noticeTickerSpeed || 60;
   const tickerLabel = siteSettings.noticeTickerLabel || 'সর্বশেষ নোটিশ:';
@@ -69,11 +85,17 @@ export const NoticeTicker: React.FC = () => {
             className="inline-flex items-center gap-6 animate-marquee py-0.5"
             style={{ animationDuration: `${speedDuration}s` }}
           >
-            {[...notices, ...notices].map((notice, idx) => (
+            {[...allTickerItems, ...allTickerItems].map((notice: any, idx) => (
               <a
                 key={`${notice.id}-${idx}`}
-                href="#notices"
-                className="inline-flex items-center gap-2.5 hover:text-amber-300 transition text-xs sm:text-sm font-medium shrink-0 group select-none"
+                href={notice.isExam ? '#admit-card' : '#notices'}
+                onClick={(e) => {
+                  if (notice.isExam) {
+                    e.preventDefault();
+                    setCurrentFrontendPage('admit-card');
+                  }
+                }}
+                className="inline-flex items-center gap-2.5 hover:text-amber-300 transition text-xs sm:text-sm font-medium shrink-0 group select-none cursor-pointer"
               >
                 <span
                   className={`inline-flex items-center justify-center px-2.5 h-[21px] rounded-md text-[11px] font-bold leading-none shadow-2xs select-none shrink-0 ${getBadgeColor(
@@ -85,7 +107,7 @@ export const NoticeTicker: React.FC = () => {
                   </span>
                 </span>
                 <span className="leading-normal group-hover:underline flex items-center">
-                  {notice.code ? `${notice.code} : ` : ''}{notice.title}
+                  {notice.code && !notice.isExam ? `${notice.code} : ` : ''}{notice.title}
                 </span>
                 <span className="text-emerald-400/80 font-bold ml-1">•</span>
               </a>

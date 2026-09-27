@@ -26,7 +26,13 @@ export const Header: React.FC = () => {
     currentFrontendPage,
     setCurrentFrontendPage,
     navigationItems,
+    admitCardConfig,
   } = useSchool();
+
+  const activeExamCount =
+    admitCardConfig?.isActive !== false
+      ? (admitCardConfig?.availableExams || []).filter((e) => e.isActive).length
+      : 0;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aboutDropdownOpen, setAboutDropdownOpen] = useState(false);
   const [mobileAboutOpen, setMobileAboutOpen] = useState(false);
@@ -376,12 +382,15 @@ export const Header: React.FC = () => {
               const activeSubItems = item.subItems?.filter((s) => s.visible !== false) || [
                 {
                   id: 'sub-admit',
-                  label: 'অ্যাডমিট কার্ড',
+                  label: 'অ্যাডমিট কার্ড (প্রবেশপত্র)',
                   url: '/admit-card',
                   order: 0,
                   visible: true,
-                  badge: 'Admit Card',
-                  description: 'পরীক্ষার প্রবেশপত্র ও সিট প্ল্যান ডাউনলোড',
+                  badge: activeExamCount > 0 ? `${activeExamCount}টি সক্রিয়` : 'Admit Card',
+                  description:
+                    activeExamCount > 0
+                      ? `বর্তমানে ${activeExamCount}টি পরীক্ষার প্রবেশপত্র ডাউনলোড চলছে`
+                      : 'পরীক্ষার প্রবেশপত্র ও সিট প্ল্যান ডাউনলোড',
                 },
                 {
                   id: 'sub-forms',

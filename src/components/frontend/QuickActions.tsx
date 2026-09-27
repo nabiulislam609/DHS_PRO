@@ -9,10 +9,16 @@ import {
   Award,
   Users,
   PhoneCall,
+  CreditCard,
 } from 'lucide-react';
 
 export const QuickActions: React.FC = () => {
-  const { setIsAdmissionModalOpen, setCurrentFrontendPage } = useSchool();
+  const { setIsAdmissionModalOpen, setCurrentFrontendPage, admitCardConfig } = useSchool();
+
+  const activeCount =
+    admitCardConfig?.isActive !== false
+      ? (admitCardConfig?.availableExams || []).filter((e) => e.isActive).length
+      : 0;
 
   const actions = [
     {
@@ -20,6 +26,13 @@ export const QuickActions: React.FC = () => {
       icon: GraduationCap,
       color: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200',
       action: () => setIsAdmissionModalOpen(true),
+    },
+    {
+      label: 'প্রবেশপত্র',
+      icon: CreditCard,
+      badge: activeCount > 0 ? `${activeCount}টি সক্রিয়` : undefined,
+      color: 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border-emerald-300',
+      action: () => setCurrentFrontendPage('admit-card'),
     },
     {
       label: 'নোটিশ',
@@ -67,19 +80,24 @@ export const QuickActions: React.FC = () => {
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-8 relative z-10">
-      <div className="bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 p-4 sm:p-6 grid grid-cols-4 sm:grid-cols-8 gap-3 sm:gap-4 transition-all">
+      <div className="bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 p-4 sm:p-6 grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-3 sm:gap-4 transition-all">
         {actions.map((item, idx) => {
           const Icon = item.icon;
           return (
             <button
               key={idx}
               onClick={item.action}
-              className="flex flex-col items-center justify-center gap-2 p-2.5 rounded-xl hover:scale-105 transition-all duration-200 cursor-pointer group"
+              className="flex flex-col items-center justify-center gap-2 p-2 rounded-xl hover:scale-105 transition-all duration-200 cursor-pointer group relative"
             >
               <div
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center border shadow-xs transition group-hover:shadow-md ${item.color}`}
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center border shadow-xs transition group-hover:shadow-md relative ${item.color}`}
               >
                 <Icon className="w-6 h-6" />
+                {item.badge && (
+                  <span className="absolute -top-1.5 -right-2 bg-emerald-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-xs border border-white animate-pulse">
+                    {item.badge}
+                  </span>
+                )}
               </div>
               <span className="text-xs font-semibold text-gray-700 group-hover:text-emerald-800 text-center">
                 {item.label}

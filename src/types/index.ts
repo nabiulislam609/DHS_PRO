@@ -201,6 +201,19 @@ export interface DownloadableForm {
   updatedDate?: string;
   downloadCount?: number;
   active: boolean;
+  uploadedAt?: string;
+  isCustomUploaded?: boolean;
+}
+
+export interface ActiveExam {
+  id: string;
+  examTerm: string;
+  examYear: string;
+  examStartDate: string;
+  isActive: boolean;
+  eligibleClasses?: string[];
+  description?: string;
+  createdDate?: string;
 }
 
 export interface AdmitCardConfig {
@@ -212,6 +225,8 @@ export interface AdmitCardConfig {
   schoolSealUrl?: string;
   isActive: boolean;
   examStartDate?: string;
+  activeExamId?: string;
+  availableExams?: ActiveExam[];
 }
 
 export interface CustomStatItem {

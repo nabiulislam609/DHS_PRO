@@ -185,7 +185,7 @@ export const isTermMatchStrict = (recordTerm: string, selectedTerm: string): boo
 };
 
 export const AcademicResultsSearch: React.FC = () => {
-  const { examResults, students } = useSchool();
+  const { examResults, students, admitCardConfig } = useSchool();
   const [searchRoll, setSearchRoll] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('');
@@ -204,16 +204,27 @@ export const AcademicResultsSearch: React.FC = () => {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const marksheetRef = useRef<HTMLDivElement>(null);
 
-  // Dynamically assemble available exam terms and classes, matching Result Add exactly
+  // Dynamically assemble available exam terms and classes, matching Result Add and Custom Exams
   const availableExamTerms = useMemo(() => {
     const list = [...AVAILABLE_EXAM_TERMS];
+    // Include custom exams added via Exam Release & Admit Card Control
+    if (admitCardConfig?.availableExams) {
+      admitCardConfig.availableExams.forEach((ex) => {
+        if (ex.examTerm && ex.examTerm.trim() && !list.includes(ex.examTerm.trim())) {
+          list.push(ex.examTerm.trim());
+        }
+      });
+    }
+    if (admitCardConfig?.examTerm && !list.includes(admitCardConfig.examTerm.trim())) {
+      list.push(admitCardConfig.examTerm.trim());
+    }
     examResults.forEach((r) => {
       if (r.examTerm && r.examTerm.trim() && !list.includes(r.examTerm.trim())) {
         list.push(r.examTerm.trim());
       }
     });
     return list;
-  }, [examResults]);
+  }, [examResults, admitCardConfig]);
 
   const availableClasses = useMemo(() => {
     const list = [...AVAILABLE_SEARCH_CLASSES];

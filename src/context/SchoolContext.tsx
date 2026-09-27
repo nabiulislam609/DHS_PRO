@@ -22,6 +22,7 @@ import {
   SectionVisibility,
   DownloadableForm,
   AdmitCardConfig,
+  ActiveExam,
 } from '../types';
 import {
   initialSiteSettings,
@@ -160,6 +161,11 @@ interface SchoolContextType {
 
   admitCardConfig: AdmitCardConfig;
   updateAdmitCardConfig: (config: Partial<AdmitCardConfig>) => void;
+  addActiveExam: (exam: Omit<ActiveExam, 'id'>) => void;
+  updateActiveExam: (id: string, updated: Partial<ActiveExam>) => void;
+  deleteActiveExam: (id: string) => void;
+  setActiveExam: (id: string, activeState?: boolean) => void;
+  toggleActiveExam: (id: string) => void;
 
   academicPrograms: AcademicProgram[];
   addProgram: (program: Omit<AcademicProgram, 'id'>) => void;
@@ -601,7 +607,39 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Admit Card Config State
   const [admitCardConfig, setAdmitCardConfig] = useState<AdmitCardConfig>(() => {
     const saved = localStorage.getItem('dhs_admit_card_config');
-    return saved ? JSON.parse(saved) : initialAdmitCardConfig;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (!parsed.availableExams || parsed.availableExams.length === 0) {
+          parsed.availableExams = initialAdmitCardConfig.availableExams;
+          parsed.activeExamId = parsed.activeExamId || initialAdmitCardConfig.activeExamId;
+        } else {
+          // Backfill eligibleClasses on existing exams if missing
+          parsed.availableExams = parsed.availableExams.map((ex: ActiveExam) => {
+            if (!ex.eligibleClasses || ex.eligibleClasses.length === 0) {
+              const matched = initialAdmitCardConfig.availableExams?.find(
+                (d) => d.id === ex.id || d.examTerm === ex.examTerm
+              );
+              return {
+                ...ex,
+                eligibleClasses: matched?.eligibleClasses || [
+                  '৬ষ্ঠ শ্রেণি',
+                  '৭ম শ্রেণি',
+                  '৮ম শ্রেণি',
+                  '৯ম শ্রেণি',
+                  '১০ম শ্রেণি',
+                ],
+              };
+            }
+            return ex;
+          });
+        }
+        return parsed;
+      } catch (e) {
+        return initialAdmitCardConfig;
+      }
+    }
+    return initialAdmitCardConfig;
   });
 
   // Sync with LocalStorage
@@ -1071,6 +1109,109 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     logActivity('প্রবেশপত্র (Admit Card) কনফিগারেশন আপডেট করা হয়েছে', 'setting');
   };
 
+  const addActiveExam = (exam: Omit<ActiveExam, 'id'>) => {
+    const id = generateUniqueId('exam');
+    const newExam: ActiveExam = { id, ...exam };
+    setAdmitCardConfig((prev) => {
+      const available = prev.availableExams ? [...prev.availableExams] : [];
+      // Support multiple active exams: do NOT deactivate other exams!
+      return {
+        ...prev,
+        examTerm: newExam.isActive ? newExam.examTerm : prev.examTerm,
+        examYear: newExam.isActive ? newExam.examYear : prev.examYear,
+        examStartDate: newExam.isActive ? newExam.examStartDate : prev.examStartDate,
+        activeExamId: newExam.isActive ? id : prev.activeExamId,
+        availableExams: [newExam, ...available],
+      };
+    });
+    logActivity(`নতুন পরীক্ষা "${exam.examTerm}" প্রবেশপত্র মডিউলে যুক্ত করা হয়েছে`, 'setting');
+  };
+
+  const updateActiveExam = (id: string, updated: Partial<ActiveExam>) => {
+    setAdmitCardConfig((prev) => {
+      const available = prev.availableExams ? [...prev.availableExams] : [];
+      // Update targeted exam independently without deactivating others
+      const updatedAvailable = available.map((ex) => {
+        if (ex.id === id) {
+          return { ...ex, ...updated };
+        }
+        return ex;
+      });
+      const activeOne = updatedAvailable.find((ex) => ex.isActive) || updatedAvailable.find((ex) => ex.id === id);
+      return {
+        ...prev,
+        examTerm: activeOne && activeOne.isActive ? activeOne.examTerm : prev.examTerm,
+        examYear: activeOne && activeOne.isActive ? activeOne.examYear : prev.examYear,
+        examStartDate: activeOne && activeOne.isActive ? activeOne.examStartDate : prev.examStartDate,
+        activeExamId: activeOne && activeOne.isActive ? activeOne.id : prev.activeExamId,
+        availableExams: updatedAvailable,
+      };
+    });
+    logActivity('পরীক্ষার তথ্য আপডেট করা হয়েছে', 'setting');
+  };
+
+  const deleteActiveExam = (id: string) => {
+    setAdmitCardConfig((prev) => {
+      const available = (prev.availableExams || []).filter((ex) => ex.id !== id);
+      const isCurrentActive = prev.activeExamId === id;
+      const nextActive = isCurrentActive && available.length > 0 ? available[0] : null;
+      return {
+        ...prev,
+        examTerm: nextActive ? nextActive.examTerm : (available.length === 0 ? '' : prev.examTerm),
+        examYear: nextActive ? nextActive.examYear : prev.examYear,
+        examStartDate: nextActive ? nextActive.examStartDate : prev.examStartDate,
+        activeExamId: nextActive ? nextActive.id : (isCurrentActive ? undefined : prev.activeExamId),
+        isActive: available.some((e) => e.isActive) ? prev.isActive : (available.length > 0 ? prev.isActive : false),
+        availableExams: available,
+      };
+    });
+    logActivity('পরীক্ষা মুছে ফেলা হয়েছে', 'setting');
+  };
+
+  const setActiveExam = (id: string, activeState?: boolean) => {
+    setAdmitCardConfig((prev) => {
+      const available = (prev.availableExams || []).map((ex) => {
+        if (ex.id === id) {
+          return {
+            ...ex,
+            isActive: activeState !== undefined ? activeState : true,
+          };
+        }
+        return ex;
+      });
+      const chosen = available.find((ex) => ex.id === id);
+      if (!chosen) return prev;
+      return {
+        ...prev,
+        examTerm: chosen.examTerm,
+        examYear: chosen.examYear,
+        examStartDate: chosen.examStartDate,
+        activeExamId: chosen.id,
+        availableExams: available,
+      };
+    });
+    logActivity('পরীক্ষার সক্রিয় অবস্থা পরিবর্তন করা হয়েছে', 'setting');
+  };
+
+  const toggleActiveExam = (id: string) => {
+    setAdmitCardConfig((prev) => {
+      const available = (prev.availableExams || []).map((ex) => {
+        if (ex.id === id) {
+          return {
+            ...ex,
+            isActive: !ex.isActive,
+          };
+        }
+        return ex;
+      });
+      return {
+        ...prev,
+        availableExams: available,
+      };
+    });
+    logActivity('পরীক্ষার অবস্থা টগল করা হয়েছে', 'setting');
+  };
+
   // Academic Programs
   const addProgram = (item: Omit<AcademicProgram, 'id'>) => {
     const id = generateUniqueId('prog');
@@ -1438,6 +1579,11 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         toggleFormActive,
         admitCardConfig,
         updateAdmitCardConfig,
+        addActiveExam,
+        updateActiveExam,
+        deleteActiveExam,
+        setActiveExam,
+        toggleActiveExam,
         academicPrograms,
         addProgram,
         updateProgram,

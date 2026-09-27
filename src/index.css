@@ -107,11 +107,13 @@ aside *::-webkit-scrollbar-thumb:hover {
   }
 
   /* When printing active notice, completely hide the app root to avoid modal overlays or CSS clashes */
-  body.printing-active-notice #root {
+  body.printing-active-notice #root,
+  body.printing-active-form #root {
     display: none !important;
   }
 
-  body.printing-active-notice #printable-notice-direct {
+  body.printing-active-notice #printable-notice-direct,
+  body.printing-active-form #printable-school-form {
     display: block !important;
     visibility: visible !important;
     position: static !important;
@@ -125,33 +127,34 @@ aside *::-webkit-scrollbar-thumb:hover {
     box-sizing: border-box !important;
   }
 
-  body.printing-active-notice #printable-notice-direct * {
+  body.printing-active-notice #printable-notice-direct *,
+  body.printing-active-form #printable-school-form * {
     visibility: visible !important;
   }
 
   /* When printing student cards, admit cards, or marksheets */
-  body:not(.printing-active-notice) * {
+  body:not(.printing-active-notice):not(.printing-active-form) * {
     visibility: hidden;
   }
 
-  body:not(.printing-active-notice) #printable-admit-card,
-  body:not(.printing-active-notice) #printable-admit-card *,
-  body:not(.printing-active-notice) #marksheet-printable-card,
-  body:not(.printing-active-notice) #marksheet-printable-card *,
-  body:not(.printing-active-notice) #printable-student-sheet,
-  body:not(.printing-active-notice) #printable-student-sheet *,
-  body:not(.printing-active-notice) #printable-student-profile,
-  body:not(.printing-active-notice) #printable-student-profile *,
-  body:not(.printing-active-notice) #printable-single-student-card,
-  body:not(.printing-active-notice) #printable-single-student-card *,
-  body:not(.printing-active-notice) #printable-admission-card,
-  body:not(.printing-active-notice) #printable-admission-card *,
-  body:not(.printing-active-notice) #printable-admission-slip,
-  body:not(.printing-active-notice) #printable-admission-slip *,
-  body:not(.printing-active-notice) #printable-teacher-sheet,
-  body:not(.printing-active-notice) #printable-teacher-sheet *,
-  body:not(.printing-active-notice) #printable-staff-sheet,
-  body:not(.printing-active-notice) #printable-staff-sheet * {
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-admit-card,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-admit-card *,
+  body:not(.printing-active-notice):not(.printing-active-form) #marksheet-printable-card,
+  body:not(.printing-active-notice):not(.printing-active-form) #marksheet-printable-card *,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-student-sheet,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-student-sheet *,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-student-profile,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-student-profile *,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-single-student-card,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-single-student-card *,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-admission-card,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-admission-card *,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-admission-slip,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-admission-slip *,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-teacher-sheet,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-teacher-sheet *,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-staff-sheet,
+  body:not(.printing-active-notice):not(.printing-active-form) #printable-staff-sheet * {
     visibility: visible;
   }
 
