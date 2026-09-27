@@ -7,6 +7,7 @@ import { Student, ActiveExam } from '../../types';
 import {
   CreditCard,
   Search,
+  Bookmark,
   Printer,
   Download,
   CheckCircle,
@@ -397,6 +398,52 @@ export const DedicatedAdmitCardPage: React.FC = () => {
     }
   };
 
+  const selectDemoRecord = (roll: string, targetClass: string, targetGroup?: string) => {
+    setRollInput(roll);
+    setSelectedClass(targetClass);
+    if (targetGroup) setSelectedGroup(targetGroup);
+    setInputError(null);
+    setSearched(false);
+
+    const rollNorm = normalizeNum(roll);
+    const clsNorm = normalizeClassName(targetClass);
+
+    const match = students.find((s) => {
+      const sRoll = normalizeNum(s.roll);
+      if (sRoll !== rollNorm) return false;
+
+      const sClass = normalizeClassName(s.class || s.studentClass || '');
+      if (sClass !== clsNorm) return false;
+
+      if (clsNorm === '9' || clsNorm === '10') {
+        const sGrp = s.group || (s.section?.includes('বিজ্ঞান') ? 'বিজ্ঞান' : s.section?.includes('মানবিক') ? 'মানবিক' : s.section?.includes('ব্যবসায়') || s.section?.includes('ব্যবসায়') ? 'ব্যবসায় শিক্ষা' : '');
+        if (sGrp && targetGroup) {
+          return normalizeGroup(sGrp) === normalizeGroup(targetGroup);
+        }
+      }
+      return true;
+    });
+
+    if (match) {
+      setFoundStudent(match);
+      setSearched(true);
+      if (match.subjects && match.subjects.length > 0) {
+        const matchedElec = availableElectives.find((elec) =>
+          match.subjects!.some((s) => s.toLowerCase().includes(elec.toLowerCase()))
+        );
+        if (matchedElec) {
+          setSelectedElective(matchedElec);
+        }
+      }
+      setTimeout(() => {
+        const el = document.getElementById('printable-admit-card');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -632,391 +679,239 @@ export const DedicatedAdmitCardPage: React.FC = () => {
         </div>
       </header>
 
-      {/* Top Header Banner */}
-      <section className="bg-gradient-to-r from-[#052e20] via-[#0b4833] to-[#04281b] text-white py-10 px-4 sm:px-8 border-b border-emerald-900/50 shadow-md print:hidden">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <nav className="flex items-center gap-2 text-xs text-emerald-200/90 mb-3 font-medium">
-              <button
-                onClick={() => setCurrentFrontendPage('home')}
-                className="hover:text-white transition cursor-pointer"
-              >
-                মূল ওয়েবসাইট
-              </button>
-              <span>/</span>
-              <span className="text-emerald-100">ডাউনলোড পোর্টাল</span>
-              <span>/</span>
-              <span className="text-white font-bold">অ্যাডমিট কার্ড</span>
-            </nav>
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-amber-300 shadow-inner">
-                <CreditCard className="w-5 h-5" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-                  পরীক্ষার প্রবেশপত্র (Admit Card)
-                </h1>
-                <p className="text-xs text-emerald-200 mt-0.5">
-                  সঠিক পরীক্ষার নাম, শ্রেণি ও রোল নম্বর দিয়ে প্রবেশপত্র ডাউনলোড করুন
-                </p>
-              </div>
-            </div>
-          </div>
+      {/* Main Content Area - Matching Result Page Layout */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 py-8">
+        {/* Top Dark Emerald Header Banner - Completely in Bengali matching Results page */}
+        <div className="bg-gradient-to-br from-[#063326] via-[#094132] to-[#042018] rounded-3xl p-8 sm:p-12 shadow-xl border border-emerald-900/40 relative overflow-hidden print:hidden">
+          {/* Subtle decorative circles */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
-          <div className="flex items-center gap-3">
-            <span className="bg-emerald-800/80 border border-emerald-600/50 text-emerald-100 text-xs px-3 py-1.5 rounded-xl font-semibold">
-              সক্রিয় পরীক্ষা: {allActiveExams.length > 0 ? `${allActiveExams.length}টি পরীক্ষা সক্রিয়` : 'বর্তমানে কোনো সক্রিয় পরীক্ষা নেই'}
-            </span>
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-1.5 bg-[#0f4d3a]/80 text-[#34d399] border border-[#16654a] px-3.5 py-1 rounded-full text-xs font-semibold mb-4">
+              <Bookmark className="w-3.5 h-3.5 text-emerald-400" />
+              <span>অনলাইন পরীক্ষা ব্যবস্থাপনা ও প্রবেশপত্র পোর্টাল</span>
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              অনলাইন পরীক্ষার প্রবেশপত্র (অ্যাডমিট কার্ড)
+            </h2>
+
+            <p className="text-emerald-100/80 text-xs sm:text-sm mt-2.5 max-w-2xl leading-relaxed">
+              সঠিক পরীক্ষার নাম, শ্রেণি ও রোল নম্বর দিয়ে প্রবেশপত্র ও পরীক্ষার সময়সূচি যাচাই করুন এবং অফিশিয়াল কপি ডাউনলোড ও সরাসরি প্রিন্ট করুন।
+            </p>
           </div>
         </div>
 
         {/* Global Inactive Warning if no exam is active */}
         {(allActiveExams.length === 0 || admitCardConfig?.isActive === false) && (
-          <div className="max-w-5xl mx-auto mt-3 px-4 sm:px-8">
-            <div className="bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs px-4 py-2.5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-300 shrink-0" />
-                <span>সতর্কবার্তা: বর্তমানে বিদ্যালয়ে কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না বা প্রবেশপত্র ডাউনলোড সাময়িকভাবে স্থগিত রয়েছে।</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setNoExamPopup({
-                  isOpen: true,
-                  title: 'এখন কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না',
-                  message: 'বর্তমানে বিদ্যালয়ে কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না এবং কোনো প্রবেশপত্র ডাউনলোডের জন্য উন্মুক্ত নেই। বিদ্যালয় কর্তৃপক্ষ ব্যাকএন্ডে পরীক্ষা যুক্ত ও সক্রিয় করলে প্রবেশপত্র সংগ্রহ করা যাবে।',
-                })}
-                className="bg-amber-300 hover:bg-amber-200 text-amber-950 font-bold px-3 py-1 rounded-lg text-xs shrink-0 transition cursor-pointer"
-              >
-                সতর্কবার্তা দেখুন
-              </button>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Main Content Area */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-8 pt-8 space-y-6">
-        {/* Currently Active Exams Showcase on Frontend (Including all Custom Added Exams) */}
-        {allActiveExams.length > 0 && admitCardConfig?.isActive !== false && (
-          <div className="bg-white rounded-2xl shadow-xs border border-emerald-200/80 p-5 sm:p-6 space-y-4 print:hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold shadow-xs">
-                  <Calendar className="w-4 h-4 text-emerald-100" />
-                </div>
-                <div>
-                  <h2 className="text-sm sm:text-base font-bold text-gray-900 flex items-center gap-2 flex-wrap">
-                    <span>চলমান ও সক্রিয় পরীক্ষাসমূহ (Currently Active Exams)</span>
-                    <span className="bg-emerald-100 text-emerald-800 text-[10.5px] font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-300">
-                      {allActiveExams.length}টি পরীক্ষা চালু
-                    </span>
-                  </h2>
-                  <p className="text-[11px] text-gray-500">
-                    কর্তৃপক্ষ কর্তৃক উন্মুক্ত পরীক্ষাসমূহ। নিচে যেকোনো পরীক্ষায় ক্লিক করে সরাসরি প্রবেশপত্র খুঁজুন অথবা রুটিন দেখুন।
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {allActiveExams.map((ex, idx) => {
-                const isSelected = ex.examTerm === selectedExamTerm;
-                const isEligibleForUser = isExamEligibleForClass(ex, selectedClass);
-                const classBadges =
-                  ex.eligibleClasses && ex.eligibleClasses.length > 0
-                    ? ex.eligibleClasses
-                    : ['সকল শ্রেণি'];
-                const isAll =
-                  classBadges.length >= 5 ||
-                  classBadges.includes('all') ||
-                  classBadges.includes('সকল শ্রেণি');
-
-                return (
-                  <div
-                    key={ex.id || idx}
-                    className={`p-4 rounded-xl border transition-all duration-200 flex flex-col justify-between gap-3 ${
-                      isSelected
-                        ? 'bg-gradient-to-br from-emerald-50/90 to-emerald-100/40 border-emerald-500 shadow-sm ring-1 ring-emerald-400/40'
-                        : 'bg-gray-50/60 hover:bg-white border-gray-200 hover:border-emerald-300 hover:shadow-2xs'
-                    }`}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-0.5">
-                          <h3 className="font-bold text-gray-900 text-sm flex items-center gap-1.5 flex-wrap">
-                            <span>{ex.examTerm}</span>
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                              <span>সক্রিয়</span>
-                            </span>
-                          </h3>
-                          <div className="flex items-center gap-3 text-[11px] text-gray-600 font-medium">
-                            <span>📅 শিক্ষাবর্ষ: <strong>{ex.examYear}</strong></span>
-                            <span>•</span>
-                            <span>পরীক্ষা শুরু: <strong>{ex.examStartDate}</strong></span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Applicable Classes Badges */}
-                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                        <span className="text-[10.5px] font-bold text-gray-500">প্রযোজ্য শ্রেণি:</span>
-                        {isAll ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
-                            সকল শ্রেণি (৬ষ্ঠ-১০ম)
-                          </span>
-                        ) : (
-                          classBadges.map((c, cIdx) => (
-                            <span
-                              key={cIdx}
-                              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border ${
-                                normalizeCls(c) === normalizeCls(selectedClass)
-                                  ? 'bg-emerald-600 text-white border-emerald-700 shadow-2xs'
-                                  : 'bg-white text-gray-700 border-gray-200'
-                              }`}
-                            >
-                              {c}
-                            </span>
-                          ))
-                        )}
-                      </div>
-
-                      {ex.description && (
-                        <p className="text-[11px] text-gray-600 line-clamp-2 italic bg-white/80 p-2 rounded-lg border border-gray-100">
-                          {ex.description}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
-                      <button
-                        type="button"
-                        onClick={() => setViewingExamRoutine(ex)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-gray-100 text-gray-700 rounded-lg text-xs font-semibold border border-gray-200 transition cursor-pointer"
-                        title="এই পরীক্ষার সময়সূচী ও রুটিন দেখুন"
-                      >
-                        <FileCheck className="w-3.5 h-3.5 text-emerald-700" />
-                        <span>রুটিন ও নোটিশ</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedExamTerm(ex.examTerm);
-                          // If current selected class is not eligible, switch to first eligible class
-                          if (!isEligibleForUser && ex.eligibleClasses && ex.eligibleClasses.length > 0) {
-                            setSelectedClass(ex.eligibleClasses[0]);
-                          }
-                          const el = document.getElementById('admit-search-card');
-                          if (el) {
-                            el.scrollIntoView({ behavior: 'smooth' });
-                          }
-                        }}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                          isSelected
-                            ? 'bg-emerald-700 text-white shadow-xs'
-                            : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300'
-                        }`}
-                      >
-                        {isSelected ? (
-                          <>
-                            <CheckCircle className="w-3.5 h-3.5" />
-                            <span>নির্বাচিত রয়েছে</span>
-                          </>
-                        ) : (
-                          <>
-                            <Search className="w-3.5 h-3.5" />
-                            <span>এই পরীক্ষা নির্বাচন করুন</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Search Box Card (Hidden in print) */}
-        <div id="admit-search-card" className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 sm:p-7 space-y-4 print:hidden">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+          <div className="bg-amber-500/15 border border-amber-400/40 text-amber-900 text-xs px-4 py-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
             <div className="flex items-center gap-2">
-              <Search className="w-4 h-4 text-emerald-700" />
-              <h2 className="text-sm sm:text-base font-bold text-gray-900">
-                প্রবেশপত্র অনুসন্ধানের তথ্য পূরণ করুন
-              </h2>
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>সতর্কবার্তা: বর্তমানে বিদ্যালয়ে কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না বা প্রবেশপত্র ডাউনলোড সাময়িকভাবে স্থগিত রয়েছে।</span>
             </div>
-            <span className="text-[11px] text-gray-500">
+            <button
+              type="button"
+              onClick={() => setNoExamPopup({
+                isOpen: true,
+                title: 'এখন কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না',
+                message: 'বর্তমানে বিদ্যালয়ে কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না এবং কোনো প্রবেশপত্র ডাউনলোডের জন্য উন্মুক্ত নেই। বিদ্যালয় কর্তৃপক্ষ ব্যাকএন্ডে পরীক্ষা যুক্ত ও সক্রিয় করলে প্রবেশপত্র সংগ্রহ করা যাবে।',
+              })}
+              className="bg-amber-200 hover:bg-amber-300 text-amber-950 font-bold px-3 py-1 rounded-lg text-xs shrink-0 transition cursor-pointer"
+            >
+              সতর্কবার্তা দেখুন
+            </button>
+          </div>
+        )}
+
+        {/* Search Student Examination Record Card - Completely in Bengali matching Results Page */}
+        <div id="admit-search-card" className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6 sm:p-8 space-y-6 print:hidden">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2 text-gray-900 font-bold text-base sm:text-lg">
+              <Search className="w-5 h-5 text-emerald-600" />
+              <span>শিক্ষার্থীর পরীক্ষার প্রবেশপত্র অনুসন্ধান করুন</span>
+            </div>
+            <span className="text-xs text-gray-500 font-medium">
               * পরীক্ষার নাম, শ্রেণি ও রোল নম্বর প্রদান করুন
             </span>
           </div>
 
-          <form onSubmit={handleSearch} className="space-y-4">
-            {/* Field 1: পরীক্ষার নাম (Exam Term) * */}
-            <div className="bg-emerald-50/60 p-3 sm:p-4 rounded-xl border border-emerald-200 space-y-1.5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                <label className="block text-xs font-bold text-gray-900 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>পরীক্ষার নাম (Exam Term) *</span>
-                </label>
-                {activeExamsForSelectedClass.length > 0 ? (
-                  <span className="text-[11px] font-semibold text-emerald-800 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-                    <span>{selectedClass}-এর জন্য <strong>{activeExamsForSelectedClass.length}টি</strong> পরীক্ষা সক্রিয়</span>
-                  </span>
-                ) : (
-                  <span className="text-[11px] font-semibold text-rose-600 flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    <span>{selectedClass}-এর জন্য বর্তমানে কোনো পরীক্ষা সক্রিয় নেই</span>
-                  </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
-                <div className="sm:col-span-8 md:col-span-9">
-                  <select
-                    value={selectedExamTerm}
-                    onChange={(e) => {
-                      setSelectedExamTerm(e.target.value);
-                      setInputError(null);
-                      setSearched(false);
-                      setFoundStudent(null);
-                    }}
-                    className={`w-full px-3.5 py-2.5 bg-white border rounded-xl text-xs font-bold transition focus:outline-hidden ${
-                      activeExamsForSelectedClass.some((e) => e.examTerm === selectedExamTerm)
-                        ? 'border-emerald-500 text-emerald-950 focus:border-emerald-600'
-                        : 'border-amber-300 text-gray-800 focus:border-amber-500'
-                    }`}
-                  >
-                    <option value="" disabled>-- পরীক্ষার নাম নির্বাচন করুন (Exam Term) --</option>
-                    {examTermOptions.map((term, idx) => (
-                      <option key={idx} value={term.value}>
-                        {term.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="sm:col-span-4 md:col-span-3">
-                  {activeExamsForSelectedClass.some((e) => e.examTerm === selectedExamTerm) ? (
-                    <span className="w-full py-2 px-3 rounded-xl bg-emerald-100 text-emerald-800 text-[11px] font-bold flex items-center justify-center gap-1 border border-emerald-200">
-                      <CheckCircle className="w-3.5 h-3.5 text-emerald-700" />
-                      <span>অনুমোদিত / সক্রিয়</span>
-                    </span>
-                  ) : (
-                    <span className="w-full py-2 px-3 rounded-xl bg-amber-50 text-amber-800 text-[11px] font-bold flex items-center justify-center gap-1 border border-amber-200">
-                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                      <span>এই শ্রেণিতে প্রযোজ্য নয়</span>
-                    </span>
-                  )}
-                </div>
-              </div>
+          <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            {/* Field: Roll Number */}
+            <div className="md:col-span-3 space-y-1.5">
+              <label className="block text-xs font-bold text-gray-700">
+                শ্রেণির রোল নম্বর <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="যেমন: ১, ২, ৩... (e.g. 1, 2, 3)"
+                value={rollInput}
+                onChange={(e) => {
+                  setRollInput(e.target.value);
+                  setInputError(null);
+                  setSearched(false);
+                  setFoundStudent(null);
+                }}
+                className={`w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm transition ${
+                  inputError
+                    ? 'border-2 border-red-500 bg-red-50/40 text-red-900 placeholder-red-400 focus:outline-hidden focus:border-red-600'
+                    : 'bg-gray-50/70 border border-gray-200 text-gray-800 placeholder-gray-400 focus:outline-hidden focus:border-emerald-600 focus:bg-white'
+                }`}
+              />
             </div>
 
-            {/* Field 2 & 3 & 4: Class, Group, Roll and Submit */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-end">
-              {/* Class */}
-              <div className={isClass910 ? 'sm:col-span-4' : 'sm:col-span-5'}>
-                <label className="block text-xs font-bold text-gray-700 mb-1">শ্রেণি (Class) *</label>
+            {/* Field: Class */}
+            <div className={isClass910 ? 'md:col-span-3 space-y-1.5' : 'md:col-span-3 space-y-1.5'}>
+              <label className="block text-xs font-bold text-gray-700">
+                শ্রেণি নির্বাচন করুন <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={selectedClass}
+                onChange={(e) => {
+                  setSelectedClass(e.target.value);
+                  setInputError(null);
+                  setSearched(false);
+                  setFoundStudent(null);
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm cursor-pointer transition bg-gray-50/70 border border-gray-200 text-gray-800 focus:outline-hidden focus:border-emerald-600 focus:bg-white"
+              >
+                {CLASS_OPTIONS.map((cls, idx) => (
+                  <option key={idx} value={cls}>{cls}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Field: Group (if 9 or 10) */}
+            {isClass910 && (
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="block text-xs font-bold text-gray-700">
+                  বিভাগ <span className="text-red-500">*</span>
+                </label>
                 <select
-                  value={selectedClass}
+                  value={selectedGroup}
                   onChange={(e) => {
-                    setSelectedClass(e.target.value);
+                    setSelectedGroup(e.target.value);
                     setInputError(null);
                     setSearched(false);
                     setFoundStudent(null);
                   }}
-                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:outline-hidden focus:border-emerald-600 focus:bg-white"
+                  className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm cursor-pointer transition bg-gray-50/70 border border-gray-200 text-gray-800 focus:outline-hidden focus:border-emerald-600 focus:bg-white"
                 >
-                  {CLASS_OPTIONS.map((cls, idx) => (
-                    <option key={idx} value={cls}>{cls}</option>
+                  {GROUP_OPTIONS.map((grp, idx) => (
+                    <option key={idx} value={grp}>{grp} বিভাগ</option>
                   ))}
                 </select>
               </div>
+            )}
 
-              {/* Group */}
-              {isClass910 && (
-                <div className="sm:col-span-3">
-                  <label className="block text-xs font-bold text-gray-700 mb-1">বিভাগ (Group) *</label>
-                  <select
-                    value={selectedGroup}
-                    onChange={(e) => {
-                      setSelectedGroup(e.target.value);
-                      setInputError(null);
-                      setSearched(false);
-                      setFoundStudent(null);
-                    }}
-                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900 focus:outline-hidden focus:border-emerald-600 focus:bg-white"
-                  >
-                    {GROUP_OPTIONS.map((grp, idx) => (
-                      <option key={idx} value={grp}>{grp} বিভাগ</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Roll Number with Validation Indicator */}
-              <div className={isClass910 ? 'sm:col-span-3' : 'sm:col-span-4'}>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-gray-700">ক্লাস রোল নম্বর *</label>
-                  {inputError && (
-                    <span className="text-[10px] text-rose-600 font-bold flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      ভুল তথ্য
-                    </span>
-                  )}
-                </div>
-                <input
-                  type="text"
-                  placeholder="যেমন: ১ বা ১০১"
-                  value={rollInput}
-                  onChange={(e) => {
-                    setRollInput(e.target.value);
-                    setInputError(null);
-                    setSearched(false);
-                    setFoundStudent(null);
-                  }}
-                  className={`w-full px-3.5 py-2.5 bg-gray-50 border rounded-xl text-xs font-mono font-bold text-gray-900 focus:outline-hidden focus:bg-white transition ${
-                    inputError
-                      ? 'border-rose-400 bg-rose-50/40 text-rose-900 focus:border-rose-600 ring-2 ring-rose-200'
-                      : 'border-gray-200 focus:border-emerald-600'
-                  }`}
-                />
-              </div>
-
-              {/* Submit Button */}
-              <div className={isClass910 ? 'sm:col-span-2' : 'sm:col-span-3'}>
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer"
-                >
-                  <Search className="w-3.5 h-3.5" />
-                  <span>প্রবেশপত্র খুঁজুন</span>
-                </button>
-              </div>
+            {/* Field: Exam Term */}
+            <div className={isClass910 ? 'md:col-span-2 space-y-1.5' : 'md:col-span-4 space-y-1.5'}>
+              <label className="block text-xs font-bold text-gray-700">
+                পরীক্ষার নাম / টার্ম <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={selectedExamTerm}
+                onChange={(e) => {
+                  setSelectedExamTerm(e.target.value);
+                  setInputError(null);
+                  setSearched(false);
+                  setFoundStudent(null);
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm cursor-pointer transition bg-gray-50/70 border border-gray-200 text-gray-800 focus:outline-hidden focus:border-emerald-600 focus:bg-white"
+              >
+                <option value="">-- পরীক্ষার নাম নির্বাচন করুন --</option>
+                {examTermOptions.map((term, idx) => (
+                  <option key={idx} value={term.value}>
+                    {term.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Inline Input Validation / Error Banner (Marked Area) */}
-            {inputError && (
-              <div className="text-xs text-rose-700 bg-rose-50 border border-rose-300 rounded-xl px-4 py-2.5 flex items-center justify-between gap-2 animate-fadeIn shadow-2xs">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
-                  <span className="font-bold">{inputError}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setInfoWrongPopup({
-                    isOpen: true,
-                    title: 'তথ্য সঠিক নয়',
-                    message: 'আপনার প্রদত্ত তথ্যের সাথে ডাটাবেজের কোনো রেকর্ড মেলেনি। অনুগ্রহ করে সঠিক রোল নম্বর ও শ্রেণি নির্বাচন করে পুনরায় চেষ্টা করুন।',
-                  })}
-                  className="text-[11px] text-rose-800 underline font-semibold hover:text-rose-950 shrink-0 cursor-pointer"
-                >
-                  পপআপ সতর্কবার্তা দেখুন
-                </button>
-              </div>
-            )}
+            {/* Submit Button */}
+            <div className="md:col-span-2">
+              <button
+                type="submit"
+                className="w-full bg-[#059669] hover:bg-[#047857] text-white py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-sm cursor-pointer hover:shadow"
+              >
+                <Search className="w-4 h-4" />
+                <span>প্রবেশপত্র অনুসন্ধান</span>
+              </button>
+            </div>
           </form>
+
+          {/* Quick Demo Records Buttons - Matching Results Page */}
+          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-100 text-xs">
+            <span className="text-gray-500 font-bold">সঠিক তথ্য দিয়ে দ্রুত যাচাই করুন:</span>
+            <button
+              type="button"
+              onClick={() => selectDemoRecord('1', '১০ম শ্রেণি', 'বিজ্ঞান')}
+              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 pl-1.5 pr-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center gap-2 text-[11px]"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1544717305-2782549b5136?w=100&h=100&fit=crop&crop=faces&q=80"
+                alt="Sadia Jahan"
+                className="w-5 h-5 rounded-full object-cover border border-emerald-300 shrink-0"
+              />
+              <span>সাদিয়া জাহান (১০ম বিজ্ঞান - রোল ১)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => selectDemoRecord('2', '১০ম শ্রেণি', 'বিজ্ঞান')}
+              className="bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 pl-1.5 pr-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center gap-2 text-[11px]"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&h=100&fit=crop&crop=faces&q=80"
+                alt="Tanvir Ahmed"
+                className="w-5 h-5 rounded-full object-cover border border-blue-300 shrink-0"
+              />
+              <span>তানভীর আহমেদ (১০ম বিজ্ঞান - রোল ২)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => selectDemoRecord('1', '৮ম শ্রেণি')}
+              className="bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 pl-1.5 pr-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center gap-2 text-[11px]"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces&q=80"
+                alt="Rafsan Zaman"
+                className="w-5 h-5 rounded-full object-cover border border-purple-300 shrink-0"
+              />
+              <span>রাফসান জামান (৮ম শ্রেণি - রোল ১)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => selectDemoRecord('1', '৯ম শ্রেণি', 'মানবিক')}
+              className="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 pl-1.5 pr-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center gap-2 text-[11px]"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces&q=80"
+                alt="Sumaiya Akter"
+                className="w-5 h-5 rounded-full object-cover border border-amber-300 shrink-0"
+              />
+              <span>সুমাইয়া আক্তার (৯ম মানবিক - রোল ১)</span>
+            </button>
+          </div>
+
+          {/* Inline Input Validation / Error Banner */}
+          {inputError && (
+            <div className="text-xs text-rose-700 bg-rose-50 border border-rose-300 rounded-xl px-4 py-2.5 flex items-center justify-between gap-2 animate-fadeIn shadow-2xs">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span className="font-bold">{inputError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInfoWrongPopup({
+                  isOpen: true,
+                  title: 'তথ্য সঠিক নয়',
+                  message: 'আপনার প্রদত্ত তথ্যের সাথে ডাটাবেজের কোনো রেকর্ড মেলেনি। অনুগ্রহ করে সঠিক রোল নম্বর ও শ্রেণি নির্বাচন করে পুনরায় চেষ্টা করুন।',
+                })}
+                className="text-[11px] text-rose-800 underline font-semibold hover:text-rose-950 shrink-0 cursor-pointer"
+              >
+                পপআপ সতর্কবার্তা দেখুন
+              </button>
+            </div>
+          )}
 
           {/* Search Result Feedback */}
           {searched && (

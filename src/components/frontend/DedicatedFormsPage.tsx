@@ -5,6 +5,7 @@ import {
   FileText,
   Download,
   Search,
+  Bookmark,
   Eye,
   CheckCircle,
   Calendar,
@@ -103,80 +104,109 @@ export const DedicatedFormsPage: React.FC = () => {
         </div>
       </header>
 
-      {/* Top Hero Banner */}
-      <section className="bg-gradient-to-r from-[#052e20] via-[#0b4833] to-[#04281b] text-white py-10 px-4 sm:px-8 border-b border-emerald-900/50 shadow-md print:hidden">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <nav className="flex items-center gap-2 text-xs text-emerald-200/90 mb-3 font-medium">
-              <button
-                onClick={() => setCurrentFrontendPage('home')}
-                className="hover:text-white transition cursor-pointer"
-              >
-                মূল ওয়েবসাইট
-              </button>
-              <span>/</span>
-              <span className="text-emerald-100">ডাউনলোড পোর্টাল</span>
-              <span>/</span>
-              <span className="text-white font-bold">প্রাতিষ্ঠানিক ফরমসমূহ</span>
-            </nav>
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-amber-300 shadow-inner">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-                  গুরুত্বপূর্ণ প্রাতিষ্ঠানিক ফরমসমূহ (Forms & Downloads)
-                </h1>
-                <p className="text-xs text-emerald-200 mt-0.5">
-                  ভর্তি, ছুটি, প্রশংসাপত্র, টিসি ও অন্যান্য ফরম প্রিভিউ, ইউনিকোড PDF ডাউনলোড ও সরাসরি প্রিন্ট করুন
-                </p>
-              </div>
+      {/* Main Content Area - Matching Result Page Layout */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 py-8">
+        {/* Top Dark Emerald Header Banner - Completely in Bengali matching Results page */}
+        <div className="bg-gradient-to-br from-[#063326] via-[#094132] to-[#042018] rounded-3xl p-8 sm:p-12 shadow-xl border border-emerald-900/40 relative overflow-hidden print:hidden">
+          {/* Subtle decorative circles */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-1.5 bg-[#0f4d3a]/80 text-[#34d399] border border-[#16654a] px-3.5 py-1 rounded-full text-xs font-semibold mb-4">
+              <Bookmark className="w-3.5 h-3.5 text-emerald-400" />
+              <span>বিদ্যালয়ের প্রাতিষ্ঠানিক ফরম ও ডাউনলোড পোর্টাল</span>
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              গুরুত্বপূর্ণ প্রাতিষ্ঠানিক ফরমসমূহ (Forms & Downloads)
+            </h2>
+
+            <p className="text-emerald-100/80 text-xs sm:text-sm mt-2.5 max-w-2xl leading-relaxed">
+              ভর্তি, ছুটি, প্রশংসাপত্র, টিসি ও অন্যান্য ফরম প্রিভিউ, ইউনিকোড PDF ডাউনলোড ও সরাসরি প্রিন্ট করুন।
+            </p>
+          </div>
+        </div>
+
+        {/* Search & Category Filter Card - Matching Results Page White Card */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6 sm:p-8 space-y-6 print:hidden">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2 text-gray-900 font-bold text-base sm:text-lg">
+              <Search className="w-5 h-5 text-emerald-600" />
+              <span>প্রয়োজনীয় প্রাতিষ্ঠানিক ফরম অনুসন্ধান করুন</span>
+            </div>
+            <span className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full font-bold">
+              মোট {downloadableForms.filter((f) => f.active).length}টি প্রাতিষ্ঠানিক ফরম উন্মুক্ত
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+            {/* Search Input */}
+            <div className="md:col-span-5 relative">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="ফরমের নাম দিয়ে খুঁজুন... (যেমন: ভর্তি, ছুটি, প্রত্যয়ন)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-9 py-2.5 rounded-xl text-xs sm:text-sm bg-gray-50/70 border border-gray-200 text-gray-800 placeholder-gray-400 focus:outline-hidden focus:border-emerald-600 focus:bg-white transition"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  title="অনুসন্ধান মুছুন"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="md:col-span-7 flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                    selectedCategory === cat
+                      ? 'bg-emerald-800 text-white shadow-xs'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-100 bg-emerald-800/70 border border-emerald-600/40 px-3.5 py-2 rounded-xl">
-            <CheckCircle className="w-4 h-4 text-emerald-300" />
-            <span>মোট {downloadableForms.filter((f) => f.active).length}টি প্রাতিষ্ঠানিক ফরম উন্মুক্ত</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Main Container */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-8 space-y-6">
-        {/* Search & Category Filter Toolbar */}
-        <div className="bg-white rounded-2xl shadow-xs border border-gray-200 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Categories Tab Pill */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-            {categories.map((cat) => (
+          {/* Quick Popular Form Chips - Matching Results Page Demo Chips */}
+          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-100 text-xs">
+            <span className="text-gray-500 font-bold">জনপ্রিয় ফরমসমূহ:</span>
+            {['ভর্তি ফরম', 'ছুটির আবেদন', 'প্রশংসাপত্র', 'ছাড়পত্র (টিসি)'].map((tag) => (
               <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
-                  selectedCategory === cat
-                    ? 'bg-emerald-800 text-white shadow-xs'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                }`}
+                key={tag}
+                type="button"
+                onClick={() => setSearchQuery(tag)}
+                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full font-semibold transition cursor-pointer text-[11px]"
               >
-                {cat}
+                {tag}
               </button>
             ))}
-          </div>
-
-          {/* Search Input */}
-          <div className="relative w-full md:w-72">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="ফরমের নাম দিয়ে খুঁজুন..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-hidden focus:border-emerald-600 focus:bg-white"
-            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="text-gray-500 hover:text-gray-700 underline text-[11px] ml-1 cursor-pointer"
+              >
+                সব ফরম প্রদর্শন
+              </button>
+            )}
           </div>
         </div>
 
         {/* Notice Info Box */}
-        <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 flex items-start gap-2.5 text-xs text-emerald-950">
+        <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 flex items-start gap-3 text-xs text-emerald-950 shadow-2xs">
           <Info className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
           <span>
             প্রয়োজনীয় ফরমটি সম্পূর্ণ বাংলায় <strong>ইউনিকোড (Unicode) PDF</strong> ফরম্যাটে ডাউনলোড করতে <strong>'PDF'</strong> বাটনে ক্লিক করুন, অথবা সরাসরি প্রিন্ট করতে <strong>'প্রিন্ট'</strong> বাটনে ক্লিক করুন। সম্পাদনার জন্য <strong>'.DOCX'</strong> ফাইলও নামাতে পারেন।
