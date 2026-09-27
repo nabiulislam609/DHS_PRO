@@ -240,6 +240,7 @@ export interface CustomStatItem {
 export interface SiteSettings {
   schoolNameBangla: string;
   schoolNameEnglish: string;
+  eiin?: string;
   shortName?: string;
   tagline?: string;
   logoUrl?: string;

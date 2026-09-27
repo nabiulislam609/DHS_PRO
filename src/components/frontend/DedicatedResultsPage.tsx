@@ -26,16 +26,24 @@ export const DedicatedResultsPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
           {/* Logo & School Branding */}
           <div className="flex items-center gap-3.5 cursor-pointer" onClick={handleGoHome}>
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-800 to-emerald-950 flex items-center justify-center text-amber-300 font-extrabold text-xl shadow-md border border-emerald-600/30">
-              দ
-            </div>
+            {siteSettings.logoUrl ? (
+              <img
+                src={siteSettings.logoUrl}
+                alt={siteSettings.schoolNameBangla}
+                className="w-11 h-11 rounded-2xl object-cover border border-emerald-600/30 shadow-xs"
+              />
+            ) : (
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-800 to-emerald-950 flex items-center justify-center text-amber-300 font-extrabold text-xl shadow-md border border-emerald-600/30">
+                {siteSettings.schoolNameBangla?.charAt(0) || 'দ'}
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base sm:text-lg font-black text-gray-900 leading-tight">
                   {siteSettings.schoolNameBangla}
                 </h1>
                 <span className="hidden sm:inline-block bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300">
-                  EIIN: ১২৩৪৫৬
+                  EIIN: {siteSettings.eiin || '১২৩৪৫৬'}
                 </span>
               </div>
               <p className="text-[11px] text-gray-500 font-medium">
