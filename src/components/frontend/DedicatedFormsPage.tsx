@@ -60,7 +60,7 @@ export const DedicatedFormsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-gray-800 pb-16 font-sans">
+    <div className="min-h-screen bg-slate-50 text-gray-800 flex flex-col font-sans">
       {/* Top Institutional Notification Bar (Result Page-style Header) */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xs print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
@@ -106,7 +106,7 @@ export const DedicatedFormsPage: React.FC = () => {
       </header>
 
       {/* Main Content Area - Matching Result Page Layout */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 py-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 py-8 flex-1 w-full">
         {/* Top Dark Emerald Header Banner - Completely in Bengali matching Results page */}
         <div className="bg-gradient-to-br from-[#063326] via-[#094132] to-[#042018] rounded-3xl p-8 sm:p-12 shadow-xl border border-emerald-900/40 relative overflow-hidden print:hidden">
           {/* Subtle decorative circles */}
@@ -377,7 +377,7 @@ export const DedicatedFormsPage: React.FC = () => {
             </p>
           </div>
         )}
-      </div>
+      </main>
 
       {/* Form Preview Modal with High-Fidelity Custom Render */}
       {previewForm && (() => {
