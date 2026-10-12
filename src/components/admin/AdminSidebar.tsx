@@ -28,6 +28,7 @@ import {
   ChevronRight,
   Bookmark,
   Download,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface MenuItem {
@@ -51,6 +52,7 @@ export const AdminSidebar: React.FC = () => {
     unreadMessageCount,
     admissions,
     siteSettings,
+    logoutAdmin,
   } = useSchool();
 
   const menuSections: MenuSection[] = [
@@ -58,6 +60,7 @@ export const AdminSidebar: React.FC = () => {
       group: 'প্রধান',
       items: [
         { id: 'dashboard' as AdminTab, label: 'ড্যাশবোর্ড', icon: LayoutDashboard },
+        { id: 'security' as AdminTab, label: 'সিকিউরিটি ও কাস্টম লিংক', icon: ShieldCheck },
         { id: 'settings' as AdminTab, label: 'সাইট সেটিংস', icon: Settings },
         { id: 'header_settings' as AdminTab, label: 'হেডার ও নোটিফিকেশন বার', icon: SlidersHorizontal },
         { id: 'sections' as AdminTab, label: 'হোমপেজ সেকশন (Show/Hide)', icon: LayoutTemplate },
@@ -207,7 +210,7 @@ export const AdminSidebar: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setViewMode('frontend')}
+            onClick={logoutAdmin}
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-rose-300 hover:text-white hover:bg-rose-950/40 transition cursor-pointer"
           >
             <LogOut className="w-4 h-4 text-rose-400" />

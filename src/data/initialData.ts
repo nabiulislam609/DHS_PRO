@@ -20,6 +20,7 @@ import {
   SectionVisibility,
   DownloadableForm,
   AdmitCardConfig,
+  AdminSecuritySettings,
 } from '../types';
 
 export const initialSiteSettings: SiteSettings = {
@@ -1041,3 +1042,12 @@ export const initialAdmitCardConfig: AdmitCardConfig = {
     'পরীক্ষা চলাকালে শৃঙ্খলা বজায় রাখতে হবে; অসদুপায় অবলম্বনে পরীক্ষা বাতিল গণ্য হবে।',
   ],
 };
+
+export const initialAdminSecuritySettings: AdminSecuritySettings = {
+  username: 'admin',
+  passwordHash: 'admin123',
+  customLoginPath: 'admin-login',
+  allowedGoogleEmail: 'aicourse.nabin@gmail.com',
+  lastUpdated: '২০২৬-১০-১২',
+};
+

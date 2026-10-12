@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSchool } from '../../context/SchoolContext';
-import { GraduationCap, MapPin, Phone, Mail, Heart, LogIn } from 'lucide-react';
+import { GraduationCap, MapPin, Phone, Mail, Heart } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const { siteSettings, setViewMode, setCurrentFrontendPage, currentFrontendPage } = useSchool();
@@ -209,16 +209,6 @@ export const Footer: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-amber-400 shrink-0" />
                 <span>{siteSettings.email}</span>
-              </div>
-
-              <div className="pt-3">
-                <button
-                  onClick={() => setViewMode('backend')}
-                  className="flex items-center gap-1.5 text-xs text-emerald-300 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded border border-white/10 transition cursor-pointer"
-                >
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span>অ্যাডমিন প্যানেলে প্রবেশ</span>
-                </button>
               </div>
             </div>
           </div>

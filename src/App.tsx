@@ -8,8 +8,9 @@ import { DedicatedTeachersPage } from './components/frontend/DedicatedTeachersPa
 import { DedicatedStaffPage } from './components/frontend/DedicatedStaffPage';
 import { DedicatedAdmitCardPage } from './components/frontend/DedicatedAdmitCardPage';
 import { DedicatedFormsPage } from './components/frontend/DedicatedFormsPage';
+import { AdminLoginPage } from './components/frontend/AdminLoginPage';
 import { AdmissionModal } from './components/frontend/AdmissionModal';
-import { Shield, Globe, AlertTriangle, RotateCcw } from 'lucide-react';
+import { AlertTriangle, RotateCcw } from 'lucide-react';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -66,9 +67,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 }
 
 const MainApp: React.FC = () => {
-  const { viewMode, setViewMode, currentFrontendPage } = useSchool();
+  const { viewMode, currentFrontendPage, isAdminAuthenticated } = useSchool();
 
   const renderContent = () => {
+    if (currentFrontendPage === 'admin-login') {
+      return <AdminLoginPage />;
+    }
     if (currentFrontendPage === 'results') {
       return <DedicatedResultsPage />;
     }
@@ -87,32 +91,19 @@ const MainApp: React.FC = () => {
     if (currentFrontendPage === 'important-forms' || currentFrontendPage === 'downloads') {
       return <DedicatedFormsPage />;
     }
-    return viewMode === 'frontend' ? <FrontendView /> : <AdminPanel />;
+
+    if (viewMode === 'backend') {
+      if (!isAdminAuthenticated) {
+        return <AdminLoginPage />;
+      }
+      return <AdminPanel />;
+    }
+
+    return <FrontendView />;
   };
 
   return (
     <div className="relative">
-      {/* Floating Toggle Button between Frontend & Backend for convenience */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <button
-          onClick={() => setViewMode(viewMode === 'frontend' ? 'backend' : 'frontend')}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full shadow-2xl font-bold text-xs transition transform hover:scale-105 active:scale-95 cursor-pointer border border-white/20 bg-emerald-800 hover:bg-emerald-900 text-white"
-          title={viewMode === 'frontend' ? 'অ্যাডমিন প্যানেল এ যান' : 'ওয়েবসাইট ভিউ এ যান'}
-        >
-          {viewMode === 'frontend' ? (
-            <>
-              <Shield className="w-4 h-4 text-amber-300" />
-              <span>এডমিন প্যানেল</span>
-            </>
-          ) : (
-            <>
-              <Globe className="w-4 h-4 text-emerald-300" />
-              <span>ওয়েবসাইট দেখুন</span>
-            </>
-          )}
-        </button>
-      </div>
-
       {/* Main View Router */}
       {renderContent()}
 

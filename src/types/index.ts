@@ -358,3 +358,11 @@ export interface SectionVisibility {
   gallery: boolean;
   contact: boolean;
 }
+
+export interface AdminSecuritySettings {
+  username: string;
+  passwordHash: string;
+  customLoginPath: string;
+  allowedGoogleEmail?: string;
+  lastUpdated?: string;
+}

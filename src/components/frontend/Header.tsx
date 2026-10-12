@@ -5,7 +5,6 @@ import {
   Phone,
   Mail,
   Clock,
-  LogIn,
   GraduationCap,
   Menu,
   X,
@@ -270,16 +269,6 @@ export const Header: React.FC = () => {
                   {siteSettings.topBarInstagramText || 'Instagram'}
                 </a>
               </div>
-
-              {/* Admin Login / Panel Button matching the screenshot */}
-              <button
-                onClick={() => setViewMode('backend')}
-                className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 px-2.5 py-1 rounded text-xs font-medium text-emerald-50 transition border border-white/20 hover:border-white/40 cursor-pointer"
-                title="অ্যাডমিন প্যানেল এ প্রবেশ করুন"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>{siteSettings.topBarAdminText || 'Admin'}</span>
-              </button>
             </div>
           </div>
         </div>
@@ -585,17 +574,6 @@ export const Header: React.FC = () => {
           >
             ভর্তি আবেদন
           </button>
-
-          {siteSettings.showTopBar === false && (
-            <button
-              onClick={() => setViewMode('backend')}
-              className="flex items-center gap-1.5 bg-gray-100 hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 border border-gray-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer"
-              title="অ্যাডমিন প্যানেল এ প্রবেশ করুন"
-            >
-              <LogIn className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Admin</span>
-            </button>
-          )}
         </nav>
 
         {/* Mobile Menu Button */}
@@ -794,18 +772,6 @@ export const Header: React.FC = () => {
           >
             সকল নোটিশ ও বিজ্ঞপ্তি
           </button>
-          <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setViewMode('backend');
-              }}
-              className="flex items-center gap-2 text-emerald-800 font-semibold"
-            >
-              <LogIn className="w-4 h-4" />
-              <span>অ্যাডমিন ড্যাশবোর্ডে যান</span>
-            </button>
-          </div>
         </div>
       )}
     </header>

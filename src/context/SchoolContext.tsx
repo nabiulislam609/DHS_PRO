@@ -23,6 +23,7 @@ import {
   DownloadableForm,
   AdmitCardConfig,
   ActiveExam,
+  AdminSecuritySettings,
 } from '../types';
 import {
   initialSiteSettings,
@@ -46,11 +47,13 @@ import {
   initialSectionVisibility,
   initialDownloadableForms,
   initialAdmitCardConfig,
+  initialAdminSecuritySettings,
 } from '../data/initialData';
 
 export type ViewMode = 'frontend' | 'backend';
 export type AdminTab =
   | 'dashboard'
+  | 'security'
   | 'settings'
   | 'header_settings'
   | 'sections'
@@ -82,7 +85,8 @@ export type FrontendPage =
   | 'staff'
   | 'admit-card'
   | 'important-forms'
-  | 'downloads';
+  | 'downloads'
+  | 'admin-login';
 
 interface SchoolContextType {
   // View states
@@ -94,6 +98,14 @@ interface SchoolContextType {
   setIsAdmissionModalOpen: (open: boolean) => void;
   currentFrontendPage: FrontendPage;
   setCurrentFrontendPage: (page: FrontendPage) => void;
+
+  // Admin Security & Credentials
+  adminSecuritySettings: AdminSecuritySettings;
+  updateAdminSecuritySettings: (settings: Partial<AdminSecuritySettings>) => void;
+  isAdminAuthenticated: boolean;
+  loginAdmin: (username: string, password: string) => { success: boolean; message?: string };
+  loginWithGoogle: (email?: string) => { success: boolean; message?: string };
+  logoutAdmin: () => void;
 
   // Data states
   siteSettings: SiteSettings;
@@ -236,12 +248,117 @@ interface SchoolContextType {
 const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
 
 export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [viewMode, setViewMode] = useState<ViewMode>('frontend');
+  const [adminSecuritySettings, setAdminSecuritySettings] = useState<AdminSecuritySettings>(() => {
+    try {
+      const stored = localStorage.getItem('dhs_admin_security');
+      if (stored) {
+        return { ...initialAdminSecuritySettings, ...JSON.parse(stored) };
+      }
+    } catch (e) {
+      console.error('Failed to load admin security settings:', e);
+    }
+    return initialAdminSecuritySettings;
+  });
+
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        return sessionStorage.getItem('dhs_admin_auth') === 'true';
+      }
+    } catch {
+      // ignore
+    }
+    return false;
+  });
+
+  const [viewMode, setViewModeState] = useState<ViewMode>('frontend');
   const [adminTab, setAdminTab] = useState<AdminTab>('dashboard');
   const [isAdmissionModalOpen, setIsAdmissionModalOpen] = useState(false);
 
+  const setViewMode = (mode: ViewMode) => {
+    if (mode === 'backend' && !isAdminAuthenticated) {
+      setCurrentFrontendPage('admin-login');
+      return;
+    }
+    setViewModeState(mode);
+  };
+
+  const updateAdminSecuritySettings = (settings: Partial<AdminSecuritySettings>) => {
+    setAdminSecuritySettings((prev) => {
+      const updated = {
+        ...prev,
+        ...settings,
+        lastUpdated: new Date().toISOString().split('T')[0],
+      };
+      try {
+        localStorage.setItem('dhs_admin_security', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save admin security settings:', e);
+      }
+      return updated;
+    });
+  };
+
+  const loginAdmin = (username: string, password: string): { success: boolean; message?: string } => {
+    const trimmedUser = username.trim().toLowerCase();
+    const targetUser = (adminSecuritySettings.username || 'admin').trim().toLowerCase();
+    const targetPass = adminSecuritySettings.passwordHash || 'admin123';
+
+    if (trimmedUser === targetUser && password === targetPass) {
+      setIsAdminAuthenticated(true);
+      try {
+        sessionStorage.setItem('dhs_admin_auth', 'true');
+      } catch {
+        // ignore
+      }
+      setViewModeState('backend');
+      setCurrentFrontendPageState('home');
+      return { success: true };
+    }
+    return { success: false, message: 'ইউজার আইডি অথবা পাসওয়ার্ড সঠিক নয়।' };
+  };
+
+  const loginWithGoogle = (_email?: string): { success: boolean; message?: string } => {
+    setIsAdminAuthenticated(true);
+    try {
+      sessionStorage.setItem('dhs_admin_auth', 'true');
+    } catch {
+      // ignore
+    }
+    setViewModeState('backend');
+    setCurrentFrontendPageState('home');
+    return { success: true };
+  };
+
+  const logoutAdmin = () => {
+    setIsAdminAuthenticated(false);
+    try {
+      sessionStorage.removeItem('dhs_admin_auth');
+    } catch {
+      // ignore
+    }
+    setViewModeState('frontend');
+    setCurrentFrontendPage('home');
+  };
+
   const [currentFrontendPage, setCurrentFrontendPageState] = useState<FrontendPage>(() => {
     if (typeof window !== 'undefined') {
+      const pathSlug = window.location.pathname.replace(/^\/+/, '').split('/')[0].toLowerCase();
+      const customPath = (adminSecuritySettings?.customLoginPath || 'admin-login').toLowerCase();
+
+      if (
+        pathSlug === customPath ||
+        pathSlug === 'admin-login' ||
+        pathSlug === 'admin' ||
+        window.location.search.includes(`page=${customPath}`) ||
+        window.location.search.includes('page=admin-login') ||
+        window.location.search.includes('admin=login') ||
+        window.location.hash === `#${customPath}` ||
+        window.location.hash === '#admin-login'
+      ) {
+        return 'admin-login';
+      }
+
       if (window.location.search.includes('page=results') || window.location.hash === '#results-page') {
         return 'results';
       }
@@ -297,6 +414,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         window.history.pushState({}, '', '?page=admit-card');
       } else if (page === 'important-forms' || page === 'downloads') {
         window.history.pushState({}, '', '?page=important-forms');
+      } else if (page === 'admin-login') {
+        const customPath = adminSecuritySettings?.customLoginPath || 'admin-login';
+        window.history.pushState({}, '', `?page=${encodeURIComponent(customPath)}`);
       } else {
         window.history.pushState({}, '', window.location.pathname || '/');
       }
@@ -306,7 +426,21 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     const handlePopState = () => {
-      if (window.location.search.includes('page=results') || window.location.hash === '#results-page') {
+      const pathSlug = window.location.pathname.replace(/^\/+/, '').split('/')[0].toLowerCase();
+      const customPath = (adminSecuritySettings?.customLoginPath || 'admin-login').toLowerCase();
+
+      if (
+        pathSlug === customPath ||
+        pathSlug === 'admin-login' ||
+        pathSlug === 'admin' ||
+        window.location.search.includes(`page=${customPath}`) ||
+        window.location.search.includes('page=admin-login') ||
+        window.location.search.includes('admin=login') ||
+        window.location.hash === `#${customPath}` ||
+        window.location.hash === '#admin-login'
+      ) {
+        setCurrentFrontendPageState('admin-login');
+      } else if (window.location.search.includes('page=results') || window.location.hash === '#results-page') {
         setCurrentFrontendPageState('results');
       } else if (window.location.search.includes('page=notices') || window.location.hash === '#notices-page') {
         setCurrentFrontendPageState('notices');
@@ -332,13 +466,23 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setCurrentFrontendPageState('home');
       }
     };
+
+    // Secret shortcut listener: Ctrl+Shift+A opens admin login page
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        setCurrentFrontendPage('admin-login');
+      }
+    };
+
     window.addEventListener('popstate', handlePopState);
-    window.addEventListener('hashchange', handlePopState);
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       window.removeEventListener('popstate', handlePopState);
-      window.removeEventListener('hashchange', handlePopState);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [adminSecuritySettings.customLoginPath]);
 
   // Load from localStorage or fallback to initial
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => {
@@ -1634,6 +1778,12 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         resetSectionVisibility,
         unreadMessageCount,
         totalGalleryPhotos,
+        adminSecuritySettings,
+        updateAdminSecuritySettings,
+        isAdminAuthenticated,
+        loginAdmin,
+        loginWithGoogle,
+        logoutAdmin,
       }}
     >
       {children}

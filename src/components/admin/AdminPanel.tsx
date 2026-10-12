@@ -23,16 +23,26 @@ import { ManageAchievements } from './ManageAchievements';
 import { ManageAcademicPrograms } from './ManageAcademicPrograms';
 import { ManageStatistics } from './ManageStatistics';
 import { ManageDownloads } from './ManageDownloads';
+import { ManageAdminSecurity } from './ManageAdminSecurity';
 import { GenericSectionManager } from './GenericSectionManager';
-import { Eye, Bell, ShieldCheck } from 'lucide-react';
+import { Eye, Bell, ShieldCheck, LogOut } from 'lucide-react';
 
 export const AdminPanel: React.FC = () => {
-  const { adminTab, setViewMode, unreadMessageCount, admissions } = useSchool();
+  const {
+    adminTab,
+    setViewMode,
+    unreadMessageCount,
+    admissions,
+    adminSecuritySettings,
+    logoutAdmin,
+  } = useSchool();
 
   const renderActiveTab = () => {
     switch (adminTab) {
       case 'dashboard':
         return <AdminDashboard />;
+      case 'security':
+        return <ManageAdminSecurity />;
       case 'results':
         return <ManageExamResults />;
       case 'teachers':
@@ -114,14 +124,21 @@ export const AdminPanel: React.FC = () => {
               )}
             </div>
 
-            {/* Admin Avatar */}
+            {/* Admin Avatar & Logout */}
             <div className="flex items-center gap-2 pl-2 border-l border-gray-200">
-              <div className="w-8 h-8 rounded-full bg-emerald-800 text-white font-bold flex items-center justify-center text-xs">
-                A
+              <div className="w-8 h-8 rounded-full bg-emerald-800 text-white font-bold flex items-center justify-center text-xs uppercase">
+                {adminSecuritySettings.username?.charAt(0) || 'A'}
               </div>
               <span className="text-xs font-bold text-gray-700 hidden sm:inline">
-                এডমিন
+                {adminSecuritySettings.username || 'এডমিন'}
               </span>
+              <button
+                onClick={logoutAdmin}
+                className="ml-1 p-1 text-gray-400 hover:text-rose-600 transition cursor-pointer"
+                title="লগআউট করুন"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </header>
