@@ -23,6 +23,7 @@ import {
   GraduationCap,
   BookOpen,
   RefreshCw,
+  RotateCcw,
 } from 'lucide-react';
 import {
   CLASS_OPTIONS,
@@ -154,27 +155,8 @@ export const DedicatedAdmitCardPage: React.FC = () => {
   // Fallback activeExam for compatibility
   const activeExam = currentExam;
 
-  // Popup Modal State for "এখন কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না"
-  const [noExamPopup, setNoExamPopup] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-  }>({
-    isOpen: false,
-    title: 'এখন কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না',
-    message: '',
-  });
-
-  // Popup Modal State for "তথ্য ভুল / তথ্য মেলেনি" (Strict validation popup without any suggestions)
-  const [infoWrongPopup, setInfoWrongPopup] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-  }>({
-    isOpen: false,
-    title: 'তথ্য সঠিক নয়',
-    message: '',
-  });
+  // Empty/Not Found message reason (matching Results page style)
+  const [notFoundReason, setNotFoundReason] = useState<string>('');
 
   // Available Exam Options for the dropdown
   const examTermOptions = useMemo(() => {
@@ -266,46 +248,44 @@ export const DedicatedAdmitCardPage: React.FC = () => {
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    // 1. Check if ANY exam is active in backend or master switch is off
-    if (admitCardConfig?.isActive === false || allActiveExams.length === 0) {
-      setNoExamPopup({
-        isOpen: true,
-        title: 'এখন কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না',
-        message: 'বর্তমানে বিদ্যালয়ে কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না এবং প্রবেশপত্র ডাউনলোডের সময়সূচি এখনও নির্ধারণ করা হয়নি। বিদ্যালয়ের পরবর্তী নোটিশের জন্য অপেক্ষা করুন।',
-      });
-      setFoundStudent(null);
+    const trimmedExam = (selectedExamTerm || '').trim();
+    const trimmedRoll = rollInput.trim();
+
+    // 1. Basic field validation
+    if (!trimmedRoll) {
+      setInputError('শ্রেণির রোল নম্বর প্রদান করুন।');
       setSearched(false);
       return;
     }
 
-    // 2. Check if selected class has any active exam
-    if (activeExamsForSelectedClass.length === 0) {
-      setNoExamPopup({
-        isOpen: true,
-        title: 'এখন কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না',
-        message: `বর্তমানে ${selectedClass}-এর জন্য কোনো সক্রিয় পরীক্ষা নির্ধারিত নেই। বিদ্যালয়ের পরবর্তী নোটিশের জন্য অপেক্ষা করুন।`,
-      });
-      setInputError(`বর্তমানে ${selectedClass}-এর জন্য কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না।`);
-      setFoundStudent(null);
-      setSearched(true);
+    const isDigitsOnly = /^[\d০-৯]+$/.test(trimmedRoll);
+    if (!isDigitsOnly) {
+      setInputError('রোল নম্বরে শুধুমাত্র সংখ্যা লিখুন।');
+      setSearched(false);
       return;
     }
 
-    // 3. Validate Exam Term selection
-    const trimmedExam = (selectedExamTerm || '').trim();
+    if (!selectedClass) {
+      setInputError('শ্রেণি নির্বাচন করুন।');
+      setSearched(false);
+      return;
+    }
+
     if (!trimmedExam) {
-      setInputError('অনুগ্রহ করে পরীক্ষার নাম (Exam Term) নির্বাচন করুন।');
-      setSearched(true);
-      setFoundStudent(null);
-      setInfoWrongPopup({
-        isOpen: true,
-        title: 'পরীক্ষার নাম নির্বাচন করুন',
-        message: 'প্রবেশপত্র পাওয়ার জন্য পরীক্ষার নাম (Exam Term) নির্বাচন করা বাধ্যতামূলক।',
-      });
+      setInputError('পরীক্ষার নাম নির্বাচন করুন।');
+      setSearched(false);
       return;
     }
 
-    // Strict validation: Does selected exam match an active exam eligible for this class?
+    // 2. Check active exams for selected class
+    if (admitCardConfig?.isActive === false || allActiveExams.length === 0 || activeExamsForSelectedClass.length === 0) {
+      setInputError(null);
+      setFoundStudent(null);
+      setSearched(true);
+      setNotFoundReason(`বর্তমানে ${selectedClass}-এর জন্য কোনো সক্রিয় পরীক্ষা নির্ধারিত নেই।`);
+      return;
+    }
+
     const matchingExamForClass = activeExamsForSelectedClass.find(
       (ex) =>
         ex.examTerm.trim().toLowerCase() === trimmedExam.toLowerCase() ||
@@ -314,48 +294,17 @@ export const DedicatedAdmitCardPage: React.FC = () => {
     );
 
     if (!matchingExamForClass) {
-      setNoExamPopup({
-        isOpen: true,
-        title: 'পরীক্ষা সক্রিয় নয়',
-        message: `"${trimmedExam}" পরীক্ষাটি বর্তমানে ${selectedClass}-এর জন্য সক্রিয় নয় অথবা অনুষ্ঠিত হচ্ছে না। ব্যাকএন্ডে যে পরীক্ষাগুলো সক্রিয় রয়েছে শুধুমাত্র সেগুলোর প্রবেশপত্র সংগ্রহ করা যাবে।`,
-      });
-      setInputError(`"${trimmedExam}" পরীক্ষাটি ${selectedClass}-এর জন্য সক্রিয় নয়।`);
-      setSearched(true);
+      setInputError(null);
       setFoundStudent(null);
-      return;
-    }
-
-    const trimmedRoll = rollInput.trim();
-    if (!trimmedRoll) {
-      setInputError('রোল নম্বর প্রদান করা বাধ্যতামূলক। সঠিক রোল নম্বর লিখুন।');
       setSearched(true);
-      setFoundStudent(null);
-      setInfoWrongPopup({
-        isOpen: true,
-        title: 'রোল নম্বর প্রদান করুন',
-        message: 'প্রবেশপত্র অনুসন্ধানের জন্য শিক্ষার্থীর সঠিক ক্লাস রোল নম্বর প্রদান করা বাধ্যতামূলক।',
-      });
-      return;
-    }
-
-    // Validate that roll consists of valid digits (Bangla ০-৯ or English 0-9)
-    const isDigitsOnly = /^[\d০-৯]+$/.test(trimmedRoll);
-    if (!isDigitsOnly) {
-      setInputError('রোল নম্বরে শুধুমাত্র সংখ্যা লিখুন।');
-      setSearched(true);
-      setFoundStudent(null);
-      setInfoWrongPopup({
-        isOpen: true,
-        title: 'অসঠিক রোল নম্বর',
-        message: 'রোল নম্বরে কোনো বর্ণ বা প্রতীক ব্যবহার করা যাবে না। শুধুমাত্র সঠিক সংখ্যা লিখুন।',
-      });
+      setNotFoundReason(`"${trimmedExam}" পরীক্ষাটি বর্তমানে ${selectedClass}-এর জন্য সক্রিয় নয়।`);
       return;
     }
 
     const rollNorm = normalizeNum(trimmedRoll);
     const clsNorm = normalizeClassName(selectedClass);
 
-    // Exact strict match in selected class & group from database
+    // Exact match in selected class & group from database
     const match = students.find((s) => {
       const sRoll = normalizeNum(s.roll);
       if (sRoll !== rollNorm) return false;
@@ -376,6 +325,7 @@ export const DedicatedAdmitCardPage: React.FC = () => {
       setInputError(null);
       setSearched(true);
       setFoundStudent(match);
+      setNotFoundReason('');
 
       // Detect elective subject from student's registered subjects
       if (match.subjects && match.subjects.length > 0) {
@@ -387,15 +337,10 @@ export const DedicatedAdmitCardPage: React.FC = () => {
         }
       }
     } else {
-      // STRICT DATA VALIDATION: If info is incorrect, DO NOT show admit card and NEVER show suggestions
       setFoundStudent(null);
       setSearched(true);
-      setInputError('প্রদত্ত তথ্য সঠিক নয়। রোল নম্বর বা নির্বাচিত শ্রেণি/বিভাগে কোনো তথ্য পাওয়া যায়নি।');
-      setInfoWrongPopup({
-        isOpen: true,
-        title: 'তথ্য সঠিক নয় (Wrong Info)',
-        message: 'আপনার প্রদত্ত পরীক্ষার নাম, শ্রেণি, বিভাগ বা রোল নম্বরের সাথে বিদ্যালয়ের ডাটাবেজে কোনো রেকর্ড মেলেনি। একটি তথ্য ভুল থাকলেও প্রবেশপত্র দেখা যাবে না। অনুগ্রহ করে সঠিক তথ্য দিয়ে পুনরায় চেষ্টা করুন।',
-      });
+      setInputError(null);
+      setNotFoundReason('সঠিক রোল নম্বর ও শ্রেণি মিলিয়ে পুনরায় অনুসন্ধান করুন।');
     }
   };
 
@@ -660,22 +605,9 @@ export const DedicatedAdmitCardPage: React.FC = () => {
 
         {/* Global Inactive Warning if no exam is active */}
         {(allActiveExams.length === 0 || admitCardConfig?.isActive === false) && (
-          <div className="bg-amber-500/15 border border-amber-400/40 text-amber-900 text-xs px-4 py-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>সতর্কবার্তা: বর্তমানে বিদ্যালয়ে কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না বা প্রবেশপত্র ডাউনলোড সাময়িকভাবে স্থগিত রয়েছে।</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setNoExamPopup({
-                isOpen: true,
-                title: 'এখন কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না',
-                message: 'বর্তমানে বিদ্যালয়ে কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না এবং কোনো প্রবেশপত্র ডাউনলোডের জন্য উন্মুক্ত নেই। বিদ্যালয় কর্তৃপক্ষ ব্যাকএন্ডে পরীক্ষা যুক্ত ও সক্রিয় করলে প্রবেশপত্র সংগ্রহ করা যাবে।',
-              })}
-              className="bg-amber-200 hover:bg-amber-300 text-amber-950 font-bold px-3 py-1 rounded-lg text-xs shrink-0 transition cursor-pointer"
-            >
-              সতর্কবার্তা দেখুন
-            </button>
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 print:hidden">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>বর্তমানে বিদ্যালয়ে কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না বা প্রবেশপত্র ডাউনলোড সাময়িকভাবে স্থগিত রয়েছে।</span>
           </div>
         )}
 
@@ -795,99 +727,49 @@ export const DedicatedAdmitCardPage: React.FC = () => {
             </div>
           </form>
 
-          {/* Inline Input Validation / Error Banner */}
+          {/* Inline Input Validation / Error Banner (sleek & non-intrusive) */}
           {inputError && (
-            <div className="text-xs text-rose-700 bg-rose-50 border border-rose-300 rounded-xl px-4 py-2.5 flex items-center justify-between gap-2 animate-fadeIn shadow-2xs">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
-                <span className="font-bold">{inputError}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setInfoWrongPopup({
-                  isOpen: true,
-                  title: 'তথ্য সঠিক নয়',
-                  message: 'আপনার প্রদত্ত তথ্যের সাথে ডাটাবেজের কোনো রেকর্ড মেলেনি। অনুগ্রহ করে সঠিক রোল নম্বর ও শ্রেণি নির্বাচন করে পুনরায় চেষ্টা করুন।',
-                })}
-                className="text-[11px] text-rose-800 underline font-semibold hover:text-rose-950 shrink-0 cursor-pointer"
-              >
-                পপআপ সতর্কবার্তা দেখুন
-              </button>
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-2.5 text-xs flex items-center gap-2 animate-fadeIn shadow-2xs">
+              <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+              <span className="font-medium">{inputError}</span>
             </div>
           )}
 
           {/* Search Result Feedback */}
-          {searched && (
+          {searched && foundStudent && (
             <div className="pt-1">
-              {foundStudent ? (
-                <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-emerald-950 shadow-2xs animate-fadeIn">
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle className="w-4 h-4 text-emerald-700 shrink-0" />
-                    <span>
-                      ✓ তথ্য সঠিক ও অনুমোদিত! শিক্ষার্থী <strong>{foundStudent.name}</strong> (রোল: <strong>{foundStudent.roll}</strong>, শ্রেণি: <strong>{selectedClass}</strong>) এর অফিশিয়াল প্রবেশপত্র নিচে প্রস্তুত।
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={handlePrint}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold text-xs shadow-xs transition cursor-pointer"
-                    >
-                      <Printer className="w-3.5 h-3.5" />
-                      <span>প্রিন্ট</span>
-                    </button>
-                    <button
-                      onClick={handleDownloadPdf}
-                      disabled={isDownloadingPdf}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs shadow-xs transition cursor-pointer disabled:opacity-50"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>{isDownloadingPdf ? 'PDF তৈরি হচ্ছে...' : 'PDF ডাউনলোড'}</span>
-                    </button>
-                  </div>
+              <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-emerald-950 shadow-2xs animate-fadeIn">
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle className="w-4 h-4 text-emerald-700 shrink-0" />
+                  <span>
+                    ✓ তথ্য সঠিক ও অনুমোদিত! শিক্ষার্থী <strong>{foundStudent.name}</strong> (রোল: <strong>{foundStudent.roll}</strong>, শ্রেণি: <strong>{selectedClass}</strong>) এর অফিশিয়াল প্রবেশপত্র নিচে প্রস্তুত।
+                  </span>
                 </div>
-              ) : (
-                /* STRICT DATA VALIDATION FAILURE: No suggestions, clean clear error message */
-                <div className="bg-rose-50 border border-rose-300 rounded-2xl p-4 sm:p-5 text-rose-950 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4 shadow-sm animate-fadeIn">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 border border-rose-200">
-                      <ShieldAlert className="w-6 h-6 text-rose-600" />
-                    </div>
-                    <div className="space-y-1 text-left">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-rose-900 text-sm sm:text-base">
-                          তথ্য সঠিক নয় — প্রবেশপত্র প্রদর্শিত হবে না
-                        </h4>
-                        <span className="bg-rose-200 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                          রেকর্ড মেলেনি
-                        </span>
-                      </div>
-                      <p className="text-xs text-rose-800 leading-relaxed">
-                        আপনার প্রদত্ত পরীক্ষার নাম, শ্রেণি, বিভাগ বা রোল নম্বরের সাথে বিদ্যালয়ের ডাটাবেজে কোনো মিল পাওয়া যায়নি। সঠিক তথ্য ছাড়া অ্যাকাডেমিক নিয়মানুযায়ী প্রবেশপত্র দেখা যাবে না।
-                      </p>
-                    </div>
-                  </div>
+                <div className="flex items-center gap-2 shrink-0">
                   <button
-                    type="button"
-                    onClick={() => {
-                      setRollInput('');
-                      setInputError(null);
-                      setSearched(false);
-                      setFoundStudent(null);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-xl text-xs font-bold shrink-0 transition cursor-pointer shadow-xs"
+                    onClick={handlePrint}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold text-xs shadow-xs transition cursor-pointer"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>নতুন করে খুঁজুন</span>
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>প্রিন্ট</span>
+                  </button>
+                  <button
+                    onClick={handleDownloadPdf}
+                    disabled={isDownloadingPdf}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs shadow-xs transition cursor-pointer disabled:opacity-50"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>{isDownloadingPdf ? 'PDF তৈরি হচ্ছে...' : 'PDF ডাউনলোড'}</span>
                   </button>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>
 
         {/* Initial Prompt When Not Searched Yet */}
         {!searched && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center space-y-3 print:hidden shadow-xs">
+          <div className="bg-white rounded-2xl border border-gray-200/80 p-8 text-center space-y-3 print:hidden shadow-xs">
             <div className="w-12 h-12 mx-auto rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
               <CreditCard className="w-6 h-6" />
             </div>
@@ -895,8 +777,39 @@ export const DedicatedAdmitCardPage: React.FC = () => {
               প্রবেশপত্র পেতে সঠিক তথ্য প্রদান করুন
             </h3>
             <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
-              শিক্ষার্থীর সঠিক শ্রেণি, বিভাগ (প্রযোজ্য ক্ষেত্রে) এবং ক্লাস রোল নম্বর প্রদান করে &quot;প্রবেশপত্র খুঁজুন&quot; বাটনে ক্লিক করুন। ডাটাবেজে তথ্য যাচাইয়ের পর কেবল বৈধ প্রবেশপত্র প্রদর্শিত হবে।
+              শিক্ষার্থীর সঠিক শ্রেণি ও ক্লাস রোল নম্বর দিয়ে &quot;প্রবেশপত্র অনুসন্ধান&quot; বাটনে ক্লিক করুন।
             </p>
+          </div>
+        )}
+
+        {/* Not Found State - EXACTLY matching Results Page (Image 3) */}
+        {searched && !foundStudent && (
+          <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-6 sm:p-8 text-center space-y-4 max-w-md mx-auto print:hidden">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border border-amber-200/80 shadow-2xs">
+              <Search className="w-6 h-6 text-amber-600" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-base sm:text-lg font-bold text-gray-900">কোনো প্রবেশপত্র পাওয়া যায়নি</h4>
+              <p className="text-xs sm:text-sm text-gray-500 max-w-xs mx-auto leading-relaxed">
+                {notFoundReason || 'সঠিক রোল নম্বর ও শ্রেণি মিলিয়ে পুনরায় অনুসন্ধান করুন।'}
+              </p>
+            </div>
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setSearched(false);
+                  setRollInput('');
+                  setInputError(null);
+                  setFoundStudent(null);
+                  setNotFoundReason('');
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-gray-500" />
+                <span>নতুন অনুসন্ধান</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -1168,131 +1081,6 @@ export const DedicatedAdmitCardPage: React.FC = () => {
           </div>
         )}
       </main>
-
-      {/* Modal Popup 1: "এখন কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না" */}
-      {noExamPopup.isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 space-y-5 shadow-2xl border-2 border-rose-300 relative text-center">
-            {/* Top Close icon */}
-            <button
-              type="button"
-              onClick={() => setNoExamPopup((prev) => ({ ...prev, isOpen: false }))}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-800 flex items-center justify-center transition cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            {/* Glowing Icon Badge */}
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center border-2 border-rose-200 shadow-md">
-              <Calendar className="w-8 h-8 text-rose-600" />
-            </div>
-
-            <div className="space-y-2">
-              <span className="bg-rose-100 text-rose-800 text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
-                পরীক্ষা নোটিশ • NOTICE
-              </span>
-              <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">
-                {noExamPopup.title}
-              </h3>
-              <p className="text-xs text-gray-600 leading-relaxed max-w-sm mx-auto">
-                {noExamPopup.message}
-              </p>
-            </div>
-
-            {/* Current Active Status Pill */}
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 text-left space-y-1.5 text-xs">
-              <div className="flex items-center justify-between text-gray-500 font-bold text-[10px] uppercase">
-                <span>বর্তমান প্রবেশপত্র পোর্টাল অবস্থা</span>
-                <span className="text-rose-600 font-bold">
-                  {activeExam ? 'অন্য পরীক্ষা সক্রিয়' : 'কোনো পরীক্ষা চলমান নেই'}
-                </span>
-              </div>
-              <p className="text-gray-800 font-medium">
-                {activeExam
-                  ? `বর্তমানে শুধুমাত্র "${activeExam.examTerm}" এর প্রবেশপত্র উন্মুক্ত রয়েছে।`
-                  : 'বিদ্যালয় কর্তৃপক্ষ যখন ব্যাকএন্ড থেকে পরীক্ষা সক্রিয় করবেন, কেবলমাত্র সেই পরীক্ষার প্রবেশপত্র ডাউনলোড করা যাবে।'}
-              </p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setNoExamPopup((prev) => ({ ...prev, isOpen: false }))}
-                className="w-full py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
-              >
-                ঠিক আছে (বুঝেছি)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setNoExamPopup((prev) => ({ ...prev, isOpen: false }));
-                  setCurrentFrontendPage('notices');
-                }}
-                className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>নোটিশ বোর্ড দেখুন</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Popup 2: "তথ্য ভুল / তথ্য সঠিক নয়" (Strict Validation Popup without suggestions) */}
-      {infoWrongPopup.isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 space-y-5 shadow-2xl border-2 border-rose-400 relative text-center">
-            {/* Top Close icon */}
-            <button
-              type="button"
-              onClick={() => setInfoWrongPopup((prev) => ({ ...prev, isOpen: false }))}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-800 flex items-center justify-center transition cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            {/* Warning Badge Icon */}
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center border-2 border-rose-200 shadow-md">
-              <AlertTriangle className="w-8 h-8 text-rose-600" />
-            </div>
-
-            <div className="space-y-2">
-              <span className="bg-rose-100 text-rose-800 text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
-                ভুল তথ্য • INVALID INFO
-              </span>
-              <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">
-                {infoWrongPopup.title}
-              </h3>
-              <p className="text-xs text-gray-600 leading-relaxed max-w-sm mx-auto">
-                {infoWrongPopup.message}
-              </p>
-            </div>
-
-            {/* Strict Notice Card */}
-            <div className="bg-rose-50/70 border border-rose-200 rounded-2xl p-3 text-left space-y-1.5 text-xs text-rose-950">
-              <div className="flex items-center gap-1.5 font-bold text-rose-800 text-[11px]">
-                <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
-                <span>নিরাপত্তা ও ডাটা ভ্যালিডেশন নীতি:</span>
-              </div>
-              <p className="text-gray-700 text-[11.5px] leading-relaxed">
-                একটি একক তথ্যে গরমিল থাকলেও কোনো প্রবেশপত্র তৈরি বা প্রদর্শন করা হবে না। সঠিক পরীক্ষার নাম, শ্রেণি, বিভাগ ও রোল নম্বর মিলিয়ে পুনরায় অনুসন্ধান করুন।
-              </p>
-            </div>
-
-            {/* Action Button */}
-            <div className="pt-1">
-              <button
-                type="button"
-                onClick={() => setInfoWrongPopup((prev) => ({ ...prev, isOpen: false }))}
-                className="w-full py-2.5 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
-              >
-                ঠিক আছে, বুঝেছি
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Exam Routine & Notice Modal for Frontend */}
       {viewingExamRoutine && (

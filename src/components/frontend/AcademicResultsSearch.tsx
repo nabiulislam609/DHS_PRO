@@ -13,6 +13,7 @@ import {
   Sparkles,
   GraduationCap,
   UserCheck,
+  RotateCcw,
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
@@ -196,11 +197,6 @@ export const AcademicResultsSearch: React.FC = () => {
   }>({});
   const [searchedResult, setSearchedResult] = useState<ExamResult | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
-  const [lastSearchedCriteria, setLastSearchedCriteria] = useState<{
-    roll: string;
-    studentClass: string;
-    examTerm: string;
-  } | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const marksheetRef = useRef<HTMLDivElement>(null);
 
@@ -264,11 +260,6 @@ export const AcademicResultsSearch: React.FC = () => {
     // Clear validation errors and record search state
     setValidationErrors({});
     setHasSearched(true);
-    setLastSearchedCriteria({
-      roll: rawRoll,
-      studentClass: rawClass,
-      examTerm: rawTerm,
-    });
 
     const engRoll = toEnglishDigits(rawRoll).toLowerCase();
     const origRoll = rawRoll.toLowerCase();
@@ -510,16 +501,9 @@ export const AcademicResultsSearch: React.FC = () => {
 
           {/* Validation Alert Banner if inputs are incomplete */}
           {Object.keys(validationErrors).length > 0 && (
-            <div className="bg-amber-50 border border-amber-300 text-amber-900 rounded-2xl p-4 text-xs sm:text-sm flex items-start gap-3 animate-shake">
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold block">অনুগ্রহ করে প্রয়োজনীয় তথ্যগুলো সঠিকভাবে পূরণ করুন:</span>
-                <ul className="list-disc list-inside mt-1 space-y-0.5 text-xs text-amber-800">
-                  {validationErrors.roll && <li>{validationErrors.roll}</li>}
-                  {validationErrors.studentClass && <li>{validationErrors.studentClass}</li>}
-                  {validationErrors.examTerm && <li>{validationErrors.examTerm}</li>}
-                </ul>
-              </div>
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-2.5 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>অনুগ্রহ করে নিচের চিহ্নিত প্রয়োজনীয় তথ্যগুলো পূরণ করুন</span>
             </div>
           )}
 
@@ -538,7 +522,7 @@ export const AcademicResultsSearch: React.FC = () => {
               </label>
               <input
                 type="text"
-                placeholder="যেমন: ১, ২, ৩... (e.g. 1, 2, 3)"
+                placeholder="রোল নম্বর (যেমন: ১, ২)"
                 value={searchRoll}
                 onChange={(e) => {
                   setSearchRoll(e.target.value);
@@ -579,7 +563,7 @@ export const AcademicResultsSearch: React.FC = () => {
                     : 'bg-gray-50/70 border border-gray-200 text-gray-800 focus:outline-hidden focus:border-emerald-600 focus:bg-white'
                 }`}
               >
-                <option value="">-- শ্রেণি নির্বাচন করুন (বাধ্যতামূলক) --</option>
+                <option value="">-- শ্রেণি নির্বাচন করুন --</option>
                 {availableClasses.map((c, idx) => (
                   <option key={idx} value={c}>
                     {c}
@@ -613,7 +597,7 @@ export const AcademicResultsSearch: React.FC = () => {
                     : 'bg-gray-50/70 border border-gray-200 text-gray-800 focus:outline-hidden focus:border-emerald-600 focus:bg-white'
                 }`}
               >
-                <option value="">-- পরীক্ষার নাম / টার্ম নির্বাচন করুন (বাধ্যতামূলক) --</option>
+                <option value="">-- পরীক্ষার নাম নির্বাচন করুন --</option>
                 {availableExamTerms.map((t, idx) => (
                   <option key={idx} value={t}>
                     {t}
@@ -725,15 +709,13 @@ export const AcademicResultsSearch: React.FC = () => {
 
                         {/* Right Verification Seal */}
                         <div className="text-center sm:text-right shrink-0">
-                          <div className="inline-block bg-emerald-50 border border-emerald-300 rounded-lg px-3 py-1.5 text-center shadow-2xs">
+                          <div className="inline-block bg-emerald-50 border border-emerald-300 rounded-lg px-3 py-1 text-center shadow-2xs">
                             <div className="flex items-center gap-1 text-emerald-900 font-bold text-[11px] justify-center sm:justify-end">
                               <CheckCircle className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                              <span>অফিসিয়াল ডিজিটাল প্রতিলিপি</span>
+                              <span>অফিসিয়াল মার্কশীট</span>
                             </div>
-                            <div className="text-[9px] text-gray-600 font-medium mt-0.5 tracking-tight flex items-center justify-center sm:justify-end gap-1.5">
-                              <span>শিক্ষাবর্ষ: ২০২৬</span>
-                              <span>•</span>
-                              <span>সনদ ক্রম: #{searchedResult.roll.padStart(4, '0')}</span>
+                            <div className="text-[9.5px] text-gray-600 font-medium mt-0.5">
+                              শিক্ষাবর্ষ: ২০২৬
                             </div>
                           </div>
                         </div>
@@ -807,12 +789,10 @@ export const AcademicResultsSearch: React.FC = () => {
                           </div>
 
                           {/* Secondary Institutional Meta Bar */}
-                          <div className="bg-gray-100/90 px-3 py-1.5 border-t border-gray-300 flex flex-wrap items-center justify-between text-[9.5px] text-gray-600 font-medium gap-2">
+                          <div className="bg-gray-50 px-3 py-1.5 border-t border-gray-200 flex flex-wrap items-center justify-between text-[10px] text-gray-600 font-medium">
                             <span>শিক্ষাবর্ষ: ২০২৬</span>
-                            <span>শাখা/গ্রুপ: {searchedResult.section || 'সাধারণ'}</span>
-                            <span>শিক্ষার্থী আইডি: {searchedResult.studentId || `DHS-2026-${searchedResult.roll}`}</span>
+                            <span>শাখা: {searchedResult.section || 'সাধারণ'}</span>
                             <span>ফলাফল প্রকাশের তারিখ: ২৪ ফেব্রুয়ারি ২০২৬</span>
-                            <span>সনদ ট্র্যাকিং: DHS-2026-R{searchedResult.roll}</span>
                           </div>
                         </div>
                       );
@@ -927,32 +907,14 @@ export const AcademicResultsSearch: React.FC = () => {
                     </div>
 
                     {/* Grading Scale & Remarks Section */}
-                    <div className="pt-2.5 border-t-2 border-dashed border-gray-300 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-stretch text-xs">
-                      {/* Left: Standard Grading Reference */}
-                      <div className="sm:col-span-7 bg-[#f8fafc] p-2 rounded-lg border border-gray-300 text-[9.5px] text-gray-700 space-y-0.5">
-                        <span className="font-bold text-gray-900 block text-[10px]">বাংলাদেশ শিক্ষা বোর্ড গ্রেডিং স্কেল:</span>
-                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 leading-tight">
-                          <span>৮০-১০০ = A+ (GP: ৫.০)</span>
-                          <span>৭০-৭৯ = A (GP: ৪.০)</span>
-                          <span>৬০-৬৯ = A- (GP: ৩.৫)</span>
-                          <span>৫০-৫৯ = B (GP: ৩.০)</span>
-                          <span>৪০-৪৯ = C (GP: ২.০)</span>
-                          <span>৩৩-৩৯ = D (GP: ১.০)</span>
-                          <span className="text-red-600 font-semibold col-span-2">০-৩২ = F (অকৃতকার্য, GP: ০.০)</span>
-                        </div>
+                    {/* Concise Grading Note & Conduct */}
+                    <div className="pt-2 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between text-[10px] text-gray-600 gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-gray-800">গ্রেডিং মানদণ্ড:</span>
+                        <span>A+ (৫.০) • A (৪.০) • A- (৩.৫) • B (৩.০) • C (২.০) • D (১.০) • F (০.০)</span>
                       </div>
-
-                      {/* Right: Institutional Remarks / Conduct */}
-                      <div className="sm:col-span-5 bg-emerald-50/60 p-2 rounded-lg border border-emerald-300 text-[9.5px] text-emerald-950 flex flex-col justify-between">
-                        <div>
-                          <span className="font-bold block text-[10px] text-emerald-900">শ্রেণি শিক্ষকের মন্তব্য:</span>
-                          <p className="mt-0.5 leading-tight text-gray-800">
-                            "অত্যন্ত চমৎকার ও প্রশংসনীয় ফলাফল। প্রাতিষ্ঠানিক আচরণ ও নিয়মানুবর্তিতা সন্তোষজনক।"
-                          </p>
-                        </div>
-                        <div className="mt-1.5 text-[8.5px] text-gray-500 text-right font-medium">
-                          মূল্যায়ন স্ট্যাটাস: অতি উত্তম ★★★
-                        </div>
+                      <div className="text-emerald-800 font-medium bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        মূল্যায়ন: সন্তোষজনক
                       </div>
                     </div>
 
@@ -984,59 +946,38 @@ export const AcademicResultsSearch: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Document Footer Security & Verification Bar */}
-                    <div className="pt-2 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between text-[9.5px] text-gray-500 font-medium">
-                      <span>* এটি একটি কম্পিউটার জেনারেটেড প্রাতিষ্ঠানিক ডিজিটাল প্রতিলিপি।</span>
-                      <span className="font-mono text-gray-600 font-semibold">
-                        যাচাই কোড: DHS-VERIFIED-2026-R{searchedResult.roll}
-                      </span>
+                    {/* Document Footer */}
+                    <div className="pt-2 border-t border-gray-200 text-center text-[9.5px] text-gray-500 font-medium">
+                      <span>* এটি একটি প্রাতিষ্ঠানিক কম্পিউটার জেনারেটেড ডিজিটাল নম্বরপত্র।</span>
                     </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-3xl border border-rose-100 shadow-md p-8 text-center space-y-4 max-w-2xl mx-auto">
-                <div className="w-16 h-16 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border-2 border-rose-200 shadow-inner">
-                  <AlertCircle className="w-8 h-8" />
+              <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-6 sm:p-8 text-center space-y-4 max-w-md mx-auto">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border border-amber-200/80 shadow-2xs">
+                  <Search className="w-6 h-6 text-amber-600" />
                 </div>
-                <div>
-                  <h4 className="text-lg font-bold text-gray-900">কোনো ফলাফল পাওয়া যায়নি</h4>
-                  <p className="text-xs sm:text-sm text-gray-600 max-w-md mx-auto mt-2 leading-relaxed">
-                    আপনার প্রদানকৃত তথ্যের সাথে মিলিয়ে কোনো প্রকাশিত ফলাফল পাওয়া যায়নি।
+                <div className="space-y-1">
+                  <h4 className="text-base sm:text-lg font-bold text-gray-900">কোনো ফলাফল পাওয়া যায়নি</h4>
+                  <p className="text-xs sm:text-sm text-gray-500 max-w-xs mx-auto leading-relaxed">
+                    সঠিক রোল নম্বর ও শ্রেণি মিলিয়ে পুনরায় অনুসন্ধান করুন।
                   </p>
                 </div>
-
-                {/* Searched Criteria Summary Box */}
-                {lastSearchedCriteria && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-xs text-left max-w-md mx-auto space-y-2">
-                    <span className="font-bold text-gray-700 block border-b border-gray-200 pb-1.5">
-                      অনুসন্ধানকৃত বিবরণ:
-                    </span>
-                    <div className="grid grid-cols-3 gap-2 text-gray-600">
-                      <div>
-                        <span className="text-gray-400 block text-[10px]">রোল নম্বর:</span>
-                        <span className="font-semibold text-gray-900">{lastSearchedCriteria.roll}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400 block text-[10px]">নির্বাচিত শ্রেণি:</span>
-                        <span className="font-semibold text-gray-900">{lastSearchedCriteria.studentClass}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400 block text-[10px]">পরীক্ষার নাম:</span>
-                        <span className="font-semibold text-gray-900 truncate block" title={lastSearchedCriteria.examTerm}>
-                          {lastSearchedCriteria.examTerm}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Helpful Validation Guideline */}
-                <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-3 text-[11.5px] text-amber-900 text-left max-w-md mx-auto leading-relaxed flex items-start gap-2">
-                  <span className="text-sm">⚠️</span>
-                  <span>
-                    <strong>ডেটা ভ্যালিডেশন নিয়ম:</strong> ফলাফল দেখার জন্য শিক্ষার্থীর রোল নম্বর, শ্রেণি এবং সংশ্লিষ্ট পরীক্ষার নাম — এই তিনটি তথ্যই অবিকল সঠিক হতে হবে। যেকোনো একটি তথ্য অমিল থাকলে ফলাফল দেখা যাবে না।
-                  </span>
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHasSearched(false);
+                      setSearchRoll('');
+                      setSelectedClass('');
+                      setSelectedTerm('');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-gray-500" />
+                    <span>নতুন অনুসন্ধান</span>
+                  </button>
                 </div>
               </div>
             )}
