@@ -83,6 +83,8 @@ export const initialHeroSlides: HeroSlide[] = [
     buttonText: 'ভর্তি চলছে',
     buttonLink: '#admission',
     active: true,
+    imageOpacity: 85,
+    overlayOpacity: 70,
   },
   {
     id: 'slide-2',
@@ -93,6 +95,8 @@ export const initialHeroSlides: HeroSlide[] = [
     buttonText: 'একাডেমিক প্রোগ্রাম',
     buttonLink: '#programs',
     active: true,
+    imageOpacity: 85,
+    overlayOpacity: 70,
   },
   {
     id: 'slide-3',
@@ -103,13 +107,15 @@ export const initialHeroSlides: HeroSlide[] = [
     buttonText: 'গ্যালারি দেখুন',
     buttonLink: '#gallery',
     active: true,
+    imageOpacity: 85,
+    overlayOpacity: 70,
   },
 ];
 
 export const initialNavigationItems: NavigationItem[] = [
   { id: 'nav-1', label: 'হোম', url: '#home', iconName: '—', order: 0, visible: true },
   { id: 'nav-2', label: 'পরিচিতি', url: '#about', iconName: '—', order: 1, visible: true },
-  { id: 'nav-4', label: 'নোটিশ', url: '#notices', iconName: '—', order: 2, visible: true },
+  { id: 'nav-4', label: 'নোটিশ', url: '/notices', iconName: '—', order: 2, visible: true },
   { id: 'nav-results', label: 'ফলাফল', url: '/results', iconName: '—', order: 3, visible: true },
   {
     id: 'nav-downloads',
@@ -913,7 +919,7 @@ export const initialSectionVisibility: SectionVisibility = {
   ticker: true,
   hero: true,
   quick_actions: true,
-  notices: true,
+  notices: false,
   leadership: true,
   about: true,
   programs: true,

@@ -150,15 +150,27 @@ export const HeroSlider: React.FC = () => {
         minHeight: `calc(100dvh - ${headerHeight}px)`,
       }}
     >
-      {/* Background Image with Dark Greenish Overlay */}
+      {/* Background Image with Customizable Opacity */}
       <div
         className="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform scale-105"
         style={{
           backgroundImage: `url(${slide.imageUrl})`,
+          opacity:
+            typeof slide.imageOpacity === 'number'
+              ? Math.max(0, Math.min(100, slide.imageOpacity)) / 100
+              : 0.85,
         }}
       />
-      {/* Dark gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/95 via-black/80 to-emerald-950/75" />
+      {/* Dark gradient overlay with customizable opacity */}
+      <div
+        className="absolute inset-0 bg-gradient-to-r from-emerald-950 via-black/80 to-emerald-950 transition-opacity duration-700 pointer-events-none"
+        style={{
+          opacity:
+            typeof slide.overlayOpacity === 'number'
+              ? Math.max(0, Math.min(100, slide.overlayOpacity)) / 100
+              : 0.65,
+        }}
+      />
 
       {/* Hero Content */}
       <div className="relative max-w-7xl mx-auto w-full h-full px-4 sm:px-8 flex flex-col justify-center items-start text-left">

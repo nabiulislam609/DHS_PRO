@@ -362,7 +362,12 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (window.location.search.includes('page=results') || window.location.hash === '#results-page') {
         return 'results';
       }
-      if (window.location.search.includes('page=notices') || window.location.hash === '#notices-page') {
+      if (
+        window.location.search.includes('page=notices') ||
+        window.location.hash === '#notices-page' ||
+        window.location.hash === '#notices' ||
+        window.location.pathname === '/notices'
+      ) {
         return 'notices';
       }
       if (window.location.search.includes('page=teachers') || window.location.hash === '#teachers-page') {
@@ -442,7 +447,12 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setCurrentFrontendPageState('admin-login');
       } else if (window.location.search.includes('page=results') || window.location.hash === '#results-page') {
         setCurrentFrontendPageState('results');
-      } else if (window.location.search.includes('page=notices') || window.location.hash === '#notices-page') {
+      } else if (
+        window.location.search.includes('page=notices') ||
+        window.location.hash === '#notices-page' ||
+        window.location.hash === '#notices' ||
+        window.location.pathname === '/notices'
+      ) {
         setCurrentFrontendPageState('notices');
       } else if (window.location.search.includes('page=teachers') || window.location.hash === '#teachers-page') {
         setCurrentFrontendPageState('teachers');
@@ -675,8 +685,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           };
         }
 
-        const noticeIdx = filtered.findIndex((item) => item.label === 'নোটিশ' || item.url === '#notices');
+        const noticeIdx = filtered.findIndex((item) => item.label === 'নোটিশ' || item.url === '#notices' || item.url === '/notices');
         if (noticeIdx !== -1) {
+          filtered[noticeIdx].url = '/notices';
           filtered.splice(noticeIdx + 1, 0, resultsItem);
         } else {
           filtered.push(resultsItem);

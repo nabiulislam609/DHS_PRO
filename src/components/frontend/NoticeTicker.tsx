@@ -88,12 +88,15 @@ export const NoticeTicker: React.FC = () => {
             {[...allTickerItems, ...allTickerItems].map((notice: any, idx) => (
               <a
                 key={`${notice.id}-${idx}`}
-                href={notice.isExam ? '#admit-card' : '#notices'}
+                href={notice.isExam ? '#admit-card' : '#notices-page'}
                 onClick={(e) => {
+                  e.preventDefault();
                   if (notice.isExam) {
-                    e.preventDefault();
                     setCurrentFrontendPage('admit-card');
+                  } else {
+                    setCurrentFrontendPage('notices');
                   }
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="inline-flex items-center gap-2.5 hover:text-amber-300 transition text-xs sm:text-sm font-medium shrink-0 group select-none cursor-pointer"
               >

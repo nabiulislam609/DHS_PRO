@@ -152,7 +152,7 @@ export const Footer: React.FC = () => {
                 </button>
               </li>
               <li>
-                <button onClick={() => scrollTo('notices')} className="hover:text-amber-300 transition cursor-pointer">
+                <button onClick={navigateToNotices} className="hover:text-amber-300 transition cursor-pointer">
                   নোটিশ বোর্ড
                 </button>
               </li>
@@ -186,7 +186,7 @@ export const Footer: React.FC = () => {
               <li><button onClick={() => scrollTo('hero')} className="hover:text-amber-300 transition cursor-pointer">হোম</button></li>
               <li><button onClick={() => scrollTo('about')} className="hover:text-amber-300 transition cursor-pointer">পরিচিতি</button></li>
               <li><button onClick={navigateToTeachers} className="hover:text-amber-300 transition cursor-pointer">শিক্ষক</button></li>
-              <li><button onClick={() => scrollTo('notices')} className="hover:text-amber-300 transition cursor-pointer">নোটিশ</button></li>
+              <li><button onClick={navigateToNotices} className="hover:text-amber-300 transition cursor-pointer">নোটিশ</button></li>
               <li><button onClick={() => scrollTo('news')} className="hover:text-amber-300 transition cursor-pointer">সংবাদ</button></li>
               <li><button onClick={() => scrollTo('events')} className="hover:text-amber-300 transition cursor-pointer">ইভেন্ট</button></li>
               <li><button onClick={() => scrollTo('programs')} className="hover:text-amber-300 transition cursor-pointer">একাডেমিক</button></li>

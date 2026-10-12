@@ -490,6 +490,10 @@ export const Header: React.FC = () => {
             }
 
             const isResults = item.label === 'ফলাফল' || item.url === '/results' || item.url === '#results';
+            const isNotices = item.label === 'নোটিশ' || item.url === '/notices' || item.url === '#notices' || item.url === '#notices-page';
+            const isActive =
+              (isResults && currentFrontendPage === 'results') ||
+              (isNotices && currentFrontendPage === 'notices');
 
             return (
               <button
@@ -507,7 +511,7 @@ export const Header: React.FC = () => {
                     handleHomeClick();
                   } else if (isResults) {
                     navigateToResults();
-                  } else if (item.url === '/notices' || item.url === '#notices-page') {
+                  } else if (isNotices) {
                     navigateToNotices();
                   } else if (item.url.startsWith('#')) {
                     scrollToSection(item.url.substring(1));
@@ -516,8 +520,8 @@ export const Header: React.FC = () => {
                   }
                 }}
                 className={`transition cursor-pointer ${
-                  isResults
-                    ? 'hover:text-emerald-700 text-emerald-800 font-semibold'
+                  isActive
+                    ? 'text-emerald-700 font-bold'
                     : 'hover:text-emerald-700'
                 }`}
               >
@@ -732,10 +736,14 @@ export const Header: React.FC = () => {
                 );
               }
 
+              const isResults = item.url === '/results' || item.url === '#results' || item.label === 'ফলাফল';
+              const isNotices = item.url === '/notices' || item.url === '#notices' || item.url === '#notices-page' || item.label === 'নোটিশ';
+
               return (
                 <button
                   key={item.id}
                   onClick={() => {
+                    setMobileMenuOpen(false);
                     if (
                       item.label === 'হোম' ||
                       item.url === '#home' ||
@@ -744,30 +752,40 @@ export const Header: React.FC = () => {
                       item.url === '#'
                     ) {
                       handleHomeClick();
-                    } else if (item.url.startsWith('#') && item.url !== '#notices-page') {
-                      scrollToSection(item.url.substring(1));
-                    } else if (item.url === '/results' || item.url === '#results' || item.label === 'ফলাফল') {
+                    } else if (isResults) {
                       navigateToResults();
-                    } else if (item.url === '/notices' || item.url === '#notices-page') {
+                    } else if (isNotices) {
                       navigateToNotices();
+                    } else if (item.url.startsWith('#')) {
+                      scrollToSection(item.url.substring(1));
                     } else {
                       window.location.href = item.url;
                     }
                   }}
-                  className="block w-full text-left py-1 hover:text-emerald-700 cursor-pointer"
+                  className={`block w-full text-left py-1 hover:text-emerald-700 cursor-pointer ${
+                    (isResults && currentFrontendPage === 'results') || (isNotices && currentFrontendPage === 'notices')
+                      ? 'text-emerald-800 font-bold'
+                      : ''
+                  }`}
                 >
                   {item.label}
                 </button>
               );
             })}
           <button
-            onClick={navigateToResults}
+            onClick={() => {
+              setMobileMenuOpen(false);
+              navigateToResults();
+            }}
             className="block w-full text-left py-1 text-emerald-800 font-bold hover:text-emerald-900 cursor-pointer"
           >
             পরীক্ষার ফলাফল ও মার্কশীট
           </button>
           <button
-            onClick={navigateToNotices}
+            onClick={() => {
+              setMobileMenuOpen(false);
+              navigateToNotices();
+            }}
             className="block w-full text-left py-1 text-emerald-800 font-bold hover:text-emerald-900 cursor-pointer"
           >
             সকল নোটিশ ও বিজ্ঞপ্তি

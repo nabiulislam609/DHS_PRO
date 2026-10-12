@@ -11,6 +11,8 @@ import {
   Upload,
   Image as ImageIcon,
   ExternalLink,
+  Sliders,
+  Eye,
 } from 'lucide-react';
 
 export const ManageHeroSlides: React.FC = () => {
@@ -37,6 +39,8 @@ export const ManageHeroSlides: React.FC = () => {
     buttonText: '',
     buttonLink: '#admission',
     active: true,
+    imageOpacity: 85,
+    overlayOpacity: 65,
   });
 
   const filteredSlides = heroSlides.filter(
@@ -70,6 +74,8 @@ export const ManageHeroSlides: React.FC = () => {
       buttonText: 'ভর্তি চলছে',
       buttonLink: '#admission',
       active: true,
+      imageOpacity: 85,
+      overlayOpacity: 65,
     });
     setModalOpen(true);
   };
@@ -84,6 +90,8 @@ export const ManageHeroSlides: React.FC = () => {
       buttonText: slide.buttonText,
       buttonLink: slide.buttonLink || '#admission',
       active: slide.active,
+      imageOpacity: typeof slide.imageOpacity === 'number' ? slide.imageOpacity : 85,
+      overlayOpacity: typeof slide.overlayOpacity === 'number' ? slide.overlayOpacity : 65,
     });
     setModalOpen(true);
   };
@@ -166,6 +174,7 @@ export const ManageHeroSlides: React.FC = () => {
                 <th className="py-3.5 px-4">শিরোনাম</th>
                 <th className="py-3.5 px-4">সাবটাইটেল</th>
                 <th className="py-3.5 px-4">ছবি URL</th>
+                <th className="py-3.5 px-4">ইমেজ অপাসিটি</th>
                 <th className="py-3.5 px-4">ব্যাজ টেক্সট</th>
                 <th className="py-3.5 px-4">বাটন টেক্সট</th>
                 <th className="py-3.5 px-4">সক্রিয়</th>
@@ -202,11 +211,44 @@ export const ManageHeroSlides: React.FC = () => {
                           src={slide.imageUrl}
                           alt={slide.title}
                           className="w-10 h-6 object-cover rounded shadow-2xs shrink-0 border border-gray-200"
+                          style={{
+                            opacity:
+                              (typeof slide.imageOpacity === 'number'
+                                ? slide.imageOpacity
+                                : 85) / 100,
+                          }}
                         />
                         <span className="font-mono text-gray-400 text-[11px] truncate">
                           {slide.imageUrl.startsWith('data:')
                             ? '[ডিভাইস থেকে আপলোড করা ছবি]'
                             : slide.imageUrl}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="range"
+                          min={10}
+                          max={100}
+                          step={5}
+                          value={
+                            typeof slide.imageOpacity === 'number'
+                              ? slide.imageOpacity
+                              : 85
+                          }
+                          onChange={(e) =>
+                            updateHeroSlide(slide.id, {
+                              imageOpacity: Number(e.target.value),
+                            })
+                          }
+                          className="w-20 h-1.5 bg-gray-200 rounded-lg cursor-pointer accent-emerald-600"
+                          title="স্লাইডারের ছবির অপাসিটি পরিবর্তন করুন"
+                        />
+                        <span className="font-mono text-emerald-800 text-[11px] font-bold min-w-[34px]">
+                          {typeof slide.imageOpacity === 'number'
+                            ? slide.imageOpacity
+                            : 85}%
                         </span>
                       </div>
                     </td>
@@ -358,16 +400,146 @@ export const ManageHeroSlides: React.FC = () => {
                   )}
                 </div>
 
-                {/* Preview */}
+                {/* Opacity & Visibility Controls */}
+                <div className="bg-white p-3.5 rounded-xl border border-emerald-200/80 shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-gray-800 text-xs flex items-center gap-1.5">
+                      <Sliders className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>ইমেজ অপাসিটি ও ওভারলে নিয়ন্ত্রণ (Opacity Settings)</span>
+                    </span>
+                    <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                      ছবি: {form.imageOpacity}% | ওভারলে: {form.overlayOpacity}%
+                    </span>
+                  </div>
+
+                  {/* Image Opacity Slider */}
+                  <div className="space-y-1.5 bg-gray-50/70 p-2.5 rounded-lg border border-gray-100">
+                    <div className="flex items-center justify-between text-xs">
+                      <label className="font-semibold text-gray-700 flex items-center gap-1">
+                        <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>ছবির অপাসিটি / দৃশ্যমানতা (Image Opacity):</span>
+                      </label>
+                      <span className="font-mono font-bold text-emerald-700 bg-white px-2 py-0.5 rounded border border-gray-200">
+                        {form.imageOpacity}%
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min={10}
+                        max={100}
+                        step={5}
+                        value={form.imageOpacity}
+                        onChange={(e) =>
+                          setForm({ ...form, imageOpacity: Number(e.target.value) })
+                        }
+                        className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-emerald-600"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[10px] text-gray-400">স্বচ্ছ/কম (১০%)</span>
+                      <div className="flex items-center gap-1">
+                        {[30, 50, 70, 85, 100].map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setForm({ ...form, imageOpacity: preset })}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition cursor-pointer ${
+                              form.imageOpacity === preset
+                                ? 'bg-emerald-600 text-white font-bold'
+                                : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                            }`}
+                          >
+                            {preset}%
+                          </button>
+                        ))}
+                      </div>
+                      <span className="text-[10px] text-gray-400">উজ্জ্বল/পূর্ণ (১০০%)</span>
+                    </div>
+                  </div>
+
+                  {/* Dark Overlay Opacity Slider */}
+                  <div className="space-y-1.5 bg-gray-50/70 p-2.5 rounded-lg border border-gray-100">
+                    <div className="flex items-center justify-between text-xs">
+                      <label className="font-semibold text-gray-700">
+                        কালো ওভারলে পর্দা (Dark Overlay Opacity):
+                      </label>
+                      <span className="font-mono font-bold text-gray-700 bg-white px-2 py-0.5 rounded border border-gray-200">
+                        {form.overlayOpacity}%
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={5}
+                        value={form.overlayOpacity}
+                        onChange={(e) =>
+                          setForm({ ...form, overlayOpacity: Number(e.target.value) })
+                        }
+                        className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-gray-800"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[10px] text-gray-400">হালকা পর্দা (০%)</span>
+                      <div className="flex items-center gap-1">
+                        {[20, 40, 65, 80].map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setForm({ ...form, overlayOpacity: preset })}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition cursor-pointer ${
+                              form.overlayOpacity === preset
+                                ? 'bg-gray-800 text-white font-bold'
+                                : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                            }`}
+                          >
+                            {preset}%
+                          </button>
+                        ))}
+                      </div>
+                      <span className="text-[10px] text-gray-400">গাঢ় পর্দা (১০০%)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Live Preview */}
                 {form.imageUrl && (
-                  <div className="relative rounded-lg overflow-hidden border border-gray-200 aspect-video max-h-48 bg-gray-900">
-                    <img
-                      src={form.imageUrl}
-                      alt="স্লাইডার প্রিভিউ"
-                      className="w-full h-full object-cover"
+                  <div className="relative rounded-xl overflow-hidden border border-emerald-200 aspect-video max-h-52 bg-gray-900 shadow-inner flex flex-col justify-end p-4">
+                    {/* Background image with live opacity */}
+                    <div
+                      className="absolute inset-0 bg-cover bg-center transition-all duration-300"
+                      style={{
+                        backgroundImage: `url(${form.imageUrl})`,
+                        opacity: form.imageOpacity / 100,
+                      }}
                     />
-                    <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-xs text-white px-2 py-0.5 rounded text-[10px]">
-                      ছবি প্রিভিউ
+                    {/* Dark gradient overlay with live opacity */}
+                    <div
+                      className="absolute inset-0 bg-gradient-to-r from-emerald-950 via-black/80 to-emerald-950 transition-opacity duration-300 pointer-events-none"
+                      style={{
+                        opacity: form.overlayOpacity / 100,
+                      }}
+                    />
+                    {/* Sample Slide Text on top to preview contrast */}
+                    <div className="relative z-10 text-white space-y-1">
+                      {form.badgeText && (
+                        <span className="inline-block bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                          {form.badgeText}
+                        </span>
+                      )}
+                      <h4 className="text-sm sm:text-base font-bold leading-tight drop-shadow-md">
+                        {form.title || 'স্লাইডার শিরোনাম'}
+                      </h4>
+                      {form.subtitle && (
+                        <p className="text-[11px] text-gray-300 line-clamp-1">
+                          {form.subtitle}
+                        </p>
+                      )}
+                    </div>
+                    <div className="absolute top-2 right-2 z-10 bg-black/75 backdrop-blur-xs text-white px-2 py-0.5 rounded text-[10px] font-mono border border-white/20">
+                      লাইভ প্রিভিউ: ছবি {form.imageOpacity}% | ওভারলে {form.overlayOpacity}%
                     </div>
                   </div>
                 )}

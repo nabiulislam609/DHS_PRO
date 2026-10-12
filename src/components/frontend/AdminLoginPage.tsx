@@ -2,15 +2,12 @@ import React, { useState } from 'react';
 import { useSchool } from '../../context/SchoolContext';
 import {
   GraduationCap,
-  Lock,
   User,
   Eye,
   EyeOff,
   ArrowLeft,
   AlertCircle,
   ShieldCheck,
-  CheckCircle2,
-  Sparkles,
 } from 'lucide-react';
 
 export const AdminLoginPage: React.FC = () => {
@@ -293,23 +290,9 @@ export const AdminLoginPage: React.FC = () => {
               </svg>
             )}
             <span>
-              Sign in as {adminSecuritySettings.allowedGoogleEmail || 'aicourse.nabin@gmail.com'}
+              Sign in with Google
             </span>
           </button>
-
-          {/* Quick Default Credentials Note for Administrator */}
-          <div className="bg-[#141418] border border-gray-800/80 rounded-xl p-3 text-[11px] text-gray-400 space-y-1">
-            <div className="flex items-center gap-1.5 text-gray-300 font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>অ্যাডমিন ডিফল্ট এক্সেস তথ্য:</span>
-            </div>
-            <p className="text-[10.5px] text-gray-400">
-              ইউজার আইডি: <strong className="text-white font-mono">{adminSecuritySettings.username || 'admin'}</strong> | পাসওয়ার্ড: <strong className="text-white font-mono">{adminSecuritySettings.passwordHash || 'admin123'}</strong>
-            </p>
-            <p className="text-[10px] text-gray-500">
-              * লগইন করার পর অ্যাডমিন ড্যাশবোর্ড থেকে ইউজার আইডি ও পাসওয়ার্ড পরিবর্তন করতে পারবেন।
-            </p>
-          </div>
         </div>
       </div>
     </div>

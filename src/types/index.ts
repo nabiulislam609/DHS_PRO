@@ -166,6 +166,8 @@ export interface HeroSlide {
   buttonText: string;
   buttonLink?: string;
   active: boolean;
+  imageOpacity?: number; // 0 to 100 percentage
+  overlayOpacity?: number; // 0 to 100 percentage
 }
 
 export interface NavigationSubItem {

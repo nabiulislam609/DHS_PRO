@@ -38,7 +38,10 @@ export const QuickActions: React.FC = () => {
       label: 'নোটিশ',
       icon: FileText,
       color: 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200',
-      action: () => document.getElementById('notices')?.scrollIntoView({ behavior: 'smooth' }),
+      action: () => {
+        setCurrentFrontendPage('notices');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
     },
     {
       label: 'ইভেন্ট',

@@ -4,7 +4,6 @@ import { Header } from './Header';
 import { HeroSlider } from './HeroSlider';
 import { NoticeTicker } from './NoticeTicker';
 import { QuickActions } from './QuickActions';
-import { NoticeBoard } from './NoticeBoard';
 import { LeadershipMessages } from './LeadershipMessages';
 import { AboutSection } from './AboutSection';
 import { AcademicPrograms } from './AcademicPrograms';
@@ -28,7 +27,6 @@ export const FrontendView: React.FC = () => {
       </div>
       {sectionVisibility.hero && <HeroSlider />}
       {sectionVisibility.quick_actions && <QuickActions />}
-      {sectionVisibility.notices && <NoticeBoard />}
       {sectionVisibility.leadership && <LeadershipMessages />}
       {sectionVisibility.about && <AboutSection />}
       {sectionVisibility.programs && <AcademicPrograms />}
