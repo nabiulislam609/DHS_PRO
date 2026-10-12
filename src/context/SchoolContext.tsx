@@ -113,17 +113,20 @@ interface SchoolContextType {
 
   teachers: Teacher[];
   addTeacher: (teacher: Omit<Teacher, 'id'>) => void;
+  addMultipleTeachers: (teachers: Omit<Teacher, 'id'>[]) => number;
   updateTeacher: (id: string, teacher: Partial<Teacher>) => void;
   deleteTeacher: (id: string) => void;
 
   staff: Staff[];
   addStaff: (staffMember: Omit<Staff, 'id'>) => void;
+  addMultipleStaff: (staffMembers: Omit<Staff, 'id'>[]) => number;
   updateStaff: (id: string, staffMember: Partial<Staff>) => void;
   deleteStaff: (id: string) => void;
 
   students: Student[];
   deletedStudents: Student[];
   addStudent: (student: Omit<Student, 'id'> & { id?: string }) => void;
+  addMultipleStudents: (students: (Omit<Student, 'id'> & { id?: string })[]) => number;
   updateStudent: (id: string, student: Partial<Student>) => void;
   deleteStudent: (id: string, roll?: string) => void;
   deleteMultipleStudents: (ids: string[]) => void;
@@ -918,6 +921,17 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     logActivity(`নতুন শিক্ষক "${newT.name}" যোগ করা হয়েছে`, 'teacher');
   };
 
+  const addMultipleTeachers = (items: Omit<Teacher, 'id'>[]): number => {
+    if (!items || items.length === 0) return 0;
+    const newItems: Teacher[] = items.map((item, idx) => ({
+      id: generateUniqueId(`t_${Date.now()}_${idx}`),
+      ...item,
+    }));
+    setTeachers((prev) => [...prev, ...newItems]);
+    logActivity(`বাল্ক আপলোডের মাধ্যমে ${newItems.length} জন নতুন শিক্ষক যোগ করা হয়েছে`, 'teacher');
+    return newItems.length;
+  };
+
   const updateTeacher = (id: string, item: Partial<Teacher>) => {
     setTeachers((prev) => prev.map((t) => (t.id === id ? { ...t, ...item } : t)));
     logActivity(`শিক্ষকের তথ্য আপডেট করা হয়েছে`, 'teacher');
@@ -937,6 +951,17 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     logActivity(`নতুন কর্মচারী "${newS.name}" যোগ করা হয়েছে`, 'setting');
   };
 
+  const addMultipleStaff = (items: Omit<Staff, 'id'>[]): number => {
+    if (!items || items.length === 0) return 0;
+    const newItems: Staff[] = items.map((item, idx) => ({
+      id: generateUniqueId(`s_${Date.now()}_${idx}`),
+      ...item,
+    }));
+    setStaff((prev) => [...prev, ...newItems]);
+    logActivity(`বাল্ক আপলোডের মাধ্যমে ${newItems.length} জন নতুন কর্মচারী যোগ করা হয়েছে`, 'setting');
+    return newItems.length;
+  };
+
   const updateStaff = (id: string, item: Partial<Staff>) => {
     setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, ...item } : s)));
     logActivity(`কর্মচারীর তথ্য আপডেট করা হয়েছে`, 'setting');
@@ -953,6 +978,17 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const newStu: Student = { ...item, id };
     setStudents((prev) => [...prev, newStu]);
     logActivity(`শিক্ষার্থী "${newStu.name}" (আইডি: ${id}, রোল: ${newStu.roll}) তালিকাভুক্ত করা হয়েছে`, 'setting');
+  };
+
+  const addMultipleStudents = (items: (Omit<Student, 'id'> & { id?: string })[]): number => {
+    if (!items || items.length === 0) return 0;
+    const newItems: Student[] = items.map((item, idx) => {
+      const id = item.id && item.id.trim() ? item.id.trim() : generateUniqueId(`stu_${Date.now()}_${idx}`);
+      return { ...item, id };
+    });
+    setStudents((prev) => [...prev, ...newItems]);
+    logActivity(`বাল্ক আপলোডের মাধ্যমে ${newItems.length} জন শিক্ষার্থী তালিকাভুক্ত করা হয়েছে`, 'setting');
+    return newItems.length;
   };
 
   const updateStudent = (id: string, item: Partial<Student>) => {
@@ -1685,15 +1721,18 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updateSiteSettings,
         teachers,
         addTeacher,
+        addMultipleTeachers,
         updateTeacher,
         deleteTeacher,
         staff,
         addStaff,
+        addMultipleStaff,
         updateStaff,
         deleteStaff,
         students,
         deletedStudents,
         addStudent,
+        addMultipleStudents,
         updateStudent,
         deleteStudent,
         deleteMultipleStudents,

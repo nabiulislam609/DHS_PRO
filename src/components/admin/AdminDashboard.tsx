@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSchool, AdminTab } from '../../context/SchoolContext';
 import {
   Users,
@@ -13,7 +13,9 @@ import {
   Trophy,
   Clock,
   Trash2,
+  FileSpreadsheet,
 } from 'lucide-react';
+import { BulkImportModal, BulkImportType } from './BulkImportModal';
 
 export const AdminDashboard: React.FC = () => {
   const {
@@ -30,7 +32,12 @@ export const AdminDashboard: React.FC = () => {
     activities,
     clearActivities,
     setAdminTab,
+    addMultipleTeachers,
+    addMultipleStaff,
+    addMultipleStudents,
   } = useSchool();
+
+  const [bulkModalType, setBulkModalType] = useState<BulkImportType | null>(null);
 
   // Helper to convert English numbers to Bengali numerals
   const toBanglaNum = (num: number) => {
@@ -168,6 +175,60 @@ export const AdminDashboard: React.FC = () => {
         })}
       </div>
 
+      {/* Quick Bulk Import Section (Teachers, Staff, Students) */}
+      <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 rounded-3xl p-6 sm:p-7 text-white shadow-lg border border-emerald-800/40 relative overflow-hidden">
+        {/* Decorative background glow */}
+        <div className="absolute -right-12 -top-12 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -left-12 -bottom-12 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="space-y-1.5 max-w-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-400/30">
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>বাল্ক আপলোড হাব (Excel • CSV • Google Drive)</span>
+            </div>
+            <h2 className="text-lg sm:text-xl font-extrabold text-white">
+              একসাথে বহু শিক্ষক, কর্মচারী ও শিক্ষার্থী যুক্ত করুন
+            </h2>
+            <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed">
+              কম্পিউটার থেকে এক্সেল/সিএসভি ফাইল আপলোড করুন অথবা গুগল ড্রাইভ/গুগল শিটের শেয়ার লিঙ্ক দিয়ে সরাসরি ব্যাকএন্ডে তথ্য সংরক্ষণ করুন।
+            </p>
+          </div>
+
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setBulkModalType('students')}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer"
+              title="একসাথে একাধিক শিক্ষার্থী যুক্ত করুন"
+            >
+              <Users className="w-4 h-4" />
+              <span>শিক্ষার্থী বাল্ক আপলোড</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setBulkModalType('teachers')}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer"
+              title="একসাথে একাধিক শিক্ষক যুক্ত করুন"
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span>শিক্ষক বাল্ক আপলোড</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setBulkModalType('staff')}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer"
+              title="একসাথে একাধিক কর্মকর্তা ও কর্মচারী যুক্ত করুন"
+            >
+              <Briefcase className="w-4 h-4" />
+              <span>কর্মচারী বাল্ক আপলোড</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Recent Activities Section matching screenshot */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
         <div className="p-5 border-b border-gray-100 flex items-center justify-between">
@@ -211,6 +272,18 @@ export const AdminDashboard: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Bulk Import Modal from Dashboard */}
+      {bulkModalType && (
+        <BulkImportModal
+          isOpen={!!bulkModalType}
+          onClose={() => setBulkModalType(null)}
+          type={bulkModalType}
+          onImportTeachers={(items) => addMultipleTeachers(items)}
+          onImportStaff={(items) => addMultipleStaff(items)}
+          onImportStudents={(items) => addMultipleStudents(items)}
+        />
+      )}
     </div>
   );
 };

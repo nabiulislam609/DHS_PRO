@@ -11,13 +11,21 @@ import {
   Printer,
   ChevronRight,
   Sparkles,
+  X,
+  Camera,
+  Eye,
+  School,
+  MapPin,
 } from 'lucide-react';
 import { Footer } from './Footer';
+import { Teacher } from '../../types';
 
 export const DedicatedTeachersPage: React.FC = () => {
   const { siteSettings, teachers, setCurrentFrontendPage } = useSchool();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string>('সব');
+  const [selectedTeacherModal, setSelectedTeacherModal] = useState<Teacher | null>(null);
+  const [bigPhotoUrl, setBigPhotoUrl] = useState<{ url: string; name: string } | null>(null);
 
   const handleGoHome = () => {
     setCurrentFrontendPage('home');
@@ -232,16 +240,17 @@ export const DedicatedTeachersPage: React.FC = () => {
             {filteredTeachers.map((teacher) => (
               <div
                 key={teacher.id}
-                className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-xs hover:shadow-md transition text-center flex flex-col items-center justify-between group hover:border-emerald-300"
+                onClick={() => setSelectedTeacherModal(teacher)}
+                className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-xs hover:shadow-md transition text-center flex flex-col items-center justify-between group hover:border-emerald-300 cursor-pointer"
               >
                 <div className="flex flex-col items-center w-full">
                   {/* Photo / Avatar */}
                   {teacher.image ? (
-                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-emerald-500 shadow-2xs mb-4 shrink-0">
+                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-emerald-500 shadow-2xs mb-4 shrink-0 group-hover:scale-105 transition duration-300">
                       <img
                         src={teacher.image}
                         alt={teacher.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                        className="w-full h-full object-cover"
                       />
                     </div>
                   ) : (
@@ -251,8 +260,9 @@ export const DedicatedTeachersPage: React.FC = () => {
                   )}
 
                   {/* Name & Designation */}
-                  <h3 className="font-bold text-base text-gray-900 group-hover:text-emerald-800 transition">
-                    {teacher.name}
+                  <h3 className="font-bold text-base text-gray-900 group-hover:text-emerald-800 transition inline-flex items-center gap-1">
+                    <span>{teacher.name}</span>
+                    <Eye className="w-3.5 h-3.5 text-emerald-600 opacity-0 group-hover:opacity-100 transition" />
                   </h3>
                   <p className="text-xs font-semibold text-emerald-700 mt-0.5">
                     {teacher.designation}
@@ -267,36 +277,237 @@ export const DedicatedTeachersPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Contact info */}
-                <div className="w-full pt-4 mt-4 border-t border-gray-100 space-y-1.5 text-left text-xs text-gray-500">
+                {/* Contact info & View Profile button */}
+                <div className="w-full pt-4 mt-4 border-t border-gray-100 space-y-2 text-left text-xs text-gray-500">
                   {teacher.email && (
                     <div className="flex items-center gap-2 truncate">
                       <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                      <a
-                        href={`mailto:${teacher.email}`}
-                        className="truncate hover:text-emerald-700 transition"
-                      >
-                        {teacher.email}
-                      </a>
+                      <span className="truncate">{teacher.email}</span>
                     </div>
                   )}
                   {teacher.phone && (
                     <div className="flex items-center gap-2">
                       <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                      <a
-                        href={`tel:${teacher.phone}`}
-                        className="hover:text-emerald-700 transition"
-                      >
-                        {teacher.phone}
-                      </a>
+                      <span>{teacher.phone}</span>
                     </div>
                   )}
+
+                  <div className="pt-1 text-center">
+                    <span className="text-[11px] font-bold text-emerald-700 group-hover:underline inline-flex items-center gap-1">
+                      <span>পূর্ণাঙ্গ প্রোফাইল ও বড় ছবি দেখুন</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
       </main>
+
+      {/* Public Teacher Details Profile Modal */}
+      {selectedTeacherModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fadeIn"
+          onClick={() => setSelectedTeacherModal(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-7 shadow-2xl relative border border-gray-100 max-h-[92vh] overflow-y-auto space-y-5 text-xs text-gray-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setSelectedTeacherModal(null)}
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-800 hover:bg-gray-100 rounded-full transition cursor-pointer z-20"
+              title="বন্ধ করুন"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Top Hero Banner with Big Photo */}
+            <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center sm:items-start gap-5 border border-emerald-800/40">
+              {/* Big Photo Box */}
+              <div className="relative group shrink-0">
+                <div className="w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden bg-emerald-950/90 border-4 border-white/90 shadow-2xl flex items-center justify-center relative">
+                  {selectedTeacherModal.image ? (
+                    <img
+                      src={selectedTeacherModal.image}
+                      alt={selectedTeacherModal.name}
+                      className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-emerald-800/60 text-emerald-100 p-4 text-center">
+                      <GraduationCap className="w-14 h-14 text-emerald-300/80 mb-1" />
+                      <span className="text-xl font-bold">{selectedTeacherModal.initial || selectedTeacherModal.name.charAt(0)}</span>
+                    </div>
+                  )}
+
+                  {selectedTeacherModal.image && (
+                    <button
+                      type="button"
+                      onClick={() => setBigPhotoUrl({ url: selectedTeacherModal.image!, name: selectedTeacherModal.name })}
+                      className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center gap-1 text-white cursor-pointer backdrop-blur-xs"
+                      title="বড় ছবি দেখতে ক্লিক করুন"
+                    >
+                      <Sparkles className="w-5 h-5 text-emerald-300" />
+                      <span className="text-[10px] font-bold bg-black/60 px-2 py-0.5 rounded-full">
+                        বড় করে দেখুন
+                      </span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white text-emerald-900 font-extrabold text-[9px] px-2.5 py-0.5 rounded-full shadow-md border border-emerald-100 flex items-center gap-1 shrink-0 whitespace-nowrap">
+                  <Camera className="w-3 h-3 text-emerald-600" />
+                  <span>শিক্ষকের ছবি</span>
+                </div>
+              </div>
+
+              {/* Info Details */}
+              <div className="space-y-2.5 flex-1 text-center sm:text-left z-10 w-full">
+                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  {selectedTeacherModal.name}
+                </h3>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500 text-white shadow-xs">
+                    {selectedTeacherModal.designation}
+                  </span>
+                  {selectedTeacherModal.subject && (
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-white/15 text-emerald-200 border border-white/20">
+                      বিষয়: {selectedTeacherModal.subject}
+                    </span>
+                  )}
+                </div>
+
+                <div className="pt-2 text-xs text-emerald-100/90 space-y-1">
+                  <p className="flex items-center justify-center sm:justify-start gap-2">
+                    <School className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>{siteSettings?.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}</span>
+                  </p>
+                  <p className="flex items-center justify-center sm:justify-start gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>{siteSettings?.address || 'দাদরা, বগুড়া'}</span>
+                  </p>
+                </div>
+
+                {selectedTeacherModal.image && (
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setBigPhotoUrl({ url: selectedTeacherModal.image!, name: selectedTeacherModal.name })}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>বড় সাইজের পূর্ণাঙ্গ ছবি দেখুন</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Information Grid */}
+            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-2.5 text-xs">
+              <h4 className="font-bold text-gray-900 border-b border-gray-200 pb-1.5 flex items-center gap-2">
+                <Phone className="w-3.5 h-3.5 text-emerald-700" />
+                <span>যোগাযোগ ও দাপ্তরিক বিবরণ</span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-200">
+                <div className="space-y-1.5">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">পদবী:</span>
+                    <span className="font-bold text-gray-800">{selectedTeacherModal.designation}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">মূল বিষয়:</span>
+                    <span className="font-bold text-emerald-800">{selectedTeacherModal.subject || 'সাধারণ'}</span>
+                  </div>
+                  {selectedTeacherModal.initial && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">ইনিশিয়াল:</span>
+                      <span className="font-mono font-bold text-gray-800">{selectedTeacherModal.initial}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1.5 sm:pl-3 pt-2 sm:pt-0">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">মোবাইল নম্বর:</span>
+                    {selectedTeacherModal.phone ? (
+                      <a
+                        href={`tel:${selectedTeacherModal.phone}`}
+                        className="font-mono font-bold text-emerald-700 hover:underline"
+                      >
+                        {selectedTeacherModal.phone}
+                      </a>
+                    ) : (
+                      <span className="text-gray-400">তথ্য দেওয়া নেই</span>
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">ইমেইল:</span>
+                    {selectedTeacherModal.email ? (
+                      <a
+                        href={`mailto:${selectedTeacherModal.email}`}
+                        className="font-medium text-emerald-700 hover:underline truncate max-w-[170px]"
+                      >
+                        {selectedTeacherModal.email}
+                      </a>
+                    ) : (
+                      <span className="text-gray-400">তথ্য দেওয়া নেই</span>
+                    )}
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">EIIN নম্বর:</span>
+                    <span className="font-mono text-gray-700">{siteSettings?.eiin || '১২৩৪৫৬'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setSelectedTeacherModal(null)}
+                className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition cursor-pointer"
+              >
+                বন্ধ করুন
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Big Photo Lightbox */}
+      {bigPhotoUrl && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setBigPhotoUrl(null)}
+        >
+          <div
+            className="relative max-w-xl w-full bg-slate-900 border border-white/20 rounded-3xl p-5 shadow-2xl flex flex-col items-center gap-4 text-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-full flex items-center justify-between pb-2 border-b border-white/10">
+              <h3 className="text-sm font-bold text-white">{bigPhotoUrl.name} - পূর্ণাঙ্গ ছবি</h3>
+              <button
+                type="button"
+                onClick={() => setBigPhotoUrl(null)}
+                className="p-1.5 bg-white/10 hover:bg-rose-500 text-white rounded-xl transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="max-h-[70vh] flex items-center justify-center rounded-2xl overflow-hidden bg-black/60 p-2 border border-emerald-500/40">
+              <img
+                src={bigPhotoUrl.url}
+                alt={bigPhotoUrl.name}
+                className="max-h-[65vh] max-w-full object-contain rounded-xl shadow-2xl"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Institutional Website Footer */}
       <Footer />

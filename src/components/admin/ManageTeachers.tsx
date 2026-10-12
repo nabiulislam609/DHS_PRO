@@ -15,18 +15,40 @@ import {
   RotateCcw,
   Loader2,
   GraduationCap,
+  FileSpreadsheet,
+  Eye,
+  Sparkles,
+  Camera,
+  Phone,
+  Mail,
+  BookOpen,
+  User,
+  School,
+  MapPin,
+  Calendar,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Teacher } from '../../types';
 import { compressImageFile } from '../../utils/imageUpload';
+import { BulkImportModal } from './BulkImportModal';
 
 export const ManageTeachers: React.FC = () => {
-  const { teachers, addTeacher, updateTeacher, deleteTeacher, siteSettings } = useSchool();
+  const { teachers, addTeacher, addMultipleTeachers, updateTeacher, deleteTeacher, siteSettings } = useSchool();
   const [modalOpen, setModalOpen] = useState(false);
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Single Teacher Details View & Big Photo
+  const [viewingTeacher, setViewingTeacher] = useState<Teacher | null>(null);
+  const [bigPhotoUrl, setBigPhotoUrl] = useState<{ url: string; name: string } | null>(null);
+  const [printingTeacher, setPrintingTeacher] = useState<Teacher | null>(null);
+  const [isExportingTeacherPdf, setIsExportingTeacherPdf] = useState(false);
+  const [isPrintingSingle, setIsPrintingSingle] = useState(false);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -395,6 +417,184 @@ export const ManageTeachers: React.FC = () => {
     setModalOpen(false);
   };
 
+  // Single Teacher Print & PDF handlers
+  const openSingleTeacherPrint = (t: Teacher) => {
+    setPrintingTeacher(t);
+  };
+
+  const executeSingleTeacherPrint = (targetTeacher?: Teacher | null) => {
+    const t = targetTeacher || printingTeacher || viewingTeacher;
+    if (t) {
+      setPrintingTeacher(t);
+    }
+    setIsPrintingSingle(true);
+
+    setTimeout(() => {
+      try {
+        window.print();
+      } catch (err) {
+        console.error('Teacher print error:', err);
+      } finally {
+        setIsPrintingSingle(false);
+      }
+    }, 120);
+  };
+
+  const handleDownloadSingleTeacherPdf = async (targetTeacher?: Teacher | null) => {
+    const t = targetTeacher || printingTeacher || viewingTeacher;
+    if (!t) return;
+
+    if (!printingTeacher || printingTeacher.id !== t.id) {
+      setPrintingTeacher(t);
+    }
+
+    setIsExportingTeacherPdf(true);
+
+    setTimeout(async () => {
+      try {
+        const element = document.getElementById('printable-single-teacher-card');
+        if (!element) {
+          handleDownloadSingleTeacherHtml(t);
+          return;
+        }
+
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfPageHeight = pdf.internal.pageSize.getHeight();
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfPageHeight;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
+          heightLeft -= pdfPageHeight;
+        }
+
+        const cleanName = t.name.replace(/\s+/g, '_');
+        pdf.save(`${cleanName}_শিক্ষক_জীবনবৃত্তান্ত.pdf`);
+      } catch (err) {
+        console.error('Single teacher PDF generation error:', err);
+        handleDownloadSingleTeacherHtml(t);
+      } finally {
+        setIsExportingTeacherPdf(false);
+      }
+    }, 200);
+  };
+
+  const handleDownloadSingleTeacherHtml = (t: Teacher) => {
+    const schoolName = siteSettings?.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়';
+    const address = siteSettings?.address || 'দাদরা, বগুড়া';
+    const phone = siteSettings?.phone1 || '+৮৮০১৭১২-৩৪৫৬৭৮';
+    const email = siteSettings?.email || 'dadrahs@gmail.com';
+    const dateStr = new Date().toLocaleDateString('bn-BD', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${t.name} - শিক্ষক পরিচিতি ও তথ্য বিবরণী</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hind Siliguri", sans-serif; margin: 0; padding: 15px; color: #1e293b; background: #fff; }
+    .header { text-align: center; border-bottom: 2px solid #065f46; padding-bottom: 12px; margin-bottom: 16px; }
+    .school-name { font-size: 22px; font-weight: bold; color: #065f46; margin: 0; }
+    .subtitle { font-size: 13px; color: #475569; margin: 4px 0 0 0; }
+    .report-title { font-size: 16px; font-weight: bold; margin: 10px 0 4px 0; color: #0f172a; }
+    .profile-wrap { display: flex; gap: 20px; margin-bottom: 20px; align-items: flex-start; }
+    .photo-box { width: 140px; height: 165px; border: 2px solid #065f46; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8fafc; shrink: 0; }
+    .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 15px; }
+    th { background: #065f46; color: white; padding: 7px 10px; border: 1px solid #044e3a; text-align: left; }
+    td { border: 1px solid #cbd5e1; padding: 6px 10px; }
+    tr:nth-child(even) { background: #f8fafc; }
+    .footer { margin-top: 50px; display: flex; justify-content: space-between; padding-top: 30px; font-size: 12px; }
+    .sign-box { text-align: center; border-top: 1px dashed #94a3b8; width: 160px; padding-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 class="school-name">${schoolName}</h1>
+    <p class="subtitle">${address} | ফোন: ${phone} | ইমেইল: ${email}</p>
+    <div class="report-title">শিক্ষক তথ্য বিবরণী ও অফিশিয়াল প্রোফাইল</div>
+    <div style="font-size: 11px; color: #64748b; margin-top: 4px;">ইস্যু তারিখ: ${dateStr}</div>
+  </div>
+
+  <div class="profile-wrap">
+    <div class="photo-box">
+      ${t.image ? `<img src="${t.image}" alt="${t.name}" />` : `<div style="font-size: 32px; font-weight: bold; color: #065f46;">${t.initial || t.name.charAt(0)}</div>`}
+    </div>
+    <div style="flex: 1;">
+      <table>
+        <tr>
+          <td style="width: 30%; font-weight: bold; background: #f1f5f9;">শিক্ষকের পূর্ণ নাম:</td>
+          <td style="font-size: 14px; font-weight: bold; color: #065f46;">${t.name}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background: #f1f5f9;">পদবী (Designation):</td>
+          <td style="font-weight: bold;">${t.designation}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background: #f1f5f9;">মূল পাঠদান বিষয়:</td>
+          <td>${t.subject || 'প্রযোজ্য নয়'}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background: #f1f5f9;">শিক্ষক ইনিশিয়াল / সংক্ষেপ:</td>
+          <td style="font-family: monospace; font-weight: bold;">${t.initial || '—'}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background: #f1f5f9;">মোবাইল নম্বর:</td>
+          <td style="font-family: monospace; font-weight: bold;">${t.phone || 'দেওয়া নেই'}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background: #f1f5f9;">অফিসিয়াল ইমেইল:</td>
+          <td>${t.email || 'দেওয়া নেই'}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold; background: #f1f5f9;">সিস্টেম টিচার আইডি:</td>
+          <td style="font-family: monospace; color: #64748b;">${t.id}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="sign-box">সংশ্লিষ্ট শিক্ষকের স্বাক্ষর</div>
+    <div class="sign-box">সহকারী প্রধান শিক্ষক</div>
+    <div class="sign-box">প্রধান শিক্ষকের স্বাক্ষর ও সিল</div>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${t.name.replace(/\s+/g, '_')}_শিক্ষক_বিবরণী.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="p-6 sm:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -413,6 +613,14 @@ export const ManageTeachers: React.FC = () => {
           >
             <Printer className="w-4 h-4 text-emerald-700" />
             <span>প্রিন্ট / পিডিএফ</span>
+          </button>
+          <button
+            onClick={() => setShowBulkImportModal(true)}
+            className="inline-flex items-center gap-1.5 bg-teal-50 text-teal-800 hover:bg-teal-100 border border-teal-300 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer"
+            title="এক্সেল, সিএসভি বা গুগল ড্রাইভ থেকে বাল্ক শিক্ষক আপলোড করুন"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-teal-700" />
+            <span>বাল্ক আপলোড (Excel / Drive)</span>
           </button>
           <button
             onClick={openAddModal}
@@ -547,33 +755,64 @@ export const ManageTeachers: React.FC = () => {
                   <tr key={t.id} className="hover:bg-gray-50/60 transition">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        {t.image ? (
-                          <img
-                            src={t.image}
-                            alt={t.name}
-                            className="w-10 h-10 rounded-full object-cover border border-emerald-300 shadow-xs shrink-0"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-800 font-bold flex items-center justify-center shrink-0">
-                            {t.initial || t.name.charAt(0)}
-                          </div>
-                        )}
-                        <div>
-                          <span className="font-bold text-gray-900 block">{t.name}</span>
-                          <span className="text-[10px] text-gray-400">ID: {t.id}</span>
+                        <button
+                          type="button"
+                          onClick={() => setViewingTeacher(t)}
+                          className="w-10 h-10 rounded-full overflow-hidden border border-emerald-300 shadow-xs shrink-0 hover:border-emerald-600 hover:scale-105 transition cursor-pointer group"
+                          title={`${t.name}-এর প্রোফাইল ও বড় ছবি দেখুন`}
+                        >
+                          {t.image ? (
+                            <img
+                              src={t.image}
+                              alt={t.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-emerald-50 text-emerald-800 font-bold flex items-center justify-center">
+                              {t.initial || t.name.charAt(0)}
+                            </div>
+                          )}
+                        </button>
+                        <div className="text-left">
+                          <button
+                            type="button"
+                            onClick={() => setViewingTeacher(t)}
+                            className="font-bold text-gray-900 hover:text-emerald-700 hover:underline transition cursor-pointer inline-flex items-center gap-1.5 group text-left"
+                            title={`${t.name}-এর বিস্তারিত প্রোফাইল ও বড় ছবি দেখুন`}
+                          >
+                            <span className="group-hover:text-emerald-700">{t.name}</span>
+                            <Eye className="w-3.5 h-3.5 text-gray-400 group-hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition shrink-0" />
+                          </button>
+                          <span className="text-[10px] text-gray-400 block font-mono">ID: {t.id}</span>
                         </div>
                       </div>
                     </td>
                     <td className="py-3 px-4 font-semibold text-emerald-800">{t.designation}</td>
                     <td className="py-3 px-4">
-                      <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700">{t.subject}</span>
+                      <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700 font-medium">{t.subject || '—'}</span>
                     </td>
                     <td className="py-3 px-4">
-                      <div>{t.email}</div>
-                      <div className="text-gray-400 text-[11px]">{t.phone}</div>
+                      <div className="text-gray-800">{t.email || '—'}</div>
+                      <div className="text-gray-400 font-mono text-[11px]">{t.phone || '—'}</div>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setViewingTeacher(t)}
+                          className="p-1.5 rounded-md hover:bg-emerald-50 text-emerald-700 transition cursor-pointer"
+                          title="শিক্ষকের পূর্ণাঙ্গ প্রোফাইল ও বড় ছবি দেখুন"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openSingleTeacherPrint(t)}
+                          className="p-1.5 rounded-md hover:bg-emerald-50 text-emerald-700 transition cursor-pointer"
+                          title="শিক্ষকের একক তথ্য বিবরণী প্রিন্ট ও পিডিএফ"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => openEditModal(t)}
                           className="p-1.5 rounded-md hover:bg-gray-100 text-gray-600 transition cursor-pointer"
@@ -928,6 +1167,546 @@ export const ManageTeachers: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Teacher Detailed Profile Modal */}
+      {viewingTeacher && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-4xl w-full p-5 sm:p-7 shadow-2xl relative border border-gray-100 max-h-[92vh] overflow-y-auto space-y-6 text-xs text-gray-800">
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setViewingTeacher(null)}
+              className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 p-2 text-gray-400 hover:text-gray-800 hover:bg-gray-100 rounded-full transition cursor-pointer z-30 shadow-2xs"
+              title="বন্ধ করুন (Close)"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Modal Title & Actions Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 pr-10 sm:pr-12">
+              <div>
+                <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-emerald-700" />
+                  <span>শিক্ষকের পূর্ণাঙ্গ তথ্য বিবরণী ও প্রোফাইল</span>
+                </h3>
+                <p className="text-[11px] text-gray-500">
+                  সিস্টেম টিচার আইডি: <span className="font-mono font-semibold">{viewingTeacher.id}</span>
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => openSingleTeacherPrint(viewingTeacher)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 rounded-xl font-bold transition cursor-pointer shadow-2xs"
+                  title="এই শিক্ষকের তথ্য বিবরণী প্রিন্ট করুন"
+                >
+                  <Printer className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>প্রিন্ট করুন</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDownloadSingleTeacherPdf(viewingTeacher)}
+                  disabled={isExportingTeacherPdf}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-200 rounded-xl font-bold transition cursor-pointer shadow-2xs disabled:opacity-60"
+                  title="সরাসরি PDF ফাইল ডাউনলোড করুন"
+                >
+                  {isExportingTeacherPdf ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-700" />
+                  ) : (
+                    <FileDown className="w-3.5 h-3.5 text-blue-700" />
+                  )}
+                  <span>PDF ডাউনলোড</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const t = viewingTeacher;
+                    setViewingTeacher(null);
+                    openEditModal(t);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 rounded-xl font-bold transition cursor-pointer shadow-2xs"
+                  title="তথ্য পরিবর্তন করুন"
+                >
+                  <Edit2 className="w-3.5 h-3.5 text-gray-700" />
+                  <span>এডিট করুন</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Profile Hero Card with Big Photo */}
+            <div className="space-y-6">
+              {/* Hero Banner with Big Photo */}
+              <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center sm:items-start gap-6 border border-emerald-800/40">
+                {/* Decorative background glows */}
+                <div className="absolute -right-12 -top-12 w-56 h-56 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -left-12 -bottom-12 w-56 h-56 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
+
+                {/* Big Teacher Photo */}
+                <div className="relative group shrink-0">
+                  <div className="w-36 h-44 sm:w-44 sm:h-52 rounded-2xl overflow-hidden bg-emerald-950/90 border-4 border-white/90 shadow-2xl flex items-center justify-center relative">
+                    {viewingTeacher.image ? (
+                      <img
+                        src={viewingTeacher.image}
+                        alt={viewingTeacher.name}
+                        className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-emerald-800/60 text-emerald-100 p-4 text-center">
+                        <GraduationCap className="w-16 h-16 text-emerald-300/80 mb-2" />
+                        <span className="text-2xl font-bold">{viewingTeacher.initial || viewingTeacher.name.charAt(0)}</span>
+                        <span className="text-[10px] text-emerald-200 mt-1">ছবি যুক্ত নেই</span>
+                      </div>
+                    )}
+
+                    {/* Interactive Zoom overlay */}
+                    {viewingTeacher.image && (
+                      <button
+                        type="button"
+                        onClick={() => setBigPhotoUrl({ url: viewingTeacher.image!, name: viewingTeacher.name })}
+                        className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center gap-1.5 text-white cursor-pointer backdrop-blur-xs"
+                        title="বড় ছবি দেখতে ক্লিক করুন"
+                      >
+                        <Sparkles className="w-6 h-6 text-emerald-300 animate-pulse" />
+                        <span className="text-[11px] font-bold bg-black/60 px-2.5 py-1 rounded-full border border-white/20">
+                          বড় করে দেখুন
+                        </span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Photo Badge */}
+                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-white text-emerald-900 font-extrabold text-[10px] px-3 py-0.5 rounded-full shadow-md border border-emerald-100 flex items-center gap-1 shrink-0 whitespace-nowrap">
+                    <Camera className="w-3 h-3 text-emerald-600" />
+                    <span>শিক্ষকের ছবি</span>
+                  </div>
+                </div>
+
+                {/* Teacher Info in Hero */}
+                <div className="space-y-3 flex-1 text-center sm:text-left z-10 w-full">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                      {viewingTeacher.name}
+                    </h2>
+                    <span className="px-3 py-1 rounded-xl text-xs font-extrabold bg-emerald-500 text-white shadow-sm border border-emerald-400/40">
+                      {viewingTeacher.designation}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-0.5">
+                    {viewingTeacher.subject && (
+                      <span className="px-3 py-1 bg-white/10 backdrop-blur-xs border border-white/20 text-emerald-100 rounded-xl font-bold text-xs flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5 text-emerald-300" />
+                        <span>মূল বিষয়: {viewingTeacher.subject}</span>
+                      </span>
+                    )}
+                    {viewingTeacher.initial && (
+                      <span className="px-3 py-1 bg-white/10 backdrop-blur-xs border border-white/20 text-emerald-100 rounded-xl font-bold text-xs font-mono">
+                        ইনিশিয়াল: {viewingTeacher.initial}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-emerald-100/90 bg-white/5 rounded-2xl p-3 border border-white/10">
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>
+                        মোবাইল:{' '}
+                        {viewingTeacher.phone ? (
+                          <a
+                            href={`tel:${viewingTeacher.phone}`}
+                            className="font-mono text-white font-bold hover:underline hover:text-emerald-300 transition"
+                          >
+                            {viewingTeacher.phone}
+                          </a>
+                        ) : (
+                          <b className="font-mono text-white/70">দেওয়া নেই</b>
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>
+                        ইমেইল:{' '}
+                        {viewingTeacher.email ? (
+                          <a
+                            href={`mailto:${viewingTeacher.email}`}
+                            className="text-white font-medium hover:underline hover:text-emerald-300 transition"
+                          >
+                            {viewingTeacher.email}
+                          </a>
+                        ) : (
+                          <span className="text-white/70">দেওয়া নেই</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <School className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>প্রতিষ্ঠান: <b className="text-white">{siteSettings?.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}</b></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>ক্যাম্পাস: <b className="text-white">{siteSettings?.address || 'দাদরা, বগুড়া'}</b></span>
+                    </div>
+                  </div>
+
+                  {viewingTeacher.image && (
+                    <div className="pt-1 flex items-center justify-center sm:justify-start gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setBigPhotoUrl({ url: viewingTeacher.image!, name: viewingTeacher.name })}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-semibold border border-white/20 transition cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
+                        <span>বড় সাইজের পূর্ণাঙ্গ ছবি দেখুন</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Two Column Detailed Information Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Left Column: Academic & Official Info */}
+                <div className="bg-gray-50/70 p-4 rounded-2xl border border-gray-200 space-y-3">
+                  <h4 className="font-bold text-xs text-gray-900 flex items-center gap-1.5 pb-2 border-b border-gray-200">
+                    <GraduationCap className="w-4 h-4 text-emerald-700" />
+                    <span>একাডেমিক ও দাপ্তরিক বিবরণ</span>
+                  </h4>
+
+                  <div className="space-y-2 text-xs divide-y divide-gray-100">
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-gray-500">শিক্ষকের পূর্ণ নাম:</span>
+                      <span className="font-bold text-gray-900">{viewingTeacher.name}</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1.5">
+                      <span className="text-gray-500">অফিসিয়াল পদবী:</span>
+                      <span className="font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-gray-200">
+                        {viewingTeacher.designation}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1.5">
+                      <span className="text-gray-500">মূল পাঠদান বিষয়:</span>
+                      <span className="font-semibold text-gray-800">{viewingTeacher.subject || 'সাধারণ'}</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1.5">
+                      <span className="text-gray-500">শিক্ষক ইনিশিয়াল:</span>
+                      <span className="font-mono font-bold text-emerald-700">{viewingTeacher.initial || '—'}</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1.5">
+                      <span className="text-gray-500">সিস্টেম টিচার আইডি:</span>
+                      <span className="font-mono text-gray-500 text-[11px]">{viewingTeacher.id}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Contact & Institutional Info */}
+                <div className="bg-gray-50/70 p-4 rounded-2xl border border-gray-200 space-y-3">
+                  <h4 className="font-bold text-xs text-gray-900 flex items-center gap-1.5 pb-2 border-b border-gray-200">
+                    <Phone className="w-4 h-4 text-emerald-700" />
+                    <span>যোগাযোগ ও প্রাতিষ্ঠানিক তথ্য</span>
+                  </h4>
+
+                  <div className="space-y-2 text-xs divide-y divide-gray-100">
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-gray-500">মোবাইল নম্বর:</span>
+                      <span className="font-mono font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-gray-200">
+                        {viewingTeacher.phone || 'তথ্য দেওয়া নেই'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1.5">
+                      <span className="text-gray-500">অফিসিয়াল ইমেইল:</span>
+                      <span className="font-medium text-gray-800">{viewingTeacher.email || 'তথ্য দেওয়া নেই'}</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1.5">
+                      <span className="text-gray-500">বিদ্যালয় কোড / EIIN:</span>
+                      <span className="font-mono text-gray-700">{siteSettings?.eiin || '১২৩৪৫৬'}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5 pt-1.5">
+                      <span className="text-gray-500">কর্মস্থল ও ঠিকানা:</span>
+                      <span className="font-medium text-gray-800 bg-white p-1.5 rounded border border-gray-200 text-[11px]">
+                        {siteSettings?.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}, {siteSettings?.address || 'দাদরা, বগুড়া'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons in Modal Footer */}
+              <div className="flex flex-wrap items-center justify-end gap-3 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setViewingTeacher(null)}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition cursor-pointer"
+                >
+                  বন্ধ করুন
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openSingleTeacherPrint(viewingTeacher)}
+                  className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded-xl transition cursor-pointer border border-emerald-200 inline-flex items-center gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>প্রোফাইল প্রিন্ট</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDownloadSingleTeacherPdf(viewingTeacher)}
+                  disabled={isExportingTeacherPdf}
+                  className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold rounded-xl transition cursor-pointer border border-blue-200 inline-flex items-center gap-1.5 disabled:opacity-60"
+                >
+                  {isExportingTeacherPdf ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-700" />
+                  ) : (
+                    <FileDown className="w-3.5 h-3.5 text-blue-700" />
+                  )}
+                  <span>PDF ডাউনলোড</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const t = viewingTeacher;
+                    setViewingTeacher(null);
+                    openEditModal(t);
+                  }}
+                  className="px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white font-bold rounded-xl transition cursor-pointer shadow-xs inline-flex items-center gap-1.5"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                  <span>তথ্য পরিবর্তন করুন</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dedicated Single Teacher Official Profile Print & PDF Modal */}
+      {printingTeacher && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl relative border border-gray-100 max-h-[95vh] flex flex-col">
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setPrintingTeacher(null)}
+              className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 p-2 text-gray-400 hover:text-gray-800 hover:bg-gray-100 rounded-full transition cursor-pointer z-30 shadow-2xs"
+              title="বন্ধ করুন (Close)"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header controls */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-gray-200 pr-12">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-bold">
+                  <Printer className="w-5 h-5 text-emerald-700" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-gray-900">
+                    শিক্ষক পরিচিতি ও অফিসিয়াল তথ্য বিবরণী
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    শিক্ষক: <span className="font-bold text-emerald-800">{printingTeacher.name}</span> ({printingTeacher.designation})
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => executeSingleTeacherPrint(printingTeacher)}
+                  disabled={isPrintingSingle}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-xs transition cursor-pointer disabled:opacity-50"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>{isPrintingSingle ? 'প্রিন্ট হচ্ছে...' : 'প্রিন্ট করুন'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDownloadSingleTeacherPdf(printingTeacher)}
+                  disabled={isExportingTeacherPdf}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl font-bold text-xs shadow-xs transition cursor-pointer disabled:opacity-50"
+                >
+                  {isExportingTeacherPdf ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <FileDown className="w-3.5 h-3.5" />
+                  )}
+                  <span>পিডিএফ ডাউনলোড</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Document Preview Container */}
+            <div className="flex-1 overflow-y-auto p-2 sm:p-6 bg-gray-100 rounded-2xl my-3">
+              <div
+                id="printable-single-teacher-card"
+                className="bg-white p-6 sm:p-8 max-w-2xl mx-auto shadow-md rounded-xl border border-gray-200 space-y-6 text-gray-800 font-sans"
+              >
+                {/* Official Letterhead */}
+                <div className="text-center border-b-2 border-emerald-800 pb-4 space-y-1">
+                  <div className="flex items-center justify-center gap-3">
+                    {siteSettings?.logoUrl ? (
+                      <img
+                        src={siteSettings.logoUrl}
+                        alt="Logo"
+                        className="w-14 h-14 object-contain rounded-full border border-gray-300"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-emerald-800 text-white flex items-center justify-center text-2xl font-bold">
+                        {siteSettings?.schoolNameBangla?.charAt(0) || 'দ'}
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <h2 className="text-xl sm:text-2xl font-extrabold text-emerald-900 leading-tight">
+                        {siteSettings?.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}
+                      </h2>
+                      <p className="text-xs text-gray-600 font-medium">
+                        {siteSettings?.schoolNameEnglish || 'Dadra High School'}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 pt-1">
+                    {siteSettings?.address || 'দাদরা, বগুড়া'} • EIIN: {siteSettings?.eiin || '১২৩৪৫৬'} • ফোন: {siteSettings?.phone1 || '+৮৮০১৭১২-৩৪৫৬৭৮'}
+                  </p>
+                  <div className="inline-block mt-2 px-4 py-1 bg-emerald-50 text-emerald-900 rounded-full text-xs font-bold border border-emerald-200">
+                    শিক্ষক পরিচিতি ও অফিসিয়াল তথ্য বিবরণী
+                  </div>
+                </div>
+
+                {/* Profile Hero with Official Photo Box */}
+                <div className="flex flex-col sm:flex-row items-center gap-6 p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                  <div className="w-32 h-40 rounded-xl overflow-hidden bg-white border-2 border-emerald-800 shadow-sm flex items-center justify-center shrink-0 relative">
+                    {printingTeacher.image ? (
+                      <img
+                        src={printingTeacher.image}
+                        alt={printingTeacher.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center p-2 text-emerald-800">
+                        <GraduationCap className="w-12 h-12 mx-auto mb-1 text-emerald-600" />
+                        <span className="text-xl font-bold">{printingTeacher.initial || printingTeacher.name.charAt(0)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 text-center sm:text-left flex-1">
+                    <h3 className="text-xl font-bold text-gray-900">{printingTeacher.name}</h3>
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                      <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold rounded-lg text-xs">
+                        {printingTeacher.designation}
+                      </span>
+                      {printingTeacher.subject && (
+                        <span className="px-2.5 py-1 bg-blue-100 text-blue-800 font-bold rounded-lg text-xs">
+                          বিষয়: {printingTeacher.subject}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-600 pt-1">
+                      মোবাইল: <b className="font-mono text-gray-900">{printingTeacher.phone || 'দেওয়া নেই'}</b>
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      ইমেইল: <b className="text-gray-900">{printingTeacher.email || 'দেওয়া নেই'}</b>
+                    </p>
+                    <p className="text-[11px] text-gray-400 font-mono">
+                      সিস্টেম টিচার আইডি: {printingTeacher.id}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Official Signatures Row */}
+                <div className="mt-14 pt-8 flex items-center justify-between text-xs text-gray-600 border-t border-dashed border-gray-300">
+                  <div className="text-center">
+                    <div className="w-32 border-t border-gray-400 pt-1 font-semibold text-gray-700">সংশ্লিষ্ট শিক্ষক</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-36 border-t border-gray-400 pt-1 font-semibold text-gray-700">সহকারী প্রধান শিক্ষক</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-40 border-t border-gray-400 pt-1 font-semibold text-gray-700">
+                      প্রধান শিক্ষকের স্বাক্ষর ও সিল
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Big Photo Fullscreen Lightbox Modal */}
+      {bigPhotoUrl && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setBigPhotoUrl(null)}
+        >
+          <div
+            className="relative max-w-2xl w-full bg-slate-900 border border-white/20 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col items-center gap-4 text-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top Bar with Name and Action Buttons */}
+            <div className="w-full flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300">
+                  <Camera className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-extrabold text-white">
+                    {bigPhotoUrl.name}
+                  </h3>
+                  <p className="text-[11px] text-gray-400">শিক্ষকের পূর্ণাঙ্গ পাসপোর্ট সাইজ ছবি</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={bigPhotoUrl.url}
+                  download={`${bigPhotoUrl.name}_photo.png`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold border border-white/15"
+                  title="ছবি ডাউনলোড করুন"
+                >
+                  <Download className="w-4 h-4 text-emerald-400" />
+                  <span className="hidden sm:inline">ডাউনলোড</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setBigPhotoUrl(null)}
+                  className="p-1.5 bg-white/10 hover:bg-rose-500 text-white rounded-xl transition cursor-pointer border border-white/15"
+                  title="বন্ধ করুন"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* High-Resolution Big Photo Box */}
+            <div className="w-full max-h-[70vh] flex items-center justify-center rounded-2xl overflow-hidden bg-black/60 border-2 border-emerald-500/40 shadow-inner p-2">
+              <img
+                src={bigPhotoUrl.url}
+                alt={bigPhotoUrl.name}
+                className="max-h-[65vh] max-w-full object-contain rounded-xl shadow-2xl transition duration-200 hover:scale-[1.02]"
+              />
+            </div>
+
+            {/* Footer Tip */}
+            <p className="text-[11px] text-gray-400 flex items-center gap-1.5">
+              <span>ক্লিক করে বাইরে চাপলে বন্ধ হবে</span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Import Modal for Teachers */}
+      <BulkImportModal
+        isOpen={showBulkImportModal}
+        onClose={() => setShowBulkImportModal(false)}
+        type="teachers"
+        onImportTeachers={(newTeachers) => addMultipleTeachers(newTeachers)}
+      />
     </div>
   );
 };

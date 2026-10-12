@@ -37,6 +37,7 @@ import {
   UserPlus,
   ArchiveRestore,
   Inbox,
+  FileSpreadsheet,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -51,12 +52,14 @@ import {
   getElectivesForClassAndGroup,
   ALL_CURRICULUM_SUBJECT_OPTIONS,
 } from '../../data/curriculumSubjects';
+import { BulkImportModal } from './BulkImportModal';
 
 export const ManageStudents: React.FC = () => {
   const {
     students,
     deletedStudents,
     addStudent,
+    addMultipleStudents,
     updateStudent,
     deleteStudent,
     deleteMultipleStudents,
@@ -68,8 +71,10 @@ export const ManageStudents: React.FC = () => {
     examResults,
   } = useSchool();
   const [modalOpen, setModalOpen] = useState(false);
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [editingStu, setEditingStu] = useState<Student | null>(null);
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
+  const [bigPhotoUrl, setBigPhotoUrl] = useState<{ url: string; name: string } | null>(null);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
@@ -975,6 +980,16 @@ export const ManageStudents: React.FC = () => {
           )}
 
           <button
+            type="button"
+            onClick={() => setShowBulkImportModal(true)}
+            className="inline-flex items-center gap-1.5 bg-teal-50 text-teal-800 hover:bg-teal-100 border border-teal-300 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer"
+            title="এক্সেল, সিএসভি বা গুগল ড্রাইভ থেকে বাল্ক শিক্ষার্থী আপলোড করুন"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-teal-700" />
+            <span>বাল্ক আপলোড (Excel / Drive)</span>
+          </button>
+
+          <button
             onClick={openAddModal}
             className="inline-flex items-center gap-2 bg-[#15803d] hover:bg-[#166534] text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer"
           >
@@ -1439,16 +1454,31 @@ export const ManageStudents: React.FC = () => {
                         />
                       </td>
                       <td className="py-3 px-4">
-                        <div className="w-10 h-10 rounded-full overflow-hidden bg-emerald-50 border border-emerald-200 flex items-center justify-center font-bold text-emerald-800 text-xs shrink-0 shadow-2xs">
+                        <button
+                          type="button"
+                          onClick={() => setViewingStudent(s)}
+                          className="w-10 h-10 rounded-full overflow-hidden bg-emerald-50 border border-emerald-200 hover:border-emerald-500 hover:scale-105 transition flex items-center justify-center font-bold text-emerald-800 text-xs shrink-0 shadow-2xs cursor-pointer group"
+                          title={`${s.name}-এর প্রোফাইল ও বড় ছবি দেখুন`}
+                        >
                           {studentPhoto ? (
                             <img src={studentPhoto} alt={s.name} className="w-full h-full object-cover" />
                           ) : (
                             <span>{s.name.charAt(0)}</span>
                           )}
-                        </div>
+                        </button>
                       </td>
                       <td className="py-3 px-4 font-mono font-bold text-emerald-800">{s.roll}</td>
-                      <td className="py-3 px-4 font-bold text-gray-900">{s.name}</td>
+                      <td className="py-3 px-4">
+                        <button
+                          type="button"
+                          onClick={() => setViewingStudent(s)}
+                          className="text-left font-bold text-gray-900 hover:text-emerald-700 hover:underline transition cursor-pointer inline-flex items-center gap-1.5 group"
+                          title={`${s.name}-এর পূর্ণাঙ্গ বিস্তারিত প্রোফাইল ও বড় ছবি দেখুন`}
+                        >
+                          <span className="group-hover:text-emerald-700">{s.name}</span>
+                          <Eye className="w-3.5 h-3.5 text-gray-400 group-hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition shrink-0" />
+                        </button>
+                      </td>
                       <td className="py-3 px-4">
                         <span className="bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded font-medium">
                           {sClass} ({s.section})
@@ -2240,7 +2270,7 @@ export const ManageStudents: React.FC = () => {
       {/* Student Full Info & Profile View Modal */}
       {viewingStudent && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-7 shadow-2xl relative border border-gray-100 max-h-[92vh] overflow-y-auto space-y-6 text-xs text-gray-800">
+          <div className="bg-white rounded-3xl max-w-4xl w-full p-5 sm:p-7 shadow-2xl relative border border-gray-100 max-h-[92vh] overflow-y-auto space-y-6 text-xs text-gray-800">
             {/* Close Button placed at Absolute Top Right Corner */}
             <button
               type="button"
@@ -2305,7 +2335,7 @@ export const ManageStudents: React.FC = () => {
               </div>
             </div>
 
-            {/* Profile Hero Card */}
+            {/* Profile Hero Card with Big Photo */}
             {(() => {
               const sClass = viewingStudent.class || viewingStudent.studentClass;
               const displayGroup = viewingStudent.group || 'সাধারণ';
@@ -2321,40 +2351,110 @@ export const ManageStudents: React.FC = () => {
 
               return (
                 <div className="space-y-6">
-                  {/* Hero Banner */}
-                  <div className="bg-gradient-to-r from-emerald-50/90 via-teal-50/60 to-emerald-50/80 border border-emerald-100 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-white border-2 border-emerald-500 shadow-md shrink-0 flex items-center justify-center">
-                      {studentPhoto ? (
-                        <img src={studentPhoto} alt={viewingStudent.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-3xl font-bold text-emerald-800">{viewingStudent.name.charAt(0)}</span>
-                      )}
+                  {/* Hero Banner with Big Photo */}
+                  <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center sm:items-start gap-6 border border-emerald-800/40">
+                    {/* Decorative background glows */}
+                    <div className="absolute -right-12 -top-12 w-56 h-56 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -left-12 -bottom-12 w-56 h-56 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
+
+                    {/* Big Student Photo */}
+                    <div className="relative group shrink-0">
+                      <div className="w-36 h-44 sm:w-44 sm:h-52 rounded-2xl overflow-hidden bg-emerald-950/90 border-4 border-white/90 shadow-2xl flex items-center justify-center relative">
+                        {studentPhoto ? (
+                          <img
+                            src={studentPhoto}
+                            alt={viewingStudent.name}
+                            className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-emerald-800/60 text-emerald-100 p-4 text-center">
+                            <User className="w-16 h-16 text-emerald-300/80 mb-2" />
+                            <span className="text-2xl font-bold">{viewingStudent.name.charAt(0)}</span>
+                            <span className="text-[10px] text-emerald-200 mt-1">ছবি যুক্ত নেই</span>
+                          </div>
+                        )}
+
+                        {/* Interactive Zoom overlay */}
+                        {studentPhoto && (
+                          <button
+                            type="button"
+                            onClick={() => setBigPhotoUrl({ url: studentPhoto, name: viewingStudent.name })}
+                            className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center gap-1.5 text-white cursor-pointer backdrop-blur-xs"
+                            title="বড় ছবি দেখতে ক্লিক করুন"
+                          >
+                            <Sparkles className="w-6 h-6 text-emerald-300 animate-pulse" />
+                            <span className="text-[11px] font-bold bg-black/60 px-2.5 py-1 rounded-full border border-white/20">
+                              বড় করে দেখুন
+                            </span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Photo Badge */}
+                      <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-white text-emerald-900 font-extrabold text-[10px] px-3 py-0.5 rounded-full shadow-md border border-emerald-100 flex items-center gap-1 shrink-0 whitespace-nowrap">
+                        <Camera className="w-3 h-3 text-emerald-600" />
+                        <span>শিক্ষার্থীর ছবি</span>
+                      </div>
                     </div>
 
-                    <div className="space-y-1.5 flex-1">
-                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                        <h2 className="text-xl font-bold text-gray-900">{viewingStudent.name}</h2>
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-600 text-white shadow-2xs">
-                          রোল: {viewingStudent.roll}
+                    {/* Student Info in Hero */}
+                    <div className="space-y-3 flex-1 text-center sm:text-left z-10 w-full">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                          {viewingStudent.name}
+                        </h2>
+                        <span className="px-3 py-1 rounded-xl text-xs font-extrabold bg-emerald-500 text-white shadow-sm border border-emerald-400/40">
+                          রোল নম্বর: {viewingStudent.roll}
                         </span>
                       </div>
 
                       <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-0.5">
-                        <span className="px-2.5 py-0.5 bg-white border border-emerald-200 text-emerald-800 rounded-lg font-semibold">
-                          শ্রেণি: {sClass} ({viewingStudent.section})
+                        <span className="px-3 py-1 bg-white/10 backdrop-blur-xs border border-white/20 text-emerald-100 rounded-xl font-bold text-xs">
+                          শ্রেণি: {sClass} ({viewingStudent.section} শাখা)
                         </span>
-                        <span className="px-2.5 py-0.5 bg-white border border-emerald-200 text-emerald-800 rounded-lg font-semibold">
+                        <span className="px-3 py-1 bg-white/10 backdrop-blur-xs border border-white/20 text-emerald-100 rounded-xl font-bold text-xs">
                           বিভাগ: {displayGroup}
                         </span>
-                        <span className="px-2.5 py-0.5 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium">
+                        <span className="px-3 py-1 bg-white/10 backdrop-blur-xs border border-white/20 text-emerald-100 rounded-xl font-bold text-xs">
                           লিঙ্গ: {viewingStudent.gender || 'ছাত্র'}
                         </span>
                       </div>
 
-                      <p className="text-gray-500 text-[11px] pt-0.5 flex items-center justify-center sm:justify-start gap-1">
-                        <Phone className="w-3 h-3 text-emerald-600" />
-                        <span>যোগাযোগ: <b className="font-mono text-gray-700">{viewingStudent.guardianPhone || viewingStudent.phone || 'দেওয়া নেই'}</b></span>
-                      </p>
+                      <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-emerald-100/90 bg-white/5 rounded-2xl p-3 border border-white/10">
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span>অভিভাবক ফোন: <b className="font-mono text-white font-bold">{viewingStudent.guardianPhone || viewingStudent.phone || 'দেওয়া নেই'}</b></span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <School className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span>সিস্টেম আইডি: <b className="font-mono text-white">{viewingStudent.id}</b></span>
+                        </div>
+                        {viewingStudent.guardianName && (
+                          <div className="flex items-center gap-2">
+                            <Users className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span>অভিভাবক: <b className="text-white">{viewingStudent.guardianName}</b></span>
+                          </div>
+                        )}
+                        {viewingStudent.presentAddress && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span>ঠিকানা: <b className="text-white">{viewingStudent.presentAddress}</b></span>
+                          </div>
+                        )}
+                      </div>
+
+                      {studentPhoto && (
+                        <div className="pt-1 flex items-center justify-center sm:justify-start gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setBigPhotoUrl({ url: studentPhoto, name: viewingStudent.name })}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-semibold border border-white/20 transition cursor-pointer"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
+                            <span>বড় সাইজের পূর্ণাঙ্গ ছবি দেখুন</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -3060,6 +3160,77 @@ export const ManageStudents: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Big Photo Fullscreen Lightbox Modal */}
+      {bigPhotoUrl && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setBigPhotoUrl(null)}
+        >
+          <div
+            className="relative max-w-2xl w-full bg-slate-900 border border-white/20 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col items-center gap-4 text-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top Bar with Name and Action Buttons */}
+            <div className="w-full flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300">
+                  <Camera className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-extrabold text-white">
+                    {bigPhotoUrl.name}
+                  </h3>
+                  <p className="text-[11px] text-gray-400">শিক্ষার্থীর পূর্ণাঙ্গ পাসপোর্ট সাইজ ছবি</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={bigPhotoUrl.url}
+                  download={`${bigPhotoUrl.name}_photo.png`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold border border-white/15"
+                  title="ছবি ডাউনলোড করুন"
+                >
+                  <Download className="w-4 h-4 text-emerald-400" />
+                  <span className="hidden sm:inline">ডাউনলোড</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setBigPhotoUrl(null)}
+                  className="p-1.5 bg-white/10 hover:bg-rose-500 text-white rounded-xl transition cursor-pointer border border-white/15"
+                  title="বন্ধ করুন"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* High-Resolution Big Photo Box */}
+            <div className="w-full max-h-[70vh] flex items-center justify-center rounded-2xl overflow-hidden bg-black/60 border-2 border-emerald-500/40 shadow-inner p-2">
+              <img
+                src={bigPhotoUrl.url}
+                alt={bigPhotoUrl.name}
+                className="max-h-[65vh] max-w-full object-contain rounded-xl shadow-2xl transition duration-200 hover:scale-[1.02]"
+              />
+            </div>
+
+            {/* Footer Tip */}
+            <p className="text-[11px] text-gray-400 flex items-center gap-1.5">
+              <span>ক্লিক করে বাইরে চাপলে বন্ধ হবে</span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Import Modal for Students */}
+      <BulkImportModal
+        isOpen={showBulkImportModal}
+        onClose={() => setShowBulkImportModal(false)}
+        type="students"
+        onImportStudents={(newStudents) => addMultipleStudents(newStudents)}
+      />
     </div>
   );
 };
