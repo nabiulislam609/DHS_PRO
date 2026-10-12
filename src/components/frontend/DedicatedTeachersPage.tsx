@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Sparkles,
 } from 'lucide-react';
+import { Footer } from './Footer';
 
 export const DedicatedTeachersPage: React.FC = () => {
   const { siteSettings, teachers, setCurrentFrontendPage } = useSchool();
@@ -297,12 +298,8 @@ export const DedicatedTeachersPage: React.FC = () => {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-6 px-4 text-center text-xs text-gray-500 print:hidden">
-        <p>
-          {siteSettings.copyrightText || `© 2026 ${siteSettings.schoolNameBangla}। সর্বস্বত্ব সংরক্ষিত।`}
-        </p>
-      </footer>
+      {/* Institutional Website Footer */}
+      <Footer />
     </div>
   );
 };

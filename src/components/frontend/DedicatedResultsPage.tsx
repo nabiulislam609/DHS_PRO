@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSchool } from '../../context/SchoolContext';
 import { AcademicResultsSearch } from './AcademicResultsSearch';
+import { Footer } from './Footer';
 import {
   GraduationCap,
   ArrowLeft,
@@ -70,25 +71,8 @@ export const DedicatedResultsPage: React.FC = () => {
         <AcademicResultsSearch />
       </main>
 
-      {/* Institutional Footer */}
-      <footer className="bg-[#052e22] text-emerald-100/90 py-8 border-t border-emerald-900/60 print:hidden text-xs">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div>
-            <span className="font-bold text-white block text-sm mb-1">{siteSettings.schoolNameBangla}</span>
-            <p className="text-[11px] text-emerald-200/70">
-              দাদরা, জয়পুরহাট সদর, রাজশাহী • ফোন: {siteSettings.phone1} • ইমেইল: {siteSettings.email}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs font-semibold">
-            <button onClick={handleGoHome} className="hover:text-white transition cursor-pointer">
-              হোম পেজ
-            </button>
-            <span>•</span>
-            <span className="text-emerald-300">মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড, রাজশাহী</span>
-          </div>
-        </div>
-      </footer>
+      {/* Institutional Website Footer */}
+      <Footer />
     </div>
   );
 };

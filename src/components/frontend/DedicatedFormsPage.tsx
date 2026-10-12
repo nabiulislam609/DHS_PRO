@@ -29,6 +29,7 @@ import {
   getFormKind,
   getFormTheme,
 } from '../../utils/formDocumentHelper';
+import { Footer } from './Footer';
 
 export const DedicatedFormsPage: React.FC = () => {
   const { siteSettings, downloadableForms, setCurrentFrontendPage } = useSchool();
@@ -544,25 +545,8 @@ export const DedicatedFormsPage: React.FC = () => {
         );
       })()}
 
-      {/* Institutional Footer */}
-      <footer className="bg-[#052e22] text-emerald-100/90 py-8 border-t border-emerald-900/60 print:hidden text-xs mt-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div>
-            <span className="font-bold text-white block text-sm mb-1">{siteSettings.schoolNameBangla}</span>
-            <p className="text-[11px] text-emerald-200/70">
-              {siteSettings.address || 'দাদরা, জয়পুরহাট সদর, রাজশাহী'} • ফোন: {siteSettings.phone1} • ইমেইল: {siteSettings.email}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs font-semibold">
-            <button onClick={() => setCurrentFrontendPage('home')} className="hover:text-white transition cursor-pointer">
-              হোম পেজ
-            </button>
-            <span>•</span>
-            <span className="text-emerald-300">মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড, রাজশাহী</span>
-          </div>
-        </div>
-      </footer>
+      {/* Institutional Website Footer */}
+      <Footer />
     </div>
   );
 };

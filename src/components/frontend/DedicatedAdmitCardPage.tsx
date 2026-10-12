@@ -40,6 +40,7 @@ import {
   printExamSchedule,
   downloadExamRoutinePdf,
 } from '../../utils/examDocumentHelper';
+import { Footer } from './Footer';
 
 export const DedicatedAdmitCardPage: React.FC = () => {
   const { siteSettings, students, admitCardConfig, setCurrentFrontendPage } = useSchool();
@@ -398,51 +399,6 @@ export const DedicatedAdmitCardPage: React.FC = () => {
     }
   };
 
-  const selectDemoRecord = (roll: string, targetClass: string, targetGroup?: string) => {
-    setRollInput(roll);
-    setSelectedClass(targetClass);
-    if (targetGroup) setSelectedGroup(targetGroup);
-    setInputError(null);
-    setSearched(false);
-
-    const rollNorm = normalizeNum(roll);
-    const clsNorm = normalizeClassName(targetClass);
-
-    const match = students.find((s) => {
-      const sRoll = normalizeNum(s.roll);
-      if (sRoll !== rollNorm) return false;
-
-      const sClass = normalizeClassName(s.class || s.studentClass || '');
-      if (sClass !== clsNorm) return false;
-
-      if (clsNorm === '9' || clsNorm === '10') {
-        const sGrp = s.group || (s.section?.includes('বিজ্ঞান') ? 'বিজ্ঞান' : s.section?.includes('মানবিক') ? 'মানবিক' : s.section?.includes('ব্যবসায়') || s.section?.includes('ব্যবসায়') ? 'ব্যবসায় শিক্ষা' : '');
-        if (sGrp && targetGroup) {
-          return normalizeGroup(sGrp) === normalizeGroup(targetGroup);
-        }
-      }
-      return true;
-    });
-
-    if (match) {
-      setFoundStudent(match);
-      setSearched(true);
-      if (match.subjects && match.subjects.length > 0) {
-        const matchedElec = availableElectives.find((elec) =>
-          match.subjects!.some((s) => s.toLowerCase().includes(elec.toLowerCase()))
-        );
-        if (matchedElec) {
-          setSelectedElective(matchedElec);
-        }
-      }
-      setTimeout(() => {
-        const el = document.getElementById('printable-admit-card');
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    }
-  };
 
   const handlePrint = () => {
     window.print();
@@ -634,7 +590,7 @@ export const DedicatedAdmitCardPage: React.FC = () => {
     : '';
 
   return (
-    <div className="min-h-screen bg-slate-50 text-gray-800 pb-16 font-sans">
+    <div className="min-h-screen bg-slate-50 text-gray-800 flex flex-col font-sans">
       {/* Top Institutional Notification Bar (Result Page-style Header) */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xs print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
@@ -680,7 +636,7 @@ export const DedicatedAdmitCardPage: React.FC = () => {
       </header>
 
       {/* Main Content Area - Matching Result Page Layout */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 py-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 py-8 flex-1 w-full">
         {/* Top Dark Emerald Header Banner - Completely in Bengali matching Results page */}
         <div className="bg-gradient-to-br from-[#063326] via-[#094132] to-[#042018] rounded-3xl p-8 sm:p-12 shadow-xl border border-emerald-900/40 relative overflow-hidden print:hidden">
           {/* Subtle decorative circles */}
@@ -838,59 +794,6 @@ export const DedicatedAdmitCardPage: React.FC = () => {
               </button>
             </div>
           </form>
-
-          {/* Quick Demo Records Buttons - Matching Results Page */}
-          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-100 text-xs">
-            <span className="text-gray-500 font-bold">সঠিক তথ্য দিয়ে দ্রুত যাচাই করুন:</span>
-            <button
-              type="button"
-              onClick={() => selectDemoRecord('1', '১০ম শ্রেণি', 'বিজ্ঞান')}
-              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 pl-1.5 pr-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center gap-2 text-[11px]"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1544717305-2782549b5136?w=100&h=100&fit=crop&crop=faces&q=80"
-                alt="Sadia Jahan"
-                className="w-5 h-5 rounded-full object-cover border border-emerald-300 shrink-0"
-              />
-              <span>সাদিয়া জাহান (১০ম বিজ্ঞান - রোল ১)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => selectDemoRecord('2', '১০ম শ্রেণি', 'বিজ্ঞান')}
-              className="bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 pl-1.5 pr-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center gap-2 text-[11px]"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&h=100&fit=crop&crop=faces&q=80"
-                alt="Tanvir Ahmed"
-                className="w-5 h-5 rounded-full object-cover border border-blue-300 shrink-0"
-              />
-              <span>তানভীর আহমেদ (১০ম বিজ্ঞান - রোল ২)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => selectDemoRecord('1', '৮ম শ্রেণি')}
-              className="bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 pl-1.5 pr-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center gap-2 text-[11px]"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces&q=80"
-                alt="Rafsan Zaman"
-                className="w-5 h-5 rounded-full object-cover border border-purple-300 shrink-0"
-              />
-              <span>রাফসান জামান (৮ম শ্রেণি - রোল ১)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => selectDemoRecord('1', '৯ম শ্রেণি', 'মানবিক')}
-              className="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 pl-1.5 pr-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center gap-2 text-[11px]"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces&q=80"
-                alt="Sumaiya Akter"
-                className="w-5 h-5 rounded-full object-cover border border-amber-300 shrink-0"
-              />
-              <span>সুমাইয়া আক্তার (৯ম মানবিক - রোল ১)</span>
-            </button>
-          </div>
 
           {/* Inline Input Validation / Error Banner */}
           {inputError && (
@@ -1264,7 +1167,7 @@ export const DedicatedAdmitCardPage: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
+      </main>
 
       {/* Modal Popup 1: "এখন কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না" */}
       {noExamPopup.isOpen && (
@@ -1555,25 +1458,8 @@ export const DedicatedAdmitCardPage: React.FC = () => {
         </div>
       )}
 
-      {/* Institutional Footer */}
-      <footer className="bg-[#052e22] text-emerald-100/90 py-8 border-t border-emerald-900/60 print:hidden text-xs mt-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div>
-            <span className="font-bold text-white block text-sm mb-1">{siteSettings.schoolNameBangla}</span>
-            <p className="text-[11px] text-emerald-200/70">
-              {siteSettings.address || 'দাদরা, জয়পুরহাট সদর, রাজশাহী'} • ফোন: {siteSettings.phone1} • ইমেইল: {siteSettings.email}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs font-semibold">
-            <button onClick={() => setCurrentFrontendPage('home')} className="hover:text-white transition cursor-pointer">
-              হোম পেজ
-            </button>
-            <span>•</span>
-            <span className="text-emerald-300">মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড, রাজশাহী</span>
-          </div>
-        </div>
-      </footer>
+      {/* Institutional Website Footer */}
+      <Footer />
 
       {/* Print Specific CSS */}
       <style dangerouslySetInnerHTML={{ __html: `

@@ -296,13 +296,6 @@ export const AcademicResultsSearch: React.FC = () => {
     setSearchedResult(match || null);
   };
 
-  const selectDemoRecord = (roll: string, cls: string, term: string) => {
-    setSearchRoll(roll);
-    setSelectedClass(cls);
-    setSelectedTerm(term);
-    setValidationErrors({});
-    handleSearch(roll, cls, term);
-  };
 
   const handlePrint = () => {
     window.print();
@@ -646,59 +639,6 @@ export const AcademicResultsSearch: React.FC = () => {
               </button>
             </div>
           </form>
-
-          {/* Quick Demo Records Buttons - Sets Exact Roll, Class, and Exam */}
-          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-100 text-xs">
-            <span className="text-gray-500 font-bold">সঠিক তথ্য দিয়ে দ্রুত যাচাই করুন:</span>
-            <button
-              type="button"
-              onClick={() => selectDemoRecord('1', '১০ম শ্রেণি (বিজ্ঞান বিভাগ)', 'Pre-Test Examination (2026)')}
-              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 pl-1.5 pr-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center gap-2 text-[11px]"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1544717305-2782549b5136?w=100&h=100&fit=crop&crop=faces&q=80"
-                alt="Sadia Jahan"
-                className="w-5 h-5 rounded-full object-cover border border-emerald-300 shrink-0"
-              />
-              <span>সাদিয়া জাহান (১০ম বিজ্ঞান - রোল ১)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => selectDemoRecord('2', '১০ম শ্রেণি (বিজ্ঞান বিভাগ)', 'Pre-Test Examination (2026)')}
-              className="bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 pl-1.5 pr-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center gap-2 text-[11px]"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&h=100&fit=crop&crop=faces&q=80"
-                alt="Tanvir Ahmed"
-                className="w-5 h-5 rounded-full object-cover border border-blue-300 shrink-0"
-              />
-              <span>তানভীর আহমেদ (১০ম বিজ্ঞান - রোল ২)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => selectDemoRecord('1', '৮ম শ্রেণি', 'Annual Examination / বার্ষিক পরীক্ষা (2026)')}
-              className="bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 pl-1.5 pr-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center gap-2 text-[11px]"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces&q=80"
-                alt="Rafsan Zaman"
-                className="w-5 h-5 rounded-full object-cover border border-purple-300 shrink-0"
-              />
-              <span>রাফসান জামান (৮ম শ্রেণি - রোল ১, বার্ষিক)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => selectDemoRecord('1', '৯ম শ্রেণি (মানবিক বিভাগ)', '1st Term Examination / ১ম সাময়িক পরীক্ষা (2026)')}
-              className="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 pl-1.5 pr-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center gap-2 text-[11px]"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces&q=80"
-                alt="Sumaiya Akter"
-                className="w-5 h-5 rounded-full object-cover border border-amber-300 shrink-0"
-              />
-              <span>সুমাইয়া আক্তার (৯ম মানবিক - রোল ১, ১ম সাময়িক)</span>
-            </button>
-          </div>
         </div>
 
         {/* Search Result Display / Marksheet */}

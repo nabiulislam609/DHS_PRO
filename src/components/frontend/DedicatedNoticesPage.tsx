@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { triggerFileDownload, openFileInNewTab } from '../../utils/fileDownloader';
 import { printNotice, downloadNoticePdf } from '../../utils/noticePdfGenerator';
+import { Footer } from './Footer';
 
 export const DedicatedNoticesPage: React.FC = () => {
   const { siteSettings, setCurrentFrontendPage, notices } = useSchool();
@@ -920,35 +921,8 @@ export const DedicatedNoticesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Institutional Footer */}
-      <footer className="bg-[#052e22] text-emerald-100/90 py-8 border-t border-emerald-900/60 print:hidden text-xs mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div>
-            <span className="font-bold text-white block text-sm mb-1">{siteSettings.schoolNameBangla}</span>
-            <p className="text-[11px] text-emerald-200/70">
-              {siteSettings.address} • ফোন: {siteSettings.phone1} • ইমেইল: {siteSettings.email}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs font-semibold">
-            <button onClick={handleGoHome} className="hover:text-white transition cursor-pointer">
-              হোম পেজ
-            </button>
-            <span>•</span>
-            <button
-              onClick={() => {
-                setCurrentFrontendPage('results');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="hover:text-white transition cursor-pointer text-amber-300"
-            >
-              ফলাফল পোর্টাল
-            </button>
-            <span>•</span>
-            <span className="text-emerald-300">মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড, রাজশাহী</span>
-          </div>
-        </div>
-      </footer>
+      {/* Institutional Website Footer */}
+      <Footer />
     </div>
   );
 };
