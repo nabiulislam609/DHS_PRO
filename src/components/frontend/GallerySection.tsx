@@ -60,39 +60,51 @@ export const GallerySection: React.FC = () => {
         ))}
       </div>
 
-      {/* Albums Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
-        {filteredAlbums.map((album) => (
-          <div
-            key={album.id}
-            onClick={() => openLightbox(album)}
-            className="group relative h-64 rounded-2xl overflow-hidden cursor-pointer shadow-xs hover:shadow-lg transition transform hover:-translate-y-1"
-          >
-            <img
-              src={album.imageUrl}
-              alt={album.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
-            />
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-            {/* Bottom Title & Count Badge */}
-            <div className="absolute bottom-4 left-4 right-4 text-white">
-              <h4 className="text-base font-bold text-white drop-shadow-xs">
-                {album.title}
-              </h4>
-              <p className="text-xs text-emerald-300 font-medium mt-0.5">
-                {album.itemCountText}
-              </p>
-            </div>
-
-            {/* Top Hover View Icon */}
-            <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-xs text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-              <ImageIcon className="w-4 h-4" />
-            </div>
+      {/* Albums Grid or Empty State */}
+      {filteredAlbums.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center max-w-lg mx-auto shadow-xs space-y-3">
+          <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <ImageIcon className="w-7 h-7" />
           </div>
-        ))}
-      </div>
+          <h3 className="text-base font-bold text-gray-800">গ্যালারিতে ছবি নেই</h3>
+          <p className="text-xs text-gray-500">
+            গ্যালারির অ্যালবাম ও ছবি যুক্ত হলে এখানে প্রদর্শিত হবে।
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+          {filteredAlbums.map((album) => (
+            <div
+              key={album.id}
+              onClick={() => openLightbox(album)}
+              className="group relative h-64 rounded-2xl overflow-hidden cursor-pointer shadow-xs hover:shadow-lg transition transform hover:-translate-y-1"
+            >
+              <img
+                src={album.imageUrl}
+                alt={album.title}
+                className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
+              />
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+              {/* Bottom Title & Count Badge */}
+              <div className="absolute bottom-4 left-4 right-4 text-white">
+                <h4 className="text-base font-bold text-white drop-shadow-xs">
+                  {album.title}
+                </h4>
+                <p className="text-xs text-emerald-300 font-medium mt-0.5">
+                  {album.itemCountText}
+                </p>
+              </div>
+
+              {/* Top Hover View Icon */}
+              <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-xs text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                <ImageIcon className="w-4 h-4" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Lightbox Modal */}
       {activeAlbum && (

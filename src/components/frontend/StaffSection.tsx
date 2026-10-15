@@ -36,9 +36,20 @@ export const StaffSection: React.FC = () => {
         </p>
       </div>
 
-      {/* Staff Grid (4 cols on lg) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {staff.map((member) => (
+      {/* Staff Grid or Empty State */}
+      {staff.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center max-w-lg mx-auto shadow-xs space-y-3">
+          <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <UserCheck className="w-7 h-7" />
+          </div>
+          <h3 className="text-base font-bold text-gray-800">কর্মচারীদের তথ্য খালি রয়েছে</h3>
+          <p className="text-xs text-gray-500">
+            কর্মকর্তা ও কর্মচারীদের পরিচিতি তথ্য শীঘ্রই হালনাগাদ করা হবে।
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {staff.map((member) => (
           <div
             key={member.id}
             onClick={() => setViewingStaff(member)}
@@ -102,6 +113,7 @@ export const StaffSection: React.FC = () => {
           </div>
         ))}
       </div>
+      )}
 
       {/* Staff Detailed Profile Modal */}
       {viewingStaff && (

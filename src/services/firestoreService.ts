@@ -151,7 +151,42 @@ export async function batchSaveDocuments<T extends { id: string }>(
   }
 }
 
-// Initial Seed helper (if Firestore collection has 0 documents)
+// Single-read fetch helper for collections (reduces reads to once per page open)
+export async function fetchCollectionOnce<T>(collectionName: string): Promise<T[]> {
+  try {
+    const colRef = collection(db, collectionName);
+    const snap = await getDocs(colRef);
+    const items: T[] = [];
+    snap.forEach((d) => {
+      items.push({ ...d.data(), id: d.id } as unknown as T);
+    });
+    return items;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, collectionName);
+    return [];
+  }
+}
+
+// Single-read fetch for all config documents in a single query
+export async function fetchAllConfigDocsOnce(): Promise<Record<string, any>> {
+  try {
+    const colRef = collection(db, COLLECTIONS.CONFIG);
+    const snap = await getDocs(colRef);
+    const configs: Record<string, any> = {};
+    snap.forEach((d) => {
+      const data = d.data();
+      if (data && data.data !== undefined) {
+        configs[d.id] = data.data;
+      }
+    });
+    return configs;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, COLLECTIONS.CONFIG);
+    return {};
+  }
+}
+
+// Initial Seed helper (only called by authenticated admin or explicitly)
 export async function seedInitialCollectionIfEmpty<T extends { id: string }>(
   collectionName: string,
   initialData: T[]
@@ -171,17 +206,13 @@ export async function seedInitialCollectionIfEmpty<T extends { id: string }>(
 export async function seedInitialConfigIfEmpty<T>(docKey: string, defaultData: T) {
   try {
     const docRef = doc(db, COLLECTIONS.CONFIG, docKey);
-    const snap = await getDocs(collection(db, COLLECTIONS.CONFIG));
-    const exists = snap.docs.some((d) => d.id === docKey);
-    if (!exists) {
-      await saveConfigDoc(docKey, defaultData);
-    }
+    await setDoc(docRef, { data: defaultData, updatedAt: new Date().toISOString() }, { merge: true });
   } catch (error) {
-    handleFirestoreError(error, OperationType.GET, `${COLLECTIONS.CONFIG}/${docKey}`);
+    handleFirestoreError(error, OperationType.WRITE, `${COLLECTIONS.CONFIG}/${docKey}`);
   }
 }
 
-// Realtime Listeners
+// Realtime Listeners (optional fallback if needed)
 export function listenCollection<T>(
   collectionName: string,
   onData: (items: T[]) => void,

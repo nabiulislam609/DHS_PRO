@@ -124,7 +124,43 @@ export const HeroSlider: React.FC = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
   };
 
-  if (!slides || slides.length === 0) return null;
+  if (!slides || slides.length === 0) {
+    return (
+      <section
+        id="hero"
+        className="relative w-full overflow-hidden bg-gradient-to-br from-emerald-950 via-[#063324] to-gray-900 scroll-mt-20 flex flex-col justify-center items-center text-center px-4 py-20 text-white"
+        style={{
+          minHeight: `calc(75dvh - ${headerHeight}px)`,
+        }}
+      >
+        <div className="max-w-4xl mx-auto space-y-5 relative z-10">
+          <span className="inline-block px-4 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs sm:text-sm font-semibold tracking-wide">
+            {siteSettings.schoolNameEnglish || 'DADRA HIGH SCHOOL'}
+          </span>
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight">
+            {siteSettings.schoolNameBangla || 'দারাদহ উচ্চ বিদ্যালয়'}
+          </h1>
+          <p className="text-base sm:text-xl text-emerald-100/90 max-w-2xl mx-auto font-light leading-relaxed">
+            {siteSettings.tagline || 'জ্ঞান, শৃঙ্খলা ও নৈতিকতার বাতিঘর — শিক্ষাবর্ষ ২০২৬'}
+          </p>
+          <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
+            <button
+              onClick={() => setIsAdmissionModalOpen(true)}
+              className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold rounded-xl text-sm transition shadow-lg cursor-pointer"
+            >
+              অনলাইন ভর্তি আবেদন
+            </button>
+            <a
+              href="#contact"
+              className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold rounded-xl text-sm transition cursor-pointer"
+            >
+              যোগাযোগ করুন
+            </a>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const slide = slides[currentSlide];
 

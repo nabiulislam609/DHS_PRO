@@ -26,6 +26,18 @@ export const NoticeTicker: React.FC = () => {
 
   const allTickerItems = [...examTickerItems, ...notices];
 
+  const fallbackTickerItems = [
+    {
+      id: 'welcome-ticker-1',
+      category: 'স্বাগতম',
+      code: 'তথ্য',
+      title: `${siteSettings.schoolNameBangla || 'দারাদহ উচ্চ বিদ্যালয়'}-এর অনলাইন পোর্টালে স্বাগতম • জ্ঞান, শৃঙ্খলা ও নৈতিকতা`,
+      isExam: false,
+    },
+  ];
+
+  const effectiveTickerItems = allTickerItems.length > 0 ? allTickerItems : fallbackTickerItems;
+
   const speedDuration = siteSettings.noticeTickerSpeed || 60;
   const tickerLabel = siteSettings.noticeTickerLabel || 'সর্বশেষ নোটিশ:';
 
@@ -85,7 +97,7 @@ export const NoticeTicker: React.FC = () => {
             className="inline-flex items-center gap-6 animate-marquee py-0.5"
             style={{ animationDuration: `${speedDuration}s` }}
           >
-            {[...allTickerItems, ...allTickerItems].map((notice: any, idx) => (
+            {[...effectiveTickerItems, ...effectiveTickerItems].map((notice: any, idx) => (
               <a
                 key={`${notice.id}-${idx}`}
                 href={notice.isExam ? '#admit-card' : '#notices-page'}

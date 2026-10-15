@@ -14,6 +14,10 @@ import {
   Clock,
   Trash2,
   FileSpreadsheet,
+  Database,
+  RefreshCw,
+  Sparkles,
+  CheckCircle2,
 } from 'lucide-react';
 import { BulkImportModal, BulkImportType } from './BulkImportModal';
 
@@ -35,9 +39,36 @@ export const AdminDashboard: React.FC = () => {
     addMultipleTeachers,
     addMultipleStaff,
     addMultipleStudents,
+    isFirestoreLoading,
+    loadDataFromFirestore,
+    seedDemoDataToFirestore,
   } = useSchool();
 
   const [bulkModalType, setBulkModalType] = useState<BulkImportType | null>(null);
+  const [seeding, setSeeding] = useState(false);
+  const [seedSuccess, setSeedSuccess] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleSeedData = async () => {
+    if (!window.confirm('আপনি কি ডাটাবেসে প্রাথমিক ডেমো তথ্য সংরক্ষণ করতে চান?')) return;
+    setSeeding(true);
+    try {
+      await seedDemoDataToFirestore();
+      setSeedSuccess(true);
+      setTimeout(() => setSeedSuccess(false), 4000);
+    } finally {
+      setSeeding(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadDataFromFirestore();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Helper to convert English numbers to Bengali numerals
   const toBanglaNum = (num: number) => {
@@ -135,14 +166,75 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="p-6 sm:p-8 space-y-8 max-w-7xl mx-auto">
       {/* Top Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-          ড্যাশবোর্ড
-        </h1>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1">
-          এক নজরে বিদ্যালয়ের তথ্য ও সাম্প্রতিক কার্যক্রম
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            ড্যাশবোর্ড
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">
+            এক নজরে বিদ্যালয়ের তথ্য ও সাম্প্রতিক কার্যক্রম
+          </p>
+        </div>
+
+        {/* Firestore Sync Action Buttons */}
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing || isFirestoreLoading}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-xs font-semibold shadow-2xs transition cursor-pointer disabled:opacity-50"
+            title="Firestore থেকে সর্বশেষ ডাটা রিফ্রেশ করুন"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-emerald-700 ${refreshing || isFirestoreLoading ? 'animate-spin' : ''}`} />
+            <span>{refreshing ? 'লোড হচ্ছে...' : 'ডাটা রিফ্রেশ'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSeedData}
+            disabled={seeding}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold shadow-2xs transition cursor-pointer disabled:opacity-50"
+            title="ডাটাবেস খালি থাকলে প্রাথমিক ডেমো তথ্য সংরক্ষণ করুন"
+          >
+            <Database className="w-3.5 h-3.5 text-emerald-700" />
+            <span>{seeding ? 'সংরক্ষণ হচ্ছে...' : 'ডেমো ডাটা সিঙ্ক'}</span>
+          </button>
+        </div>
       </div>
+
+      {seedSuccess && (
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>প্রাথমিক ডেমো তথ্য সফলভাবে Firebase Firestore-এ সংরক্ষণ করা হয়েছে!</span>
+        </div>
+      )}
+
+      {/* Empty Database Helper Notice */}
+      {teachers.length === 0 && students.length === 0 && notices.length === 0 && (
+        <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-amber-700" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-amber-900">
+                ডাটাবেসে কোনো তথ্য নেই (Empty Database)
+              </h3>
+              <p className="text-xs text-amber-700 mt-0.5">
+                বর্তমানে আপনার ক্লাউড ডাটাবেস সম্পূর্ণ খালি অবস্থায় রয়েছে। আপনি চাইলে বিদ্যালয়টির প্রাথমিক ডেমো তথ্য এক ক্লিকেই Firestore-এ সংরক্ষণ করতে পারেন।
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleSeedData}
+            disabled={seeding}
+            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-xs transition shrink-0 cursor-pointer disabled:opacity-50"
+          >
+            {seeding ? 'সংরক্ষণ হচ্ছে...' : 'প্রাথমিক ডেমো তথ্য যুক্ত করুন'}
+          </button>
+        </div>
+      )}
 
       {/* 10 Stat Cards in 2 rows of 5 matching screenshot */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">

@@ -31,9 +31,20 @@ export const NewsSection: React.FC = () => {
         </p>
       </div>
 
-      {/* Grid: 1 large on left, 3 small on right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column (Featured News) */}
+      {/* News Content or Empty State */}
+      {news.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center max-w-lg mx-auto shadow-xs space-y-3">
+          <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <Calendar className="w-7 h-7" />
+          </div>
+          <h3 className="text-base font-bold text-gray-800">বর্তমানে কোনো সংবাদ নেই</h3>
+          <p className="text-xs text-gray-500">
+            বিদ্যালয়ের সাম্প্রতিক সংবাদ প্রকাশিত হলে এখানে দেখতে পাবেন।
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column (Featured News) */}
         {featured && (
           <div
             onClick={() => openNewsModal(featured)}
@@ -136,6 +147,7 @@ export const NewsSection: React.FC = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* News Modal with Photos Viewer */}
       {selectedNews && (

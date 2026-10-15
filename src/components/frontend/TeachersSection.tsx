@@ -35,9 +35,20 @@ export const TeachersSection: React.FC = () => {
         </p>
       </div>
 
-      {/* Teachers Grid (4 cols on lg) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {teachers.map((teacher) => (
+      {/* Teachers Grid or Empty State */}
+      {teachers.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center max-w-lg mx-auto shadow-xs space-y-3">
+          <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <GraduationCap className="w-7 h-7" />
+          </div>
+          <h3 className="text-base font-bold text-gray-800">শিক্ষক মণ্ডলীর তথ্য খালি রয়েছে</h3>
+          <p className="text-xs text-gray-500">
+            শিক্ষকবৃন্দের পরিচিতি ও পদবী তথ্য শীঘ্রই হালনাগাদ করা হবে।
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {teachers.map((teacher) => (
           <div
             key={teacher.id}
             onClick={() => setViewingTeacher(teacher)}
@@ -98,6 +109,7 @@ export const TeachersSection: React.FC = () => {
           </div>
         ))}
       </div>
+      )}
 
       {/* Teacher Detailed Profile Modal */}
       {viewingTeacher && (

@@ -67,10 +67,21 @@ export const NoticeBoard: React.FC = () => {
         </p>
       </div>
 
-      {/* Two Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Pinned Notice Card (4 cols) */}
-        <div className="lg:col-span-4">
+      {/* Notices Content or Empty State */}
+      {notices.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center max-w-lg mx-auto shadow-xs space-y-3">
+          <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <FileText className="w-7 h-7" />
+          </div>
+          <h3 className="text-base font-bold text-gray-800">বর্তমানে কোনো নোটিশ নেই</h3>
+          <p className="text-xs text-gray-500">
+            বিদ্যালয়ের নতুন নোটিশ বা বিজ্ঞপ্তি প্রকাশিত হলে এখানে প্রদর্শিত হবে।
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Column: Pinned Notice Card (4 cols) */}
+          <div className="lg:col-span-4">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden h-full flex flex-col">
             {/* Dark green header bar */}
             <div className="bg-[#0f5338] text-white px-5 py-3 flex items-center justify-between">
@@ -316,6 +327,7 @@ export const NoticeBoard: React.FC = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* Notice Detail Modal */}
       {selectedNotice && (

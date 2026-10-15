@@ -23,9 +23,20 @@ export const EventsSection: React.FC = () => {
         </p>
       </div>
 
-      {/* Grid of 4 Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {events.map((evt) => {
+      {/* Events Content or Empty State */}
+      {events.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center max-w-lg mx-auto shadow-xs space-y-3">
+          <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <Clock className="w-7 h-7" />
+          </div>
+          <h3 className="text-base font-bold text-gray-800">কোনো আসন্ন ইভেন্ট নেই</h3>
+          <p className="text-xs text-gray-500">
+            নতুন ইভেন্ট বা অনুষ্ঠানের তারিখ নির্ধারিত হলে এখানে জানানো হবে।
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {events.map((evt) => {
           const allImages = [
             ...(evt.imageUrl ? [evt.imageUrl] : []),
             ...(evt.images || []),
@@ -107,6 +118,7 @@ export const EventsSection: React.FC = () => {
           );
         })}
       </div>
+      )}
 
       {/* Event Detail & Gallery Modal */}
       {selectedEvent && (

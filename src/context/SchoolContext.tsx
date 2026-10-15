@@ -13,10 +13,10 @@ import {
   deleteDocument,
   saveConfigDoc,
   batchSaveDocuments,
+  fetchCollectionOnce,
+  fetchAllConfigDocsOnce,
   seedInitialCollectionIfEmpty,
   seedInitialConfigIfEmpty,
-  listenCollection,
-  listenConfigDoc,
   COLLECTIONS,
   CONFIG_DOCS,
 } from '../services/firestoreService';
@@ -268,6 +268,11 @@ interface SchoolContextType {
   // Quick stats
   unreadMessageCount: number;
   totalGalleryPhotos: number;
+
+  // Firestore sync & loading
+  isFirestoreLoading: boolean;
+  loadDataFromFirestore: () => Promise<void>;
+  seedDemoDataToFirestore: () => Promise<void>;
 }
 
 const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
@@ -999,157 +1004,143 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     localStorage.setItem('dhs_activities', JSON.stringify(activities));
   }, [activities]);
 
-  // Real-time Firestore Live Synchronization & Initial Auto-Seed
-  useEffect(() => {
-    let isMounted = true;
+  // Single-read Firestore Data Loader on initial page mount (reduces reads dramatically)
+  const [isFirestoreLoading, setIsFirestoreLoading] = useState(false);
+  const [, setFirestoreLoaded] = useState(false);
 
-    const setupFirestore = async () => {
-      try {
-        await Promise.allSettled([
-          seedInitialCollectionIfEmpty(COLLECTIONS.TEACHERS, initialTeachers),
-          seedInitialCollectionIfEmpty(COLLECTIONS.STAFF, initialStaff),
-          seedInitialCollectionIfEmpty(COLLECTIONS.STUDENTS, initialStudents),
-          seedInitialCollectionIfEmpty(COLLECTIONS.NOTICES, initialNotices),
-          seedInitialCollectionIfEmpty(COLLECTIONS.NEWS, initialNews),
-          seedInitialCollectionIfEmpty(COLLECTIONS.EVENTS, initialEvents),
-          seedInitialCollectionIfEmpty(COLLECTIONS.ACHIEVEMENTS, initialAchievements),
-          seedInitialCollectionIfEmpty(COLLECTIONS.GALLERY, initialGalleryAlbums),
-          seedInitialCollectionIfEmpty(COLLECTIONS.ADMISSIONS, initialAdmissions),
-          seedInitialCollectionIfEmpty(COLLECTIONS.MESSAGES, initialMessages),
-          seedInitialCollectionIfEmpty(COLLECTIONS.EXAM_RESULTS, initialExamResults),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.SITE_SETTINGS, initialSiteSettings),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.HERO_SLIDES, initialHeroSlides),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.NAVIGATION_ITEMS, initialNavigationItems),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.PERFORMANCE_TRENDS, initialPerformanceTrends),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.SECTION_VISIBILITY, initialSectionVisibility),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.DOWNLOADABLE_FORMS, initialDownloadableForms),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.ADMIT_CARD_CONFIG, initialAdmitCardConfig),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.LEADERSHIP, initialLeadership),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.PROGRAMS, initialAcademicPrograms),
-        ]);
-      } catch (err) {
-        console.warn('Initial Firestore setup notice:', err);
+  const loadDataFromFirestore = async () => {
+    setIsFirestoreLoading(true);
+    try {
+      // 1. Fetch all config documents in a single collection query (1 network call)
+      const configs = await fetchAllConfigDocsOnce();
+      if (configs[CONFIG_DOCS.SITE_SETTINGS]) {
+        setSiteSettings(configs[CONFIG_DOCS.SITE_SETTINGS]);
       }
-    };
+      if (configs[CONFIG_DOCS.HERO_SLIDES]) {
+        setHeroSlides(configs[CONFIG_DOCS.HERO_SLIDES]);
+      }
+      if (configs[CONFIG_DOCS.NAVIGATION_ITEMS]) {
+        setNavigationItems(configs[CONFIG_DOCS.NAVIGATION_ITEMS]);
+      }
+      if (configs[CONFIG_DOCS.PERFORMANCE_TRENDS]) {
+        setPerformanceTrends(configs[CONFIG_DOCS.PERFORMANCE_TRENDS]);
+      }
+      if (configs[CONFIG_DOCS.SECTION_VISIBILITY]) {
+        setSectionVisibility(configs[CONFIG_DOCS.SECTION_VISIBILITY]);
+      }
+      if (configs[CONFIG_DOCS.DOWNLOADABLE_FORMS]) {
+        setDownloadableForms(configs[CONFIG_DOCS.DOWNLOADABLE_FORMS]);
+      }
+      if (configs[CONFIG_DOCS.ADMIT_CARD_CONFIG]) {
+        setAdmitCardConfig(configs[CONFIG_DOCS.ADMIT_CARD_CONFIG]);
+      }
+      if (configs[CONFIG_DOCS.LEADERSHIP]) {
+        setLeadership(configs[CONFIG_DOCS.LEADERSHIP]);
+      }
+      if (configs[CONFIG_DOCS.PROGRAMS]) {
+        setAcademicPrograms(configs[CONFIG_DOCS.PROGRAMS]);
+      }
 
-    setupFirestore();
+      // 2. Fetch public collections once (only 1 read per collection, no multi-listener streams)
+      const [
+        fetchedTeachers,
+        fetchedStaff,
+        fetchedStudents,
+        fetchedNotices,
+        fetchedNews,
+        fetchedEvents,
+        fetchedAchievements,
+        fetchedGallery,
+        fetchedExamResults,
+      ] = await Promise.all([
+        fetchCollectionOnce<Teacher>(COLLECTIONS.TEACHERS),
+        fetchCollectionOnce<Staff>(COLLECTIONS.STAFF),
+        fetchCollectionOnce<Student>(COLLECTIONS.STUDENTS),
+        fetchCollectionOnce<Notice>(COLLECTIONS.NOTICES),
+        fetchCollectionOnce<NewsItem>(COLLECTIONS.NEWS),
+        fetchCollectionOnce<EventItem>(COLLECTIONS.EVENTS),
+        fetchCollectionOnce<AchievementItem>(COLLECTIONS.ACHIEVEMENTS),
+        fetchCollectionOnce<GalleryAlbum>(COLLECTIONS.GALLERY),
+        fetchCollectionOnce<ExamResult>(COLLECTIONS.EXAM_RESULTS),
+      ]);
 
-    const unsubs: (() => void)[] = [
-      listenCollection<Teacher>(COLLECTIONS.TEACHERS, (items) => {
-        if (isMounted && items.length > 0) setTeachers(items);
-      }),
-      listenCollection<Staff>(COLLECTIONS.STAFF, (items) => {
-        if (isMounted && items.length > 0) setStaff(items);
-      }),
-      listenCollection<Student>(COLLECTIONS.STUDENTS, (items) => {
-        if (isMounted && items.length > 0) setStudents(items);
-      }),
-      listenCollection<Student>(COLLECTIONS.DELETED_STUDENTS, (items) => {
-        if (isMounted) setDeletedStudents(items);
-      }),
-      listenCollection<Notice>(COLLECTIONS.NOTICES, (items) => {
-        if (isMounted && items.length > 0) setNotices(items);
-      }),
-      listenCollection<NewsItem>(COLLECTIONS.NEWS, (items) => {
-        if (isMounted && items.length > 0) setNews(items);
-      }),
-      listenCollection<EventItem>(COLLECTIONS.EVENTS, (items) => {
-        if (isMounted && items.length > 0) setEvents(items);
-      }),
-      listenCollection<AchievementItem>(COLLECTIONS.ACHIEVEMENTS, (items) => {
-        if (isMounted && items.length > 0) setAchievements(items);
-      }),
-      listenCollection<GalleryAlbum>(COLLECTIONS.GALLERY, (items) => {
-        if (isMounted && items.length > 0) setGalleryAlbums(items);
-      }),
-      listenCollection<AdmissionApplication>(COLLECTIONS.ADMISSIONS, (items) => {
-        if (isMounted && items.length > 0) setAdmissions(items);
-      }),
-      listenCollection<ContactMessage>(COLLECTIONS.MESSAGES, (items) => {
-        if (isMounted && items.length > 0) setMessages(items);
-      }),
-      listenCollection<ExamResult>(COLLECTIONS.EXAM_RESULTS, (items) => {
-        if (isMounted && items.length > 0) setExamResults(items);
-      }),
-      listenCollection<ActivityLog>(COLLECTIONS.ACTIVITIES, (items) => {
-        if (isMounted && items.length > 0) setActivities(items);
-      }),
+      // If Firestore has data or empty collections, reflect them into state
+      // This properly supports empty database states without crashing!
+      setTeachers(fetchedTeachers);
+      setStaff(fetchedStaff);
+      setStudents(fetchedStudents);
+      setNotices(fetchedNotices);
+      setNews(fetchedNews);
+      setEvents(fetchedEvents);
+      setAchievements(fetchedAchievements);
+      setGalleryAlbums(fetchedGallery);
+      setExamResults(fetchedExamResults);
 
-      // Config Docs
-      listenConfigDoc<SiteSettings>(CONFIG_DOCS.SITE_SETTINGS, (data) => {
-        if (isMounted && data) setSiteSettings(data);
-      }),
-      listenConfigDoc<HeroSlide[]>(CONFIG_DOCS.HERO_SLIDES, (data) => {
-        if (isMounted && data) setHeroSlides(data);
-      }),
-      listenConfigDoc<NavigationItem[]>(CONFIG_DOCS.NAVIGATION_ITEMS, (data) => {
-        if (isMounted && data) setNavigationItems(data);
-      }),
-      listenConfigDoc<PerformanceTrendItem[]>(CONFIG_DOCS.PERFORMANCE_TRENDS, (data) => {
-        if (isMounted && data) setPerformanceTrends(data);
-      }),
-      listenConfigDoc<SectionVisibility>(CONFIG_DOCS.SECTION_VISIBILITY, (data) => {
-        if (isMounted && data) setSectionVisibility(data);
-      }),
-      listenConfigDoc<DownloadableForm[]>(CONFIG_DOCS.DOWNLOADABLE_FORMS, (data) => {
-        if (isMounted && data) setDownloadableForms(data);
-      }),
-      listenConfigDoc<AdmitCardConfig>(CONFIG_DOCS.ADMIT_CARD_CONFIG, (data) => {
-        if (isMounted && data) setAdmitCardConfig(data);
-      }),
-      listenConfigDoc<LeadershipMessage[]>(CONFIG_DOCS.LEADERSHIP, (data) => {
-        if (isMounted && data) setLeadership(data);
-      }),
-      listenConfigDoc<AcademicProgram[]>(CONFIG_DOCS.PROGRAMS, (data) => {
-        if (isMounted && data) setAcademicPrograms(data);
-      }),
-    ];
+      setFirestoreLoaded(true);
+    } catch (err) {
+      console.warn('Initial Firestore load notice:', err);
+    } finally {
+      setIsFirestoreLoading(false);
+    }
+  };
 
-    return () => {
-      isMounted = false;
-      unsubs.forEach((unsub) => {
-        try {
-          unsub();
-        } catch {
-          // ignore
-        }
-      });
-    };
+  // Run single-load on page open
+  useEffect(() => {
+    loadDataFromFirestore();
   }, []);
 
-  // When admin logs in, re-run seeding for any empty collections using authenticated credentials
+  // When admin logs in, load admin-only collections (deleted_students, admissions, messages, activities)
   useEffect(() => {
-    if (!adminUser) return;
-    const seedAsAdmin = async () => {
+    if (!adminUser && !isAdminAuthenticated) return;
+    const loadAdminCollections = async () => {
       try {
-        await Promise.allSettled([
-          seedInitialCollectionIfEmpty(COLLECTIONS.TEACHERS, initialTeachers),
-          seedInitialCollectionIfEmpty(COLLECTIONS.STAFF, initialStaff),
-          seedInitialCollectionIfEmpty(COLLECTIONS.STUDENTS, initialStudents),
-          seedInitialCollectionIfEmpty(COLLECTIONS.NOTICES, initialNotices),
-          seedInitialCollectionIfEmpty(COLLECTIONS.NEWS, initialNews),
-          seedInitialCollectionIfEmpty(COLLECTIONS.EVENTS, initialEvents),
-          seedInitialCollectionIfEmpty(COLLECTIONS.ACHIEVEMENTS, initialAchievements),
-          seedInitialCollectionIfEmpty(COLLECTIONS.GALLERY, initialGalleryAlbums),
-          seedInitialCollectionIfEmpty(COLLECTIONS.ADMISSIONS, initialAdmissions),
-          seedInitialCollectionIfEmpty(COLLECTIONS.MESSAGES, initialMessages),
-          seedInitialCollectionIfEmpty(COLLECTIONS.EXAM_RESULTS, initialExamResults),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.SITE_SETTINGS, initialSiteSettings),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.HERO_SLIDES, initialHeroSlides),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.NAVIGATION_ITEMS, initialNavigationItems),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.PERFORMANCE_TRENDS, initialPerformanceTrends),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.SECTION_VISIBILITY, initialSectionVisibility),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.DOWNLOADABLE_FORMS, initialDownloadableForms),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.ADMIT_CARD_CONFIG, initialAdmitCardConfig),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.LEADERSHIP, initialLeadership),
-          seedInitialConfigIfEmpty(CONFIG_DOCS.PROGRAMS, initialAcademicPrograms),
+        const [delStudents, adms, msgs, acts] = await Promise.all([
+          fetchCollectionOnce<Student>(COLLECTIONS.DELETED_STUDENTS),
+          fetchCollectionOnce<AdmissionApplication>(COLLECTIONS.ADMISSIONS),
+          fetchCollectionOnce<ContactMessage>(COLLECTIONS.MESSAGES),
+          fetchCollectionOnce<ActivityLog>(COLLECTIONS.ACTIVITIES),
         ]);
-      } catch (e) {
-        console.warn('Admin seed notice:', e);
+        setDeletedStudents(delStudents);
+        setAdmissions(adms);
+        setMessages(msgs);
+        setActivities(acts);
+      } catch (err) {
+        console.warn('Admin collections load notice:', err);
       }
     };
-    seedAsAdmin();
-  }, [adminUser]);
+    loadAdminCollections();
+  }, [adminUser, isAdminAuthenticated]);
+
+  // One-click demo data seeder for authenticated admin if database is empty
+  const seedDemoDataToFirestore = async () => {
+    try {
+      await Promise.allSettled([
+        batchSaveDocuments(COLLECTIONS.TEACHERS, initialTeachers),
+        batchSaveDocuments(COLLECTIONS.STAFF, initialStaff),
+        batchSaveDocuments(COLLECTIONS.STUDENTS, initialStudents),
+        batchSaveDocuments(COLLECTIONS.NOTICES, initialNotices),
+        batchSaveDocuments(COLLECTIONS.NEWS, initialNews),
+        batchSaveDocuments(COLLECTIONS.EVENTS, initialEvents),
+        batchSaveDocuments(COLLECTIONS.ACHIEVEMENTS, initialAchievements),
+        batchSaveDocuments(COLLECTIONS.GALLERY, initialGalleryAlbums),
+        batchSaveDocuments(COLLECTIONS.ADMISSIONS, initialAdmissions),
+        batchSaveDocuments(COLLECTIONS.MESSAGES, initialMessages),
+        batchSaveDocuments(COLLECTIONS.EXAM_RESULTS, initialExamResults),
+        saveConfigDoc(CONFIG_DOCS.SITE_SETTINGS, initialSiteSettings),
+        saveConfigDoc(CONFIG_DOCS.HERO_SLIDES, initialHeroSlides),
+        saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, initialNavigationItems),
+        saveConfigDoc(CONFIG_DOCS.PERFORMANCE_TRENDS, initialPerformanceTrends),
+        saveConfigDoc(CONFIG_DOCS.SECTION_VISIBILITY, initialSectionVisibility),
+        saveConfigDoc(CONFIG_DOCS.DOWNLOADABLE_FORMS, initialDownloadableForms),
+        saveConfigDoc(CONFIG_DOCS.ADMIT_CARD_CONFIG, initialAdmitCardConfig),
+        saveConfigDoc(CONFIG_DOCS.LEADERSHIP, initialLeadership),
+        saveConfigDoc(CONFIG_DOCS.PROGRAMS, initialAcademicPrograms),
+      ]);
+      await loadDataFromFirestore();
+    } catch (e) {
+      console.warn('Seed demo data notice:', e);
+    }
+  };
 
   const generateUniqueId = (prefix: string) => {
     return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -2316,6 +2307,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         loginAdmin,
         loginWithGoogle,
         logoutAdmin,
+        isFirestoreLoading,
+        loadDataFromFirestore,
+        seedDemoDataToFirestore,
       }}
     >
       {children}
