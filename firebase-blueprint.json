@@ -1,0 +1,235 @@
+{
+  "entities": {
+    "Teacher": {
+      "title": "Teacher",
+      "description": "Faculty member at the school",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "designation": { "type": "string" },
+        "subject": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "initial": { "type": "string" },
+        "image": { "type": "string" }
+      },
+      "required": ["id", "name", "designation"]
+    },
+    "Staff": {
+      "title": "Staff",
+      "description": "Staff member or administrative officer",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "designation": { "type": "string" },
+        "department": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string" },
+        "initial": { "type": "string" },
+        "image": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Student record at the school",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "studentClass": { "type": "string" },
+        "roll": { "type": "string" },
+        "section": { "type": "string" },
+        "group": { "type": "string" },
+        "image": { "type": "string" },
+        "gender": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "guardianName": { "type": "string" },
+        "guardianPhone": { "type": "string" }
+      },
+      "required": ["id", "name", "studentClass", "roll"]
+    },
+    "Notice": {
+      "title": "Notice",
+      "description": "Official notice published by the institution",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "category": { "type": "string" },
+        "content": { "type": "string" },
+        "attachmentUrl": { "type": "string" }
+      },
+      "required": ["id", "title", "date", "category"]
+    },
+    "NewsItem": {
+      "title": "NewsItem",
+      "description": "News article or press update",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "summary": { "type": "string" },
+        "content": { "type": "string" },
+        "image": { "type": "string" },
+        "category": { "type": "string" }
+      },
+      "required": ["id", "title", "date"]
+    },
+    "EventItem": {
+      "title": "EventItem",
+      "description": "School event or calendar occasion",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "location": { "type": "string" },
+        "description": { "type": "string" },
+        "image": { "type": "string" }
+      },
+      "required": ["id", "title", "date"]
+    },
+    "AchievementItem": {
+      "title": "AchievementItem",
+      "description": "School success or trophy honor",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "year": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "image": { "type": "string" }
+      },
+      "required": ["id", "title", "year"]
+    },
+    "GalleryAlbum": {
+      "title": "GalleryAlbum",
+      "description": "Photo album of school memories",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "coverImage": { "type": "string" },
+        "images": { "type": "array" }
+      },
+      "required": ["id", "title"]
+    },
+    "AdmissionApplication": {
+      "title": "AdmissionApplication",
+      "description": "Student online admission submission",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentName": { "type": "string" },
+        "desiredClass": { "type": "string" },
+        "guardianPhone": { "type": "string" },
+        "status": { "type": "string" },
+        "appliedDate": { "type": "string" }
+      },
+      "required": ["id", "studentName", "desiredClass", "guardianPhone"]
+    },
+    "ContactMessage": {
+      "title": "ContactMessage",
+      "description": "Feedback message submitted from frontend",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "date": { "type": "string" },
+        "read": { "type": "boolean" }
+      },
+      "required": ["id", "name", "message"]
+    },
+    "ExamResult": {
+      "title": "ExamResult",
+      "description": "Student exam report card result",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "roll": { "type": "string" },
+        "studentClass": { "type": "string" },
+        "examName": { "type": "string" },
+        "year": { "type": "string" },
+        "gpa": { "type": "number" },
+        "grade": { "type": "string" }
+      },
+      "required": ["id", "roll", "studentClass", "examName"]
+    },
+    "SchoolConfig": {
+      "title": "SchoolConfig",
+      "description": "General settings, layout config, and page preferences",
+      "type": "object",
+      "properties": {
+        "key": { "type": "string" },
+        "data": { "type": "object" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["key"]
+    }
+  },
+  "firestore": {
+    "/teachers/{teacherId}": {
+      "schema": "Teacher",
+      "description": "School faculty directory"
+    },
+    "/staff/{staffId}": {
+      "schema": "Staff",
+      "description": "School staff and employees"
+    },
+    "/students/{studentId}": {
+      "schema": "Student",
+      "description": "Student roster"
+    },
+    "/notices/{noticeId}": {
+      "schema": "Notice",
+      "description": "Official institutional notices"
+    },
+    "/news/{newsId}": {
+      "schema": "NewsItem",
+      "description": "Published news updates"
+    },
+    "/events/{eventId}": {
+      "schema": "EventItem",
+      "description": "Campus events"
+    },
+    "/achievements/{achievementId}": {
+      "schema": "AchievementItem",
+      "description": "School achievements and awards"
+    },
+    "/gallery/{albumId}": {
+      "schema": "GalleryAlbum",
+      "description": "Photo albums"
+    },
+    "/admissions/{applicationId}": {
+      "schema": "AdmissionApplication",
+      "description": "Online admission applications"
+    },
+    "/messages/{messageId}": {
+      "schema": "ContactMessage",
+      "description": "Inquiries and contact feedback"
+    },
+    "/exam_results/{resultId}": {
+      "schema": "ExamResult",
+      "description": "Exam transcripts and results"
+    },
+    "/school_config/{configDocId}": {
+      "schema": "SchoolConfig",
+      "description": "Site settings, hero slides, sections visibility, etc."
+    }
+  }
+}

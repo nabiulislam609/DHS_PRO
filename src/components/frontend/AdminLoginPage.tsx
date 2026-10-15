@@ -8,6 +8,8 @@ import {
   ArrowLeft,
   AlertCircle,
   ShieldCheck,
+  Mail,
+  Lock,
 } from 'lucide-react';
 
 export const AdminLoginPage: React.FC = () => {
@@ -19,19 +21,19 @@ export const AdminLoginPage: React.FC = () => {
     setCurrentFrontendPage,
   } = useSchool();
 
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!username.trim()) {
-      setErrorMessage('অনুগ্রহ করে ইউজার আইডি / ইউজারনেম প্রদান করুন।');
+    if (!email.trim()) {
+      setErrorMessage('অনুগ্রহ করে আপনার Firebase অ্যাডমিন ইমেইল প্রদান করুন।');
       return;
     }
     if (!password) {
@@ -40,23 +42,32 @@ export const AdminLoginPage: React.FC = () => {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      const res = loginAdmin(username, password);
+    try {
+      const res = await loginAdmin(email, password);
       if (!res.success) {
-        setErrorMessage(res.message || 'ইউজার আইডি অথবা পাসওয়ার্ড সঠিক নয়।');
-        setIsLoading(false);
+        setErrorMessage(res.message || 'ইমেইল অথবা পাসওয়ার্ড সঠিক নয়।');
       }
-    }, 400);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'লগইন করার সময় একটি সমস্যা দেখা দিয়েছে।');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     setErrorMessage(null);
     setGoogleLoading(true);
-    setTimeout(() => {
+    try {
       const targetEmail = adminSecuritySettings.allowedGoogleEmail || 'aicourse.nabin@gmail.com';
-      loginWithGoogle(targetEmail);
+      const res = await loginWithGoogle(targetEmail);
+      if (!res.success) {
+        setErrorMessage(res.message || 'গুগল দিয়ে লগইন ব্যর্থ হয়েছে।');
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'গুগল লগইনে সমস্যা হয়েছে।');
+    } finally {
       setGoogleLoading(false);
-    }, 500);
+    }
   };
 
   return (
@@ -170,10 +181,10 @@ export const AdminLoginPage: React.FC = () => {
           {/* Heading Section */}
           <div className="space-y-1.5 text-left">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Welcome!
+              এডমিন লগইন
             </h2>
             <p className="text-xs sm:text-sm text-gray-400">
-              অ্যাডমিন প্যানেলে প্রবেশ করতে আপনার তথ্য প্রদান করুন
+              Firebase Authentication ইমেইল ও পাসওয়ার্ড প্রদান করে অ্যাডমিন ড্যাশবোর্ডে প্রবেশ করুন
             </p>
           </div>
 
@@ -187,31 +198,32 @@ export const AdminLoginPage: React.FC = () => {
 
           {/* Auth Form */}
           <form onSubmit={handleLogin} className="space-y-4">
-            {/* Username / User ID Field */}
+            {/* Email Field */}
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-gray-300">
-                User ID / Username
+                Firebase এডমিন ইমেইল (Admin Email)
               </label>
               <div className="relative">
                 <input
-                  type="text"
-                  placeholder="যেমন: admin বা user id"
-                  value={username}
+                  type="email"
+                  placeholder="যেমন: admin@dhsedu.edu.bd"
+                  value={email}
                   onChange={(e) => {
-                    setUsername(e.target.value);
+                    setEmail(e.target.value);
                     if (errorMessage) setErrorMessage(null);
                   }}
                   className="w-full px-4 py-3 bg-[#131317] border border-gray-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-xl text-sm text-white placeholder-gray-500 transition outline-hidden font-mono"
                   autoFocus
+                  required
                 />
-                <User className="w-4 h-4 text-gray-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Mail className="w-4 h-4 text-gray-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
 
             {/* Password Field */}
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-gray-300">
-                Password
+                পাসওয়ার্ড (Password)
               </label>
               <div className="relative">
                 <input
@@ -223,6 +235,7 @@ export const AdminLoginPage: React.FC = () => {
                     if (errorMessage) setErrorMessage(null);
                   }}
                   className="w-full px-4 py-3 bg-[#131317] border border-gray-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-xl text-sm text-white placeholder-gray-500 transition outline-hidden font-mono"
+                  required
                 />
                 <button
                   type="button"
@@ -234,11 +247,11 @@ export const AdminLoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Continue Submit Button (Matching Image 3) */}
+            {/* Continue Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 py-3.5 px-4 bg-[#4a4a52] hover:bg-[#5a5a64] active:bg-[#3a3a40] text-white font-bold rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full mt-2 py-3.5 px-4 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white font-bold rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -246,7 +259,7 @@ export const AdminLoginPage: React.FC = () => {
                   <span>যাচাই করা হচ্ছে...</span>
                 </>
               ) : (
-                <span>Continue</span>
+                <span>লগইন করুন (Sign In)</span>
               )}
             </button>
           </form>

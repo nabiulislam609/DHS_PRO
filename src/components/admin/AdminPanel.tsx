@@ -34,6 +34,7 @@ export const AdminPanel: React.FC = () => {
     unreadMessageCount,
     admissions,
     adminSecuritySettings,
+    adminUser,
     logoutAdmin,
   } = useSchool();
 
@@ -126,12 +127,18 @@ export const AdminPanel: React.FC = () => {
 
             {/* Admin Avatar & Logout */}
             <div className="flex items-center gap-2 pl-2 border-l border-gray-200">
-              <div className="w-8 h-8 rounded-full bg-emerald-800 text-white font-bold flex items-center justify-center text-xs uppercase">
-                {adminSecuritySettings.username?.charAt(0) || 'A'}
+              <div
+                className="w-8 h-8 rounded-full bg-emerald-800 text-white font-bold flex items-center justify-center text-xs uppercase"
+                title={adminUser?.email || adminSecuritySettings.username || 'Admin'}
+              >
+                {adminUser?.email?.charAt(0) || adminSecuritySettings.username?.charAt(0) || 'A'}
               </div>
-              <span className="text-xs font-bold text-gray-700 hidden sm:inline">
-                {adminSecuritySettings.username || 'এডমিন'}
-              </span>
+              <div className="hidden sm:block text-left">
+                <span className="text-xs font-bold text-gray-800 block truncate max-w-[150px]">
+                  {adminUser?.email || adminSecuritySettings.username || 'এডমিন'}
+                </span>
+                <span className="text-[10px] text-emerald-700 block font-medium">Firebase Auth</span>
+              </div>
               <button
                 onClick={logoutAdmin}
                 className="ml-1 p-1 text-gray-400 hover:text-rose-600 transition cursor-pointer"
