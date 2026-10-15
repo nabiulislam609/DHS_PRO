@@ -82,7 +82,7 @@ export const ManageStudents: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'active' | 'deleted'>('active');
   const [deletedSearchQuery, setDeletedSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<{
-    type: 'success' | 'warning' | 'info';
+    type: 'success' | 'warning' | 'info' | 'error';
     text: string;
   } | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -106,9 +106,9 @@ export const ManageStudents: React.FC = () => {
   const [isExportingStudentPdf, setIsExportingStudentPdf] = useState(false);
   const [isPrintingSingle, setIsPrintingSingle] = useState(false);
 
-  const showToast = (type: 'success' | 'warning' | 'info', text: string) => {
+  const showToast = (type: 'success' | 'warning' | 'info' | 'error', text: string) => {
     setToastMessage({ type, text });
-    setTimeout(() => setToastMessage(null), 4500);
+    setTimeout(() => setToastMessage(null), 5000);
   };
 
   // Detect duplicate students
@@ -143,60 +143,84 @@ export const ManageStudents: React.FC = () => {
     });
   }, [deletedStudents, deletedSearchQuery]);
 
-  const handleConfirmSingleDelete = () => {
+  const handleConfirmSingleDelete = async () => {
     if (!studentToDelete) return;
-    deleteStudent(studentToDelete.id, studentToDelete.roll);
-    setSelectedIds((prev) => prev.filter((id) => id !== studentToDelete.id));
-    showToast(
-      'success',
-      `✓ "${studentToDelete.name}" (রোল: ${studentToDelete.roll})-কে মুছে রিসাইকেল বিনে রাখা হয়েছে। 'মুছে ফেলা শিক্ষার্থী' তালিকা থেকে যেকোনো সময় পুনরায় যুক্ত করা যাবে।`
-    );
-    setStudentToDelete(null);
+    try {
+      await deleteStudent(studentToDelete.id, studentToDelete.roll);
+      setSelectedIds((prev) => prev.filter((id) => id !== studentToDelete.id));
+      showToast(
+        'success',
+        `✓ "${studentToDelete.name}" (রোল: ${studentToDelete.roll})-কে মুছে রিসাইকেল বিনে রাখা হয়েছে। 'মুছে ফেলা শিক্ষার্থী' তালিকা থেকে যেকোনো সময় পুনরায় যুক্ত করা যাবে।`
+      );
+      setStudentToDelete(null);
+    } catch (err: any) {
+      showToast('error', err?.message || 'শিক্ষার্থী মুছে ফেলতে সমস্যা হয়েছে');
+    }
   };
 
-  const handleRestoreStudent = (s: Student) => {
-    restoreStudent(s.id);
-    showToast(
-      'success',
-      `✓ "${s.name}" (শ্রেণি: ${s.class || s.studentClass}, রোল: ${s.roll})-কে সফলভাবে শিক্ষার্থী তালিকায় পুনরায় যুক্ত করা হয়েছে।`
-    );
+  const handleRestoreStudent = async (s: Student) => {
+    try {
+      await restoreStudent(s.id);
+      showToast(
+        'success',
+        `✓ "${s.name}" (শ্রেণি: ${s.class || s.studentClass}, রোল: ${s.roll})-কে সফলভাবে শিক্ষার্থী তালিকায় পুনরায় যুক্ত করা হয়েছে।`
+      );
+    } catch (err: any) {
+      showToast('error', err?.message || 'শিক্ষার্থী পুনরুদ্ধার করতে সমস্যা হয়েছে');
+    }
   };
 
-  const handleRestoreAllDeleted = () => {
+  const handleRestoreAllDeleted = async () => {
     if (deletedStudents.length === 0) return;
     const count = deletedStudents.length;
-    deletedStudents.forEach((s) => restoreStudent(s.id));
-    showToast('success', `✓ সকল (${count} জন) শিক্ষার্থীকে পুনরায় সফলভাবে যুক্ত করা হয়েছে।`);
+    try {
+      await Promise.all(deletedStudents.map((s) => restoreStudent(s.id)));
+      showToast('success', `✓ সকল (${count} জন) শিক্ষার্থীকে পুনরায় সফলভাবে যুক্ত করা হয়েছে।`);
+    } catch (err: any) {
+      showToast('error', err?.message || 'শিক্ষার্থীদের পুনরুদ্ধার করতে সমস্যা হয়েছে');
+    }
   };
 
-  const handleEmptyTrash = () => {
+  const handleEmptyTrash = async () => {
     if (
       confirm(
         'আপনি কি নিশ্চিত যে রিসাইকেল বিনের সকল শিক্ষার্থীর তথ্য স্থায়ীভাবে সম্পূর্ণ মুছে ফেলতে চান? এটি আর কোনোভাবেই পুনরুদ্ধার করা যাবে না।'
       )
     ) {
-      emptyDeletedStudents();
-      showToast('info', 'সকল মুছে ফেলা শিক্ষার্থীর তথ্য স্থায়ীভাবে সম্পূর্ণ মুছে ফেলা হয়েছে।');
+      try {
+        await emptyDeletedStudents();
+        showToast('info', 'সকল মুছে ফেলা শিক্ষার্থীর তথ্য স্থায়ীভাবে সম্পূর্ণ মুছে ফেলা হয়েছে।');
+      } catch (err: any) {
+        showToast('error', err?.message || 'রিসাইকেল বিন খালি করতে সমস্যা হয়েছে');
+      }
     }
   };
 
-  const handlePermanentDelete = (s: Student) => {
+  const handlePermanentDelete = async (s: Student) => {
     if (
       confirm(
         `আপনি কি নিশ্চিত যে "${s.name}" (রোল: ${s.roll}) এর তথ্য স্থায়ীভাবে মুছে ফেলতে চান? এটি আর কোনোভাবেই পুনরুদ্ধার করা যাবে না।`
       )
     ) {
-      permanentlyDeleteStudent(s.id);
-      showToast('info', `"${s.name}" এর তথ্য স্থায়ীভাবে মুছে ফেলা হয়েছে।`);
+      try {
+        await permanentlyDeleteStudent(s.id);
+        showToast('info', `"${s.name}" এর তথ্য স্থায়ীভাবে মুছে ফেলা হয়েছে।`);
+      } catch (err: any) {
+        showToast('error', err?.message || 'স্থায়ীভাবে মুছতে সমস্যা হয়েছে');
+      }
     }
   };
 
-  const handleConfirmBulkDelete = () => {
+  const handleConfirmBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    deleteMultipleStudents(selectedIds);
-    showToast('success', `✓ মোট ${selectedIds.length} জন শিক্ষার্থীর তথ্য মুছে ফেলা হয়েছে।`);
-    setSelectedIds([]);
-    setShowBulkDeleteModal(false);
+    try {
+      await deleteMultipleStudents(selectedIds);
+      showToast('success', `✓ মোট ${selectedIds.length} জন শিক্ষার্থীর তথ্য মুছে ফেলা হয়েছে।`);
+      setSelectedIds([]);
+      setShowBulkDeleteModal(false);
+    } catch (err: any) {
+      showToast('error', err?.message || 'শিক্ষার্থীদের তথ্য মুছে ফেলতে সমস্যা হয়েছে');
+    }
   };
 
   const handleCleanDuplicates = () => {
@@ -849,7 +873,7 @@ export const ManageStudents: React.FC = () => {
     setForm((prev) => ({ ...prev, image: undefined }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return;
 
@@ -886,12 +910,18 @@ export const ManageStudents: React.FC = () => {
       presentAddress: form.presentAddress.trim() || undefined,
     };
 
-    if (editingStu) {
-      updateStudent(editingStu.id, studentPayload);
-    } else {
-      addStudent(studentPayload);
+    try {
+      if (editingStu) {
+        await updateStudent(editingStu.id, studentPayload);
+        showToast('success', '✓ শিক্ষার্থীর তথ্য সফলভাবে আপডেট করা হয়েছে');
+      } else {
+        await addStudent(studentPayload);
+        showToast('success', '✓ নতুন শিক্ষার্থী সফলভাবে যুক্ত করা হয়েছে');
+      }
+      setModalOpen(false);
+    } catch (err: any) {
+      showToast('error', err?.message || 'শিক্ষার্থীর তথ্য সংরক্ষণ করতে ব্যর্থ হয়েছে');
     }
-    setModalOpen(false);
   };
 
   return (
@@ -904,12 +934,16 @@ export const ManageStudents: React.FC = () => {
               ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
               : toastMessage.type === 'warning'
               ? 'bg-amber-50 text-amber-900 border-amber-200'
+              : toastMessage.type === 'error'
+              ? 'bg-rose-50 text-rose-900 border-rose-200'
               : 'bg-blue-50 text-blue-900 border-blue-200'
           }`}
         >
           <div className="flex items-center gap-2">
             {toastMessage.type === 'success' ? (
               <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : toastMessage.type === 'error' ? (
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
             ) : (
               <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
             )}

@@ -19,6 +19,7 @@ import {
   Filter,
   CheckCircle2,
   AlertTriangle,
+  AlertCircle,
   ExternalLink,
   CheckSquare,
   Square,
@@ -63,16 +64,17 @@ export const ManageNotices: React.FC = () => {
 
   // Action Loading & Toast Feedback
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isSubmittingNotice, setIsSubmittingNotice] = useState(false);
   const [toastMessage, setToastMessage] = useState<{
-    type: 'success' | 'warning' | 'info';
+    type: 'success' | 'warning' | 'info' | 'error';
     text: string;
   } | null>(null);
 
-  const showToast = (type: 'success' | 'warning' | 'info', text: string) => {
+  const showToast = (type: 'success' | 'warning' | 'info' | 'error', text: string) => {
     setToastMessage({ type, text });
     setTimeout(() => {
       setToastMessage(null);
-    }, 4000);
+    }, 5000);
   };
 
   const categories = [
@@ -191,7 +193,7 @@ export const ManageNotices: React.FC = () => {
     setUploadError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) {
       showToast('warning', 'দয়া করে নোটিশের শিরোনাম লিখুন');
@@ -211,15 +213,22 @@ export const ManageNotices: React.FC = () => {
       attachmentSize: form.attachmentSize,
     };
 
-    if (editingNotice) {
-      updateNotice(editingNotice.id, noticePayload);
-      showToast('success', '✓ নোটিশ সফলভাবে হালনাগাদ করা হয়েছে');
-    } else {
-      addNotice(noticePayload);
-      showToast('success', '✓ নতুন নোটিশ সফলভাবে প্রকাশ করা হয়েছে');
+    setIsSubmittingNotice(true);
+    try {
+      if (editingNotice) {
+        await updateNotice(editingNotice.id, noticePayload);
+        showToast('success', '✓ নোটিশ সফলভাবে হালনাগাদ করা হয়েছে');
+      } else {
+        await addNotice(noticePayload);
+        showToast('success', '✓ নতুন নোটিশ সফলভাবে প্রকাশ করা হয়েছে');
+      }
+      setModalOpen(false);
+    } catch (err: any) {
+      console.error('Notice save error:', err);
+      showToast('error', err?.message || 'Firestore-এ নোটিশ সংরক্ষণে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
+    } finally {
+      setIsSubmittingNotice(false);
     }
-
-    setModalOpen(false);
   };
 
   // Filtered Notices
@@ -253,26 +262,34 @@ export const ManageNotices: React.FC = () => {
   };
 
   // Delete Notice Handler (Reliable in-app confirmation)
-  const confirmDeleteNotice = () => {
+  const confirmDeleteNotice = async () => {
     if (!noticeToDelete) return;
     const deletedTitle = noticeToDelete.title;
-    deleteNotice(noticeToDelete.id);
-    setSelectedIds((prev) => prev.filter((id) => id !== noticeToDelete.id));
-    if (viewingNotice?.id === noticeToDelete.id) {
-      setViewingNotice(null);
+    try {
+      await deleteNotice(noticeToDelete.id);
+      setSelectedIds((prev) => prev.filter((id) => id !== noticeToDelete.id));
+      if (viewingNotice?.id === noticeToDelete.id) {
+        setViewingNotice(null);
+      }
+      setNoticeToDelete(null);
+      showToast('success', `✓ নোটিশ "${deletedTitle}" মুছে ফেলা হয়েছে`);
+    } catch (err: any) {
+      showToast('error', err?.message || 'নোটিশ মুছে ফেলতে সমস্যা হয়েছে');
     }
-    setNoticeToDelete(null);
-    showToast('success', `✓ নোটিশ "${deletedTitle}" মুছে ফেলা হয়েছে`);
   };
 
   // Bulk Delete Handler
-  const confirmBulkDelete = () => {
+  const confirmBulkDelete = async () => {
     if (selectedIds.length === 0) return;
     const count = selectedIds.length;
-    deleteMultipleNotices(selectedIds);
-    setSelectedIds([]);
-    setShowBulkDeleteModal(false);
-    showToast('success', `✓ নির্বাচিত ${count}টি নোটিশ মুছে ফেলা হয়েছে`);
+    try {
+      await deleteMultipleNotices(selectedIds);
+      setSelectedIds([]);
+      setShowBulkDeleteModal(false);
+      showToast('success', `✓ নির্বাচিত ${count}টি নোটিশ মুছে ফেলা হয়েছে`);
+    } catch (err: any) {
+      showToast('error', err?.message || 'নোটিশসমূহ মুছে ফেলতে সমস্যা হয়েছে');
+    }
   };
 
   // Print Handler
@@ -329,13 +346,16 @@ export const ManageNotices: React.FC = () => {
               ? 'bg-emerald-900 text-white border-emerald-700'
               : toastMessage.type === 'warning'
               ? 'bg-amber-900 text-white border-amber-700'
+              : toastMessage.type === 'error'
+              ? 'bg-rose-950 text-white border-rose-700 shadow-rose-950/50'
               : 'bg-slate-900 text-white border-slate-700'
           }`}
         >
-          {toastMessage.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
-          {toastMessage.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-400" />}
-          {toastMessage.type === 'info' && <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />}
-          <span className="text-xs sm:text-sm font-semibold">{toastMessage.text}</span>
+          {toastMessage.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />}
+          {toastMessage.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />}
+          {toastMessage.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />}
+          {toastMessage.type === 'info' && <Loader2 className="w-5 h-5 text-blue-400 animate-spin shrink-0" />}
+          <span className="text-xs sm:text-sm font-semibold max-w-sm">{toastMessage.text}</span>
         </div>
       )}
 
@@ -608,12 +628,16 @@ export const ManageNotices: React.FC = () => {
 
                     {/* Pin / Unpin */}
                     <button
-                      onClick={() => {
-                        togglePinNotice(n.id);
-                        showToast(
-                          'info',
-                          n.pinned ? 'নোটিশটি আনপিন করা হয়েছে' : 'নোটিশটি হোমপেজে পিন করা হয়েছে'
-                        );
+                      onClick={async () => {
+                        try {
+                          await togglePinNotice(n.id);
+                          showToast(
+                            'info',
+                            n.pinned ? 'নোটিশটি আনপিন করা হয়েছে' : 'নোটিশটি হোমপেজে পিন করা হয়েছে'
+                          );
+                        } catch (err: any) {
+                          showToast('error', err?.message || 'নোটিশ পিন পরিবর্তন করা যায়নি');
+                        }
                       }}
                       className={`p-1.5 rounded-lg text-xs font-medium border transition cursor-pointer flex items-center gap-1 ${
                         n.pinned

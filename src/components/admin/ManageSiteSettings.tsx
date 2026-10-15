@@ -14,12 +14,14 @@ import {
   Building,
   Sliders,
   ExternalLink,
+  AlertCircle,
 } from 'lucide-react';
 
 export const ManageSiteSettings: React.FC = () => {
   const { siteSettings, updateSiteSettings, setAdminTab } = useSchool();
   const [form, setForm] = useState({ ...siteSettings });
   const [saved, setSaved] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
 
   const logoFileRef = useRef<HTMLInputElement | null>(null);
@@ -47,12 +49,18 @@ export const ManageSiteSettings: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateSiteSettings(form);
-    setSaved(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => setSaved(false), 3500);
+    setErrorMessage(null);
+    try {
+      await updateSiteSettings(form);
+      setSaved(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => setSaved(false), 3500);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'সাইট সেটিংস সংরক্ষণ করতে সমস্যা হয়েছে');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
@@ -77,6 +85,13 @@ export const ManageSiteSettings: React.FC = () => {
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-800 text-xs font-semibold animate-fadeIn">
           <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
           <span>সাইট সেটিংস সফলভাবে আপডেট ও সংরক্ষিত হয়েছে!</span>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-rose-800 text-xs font-semibold animate-fadeIn">
+          <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+          <span>{errorMessage}</span>
         </div>
       )}
 

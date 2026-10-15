@@ -140,7 +140,7 @@ export const ManageGallery: React.FC = () => {
   };
 
   // Create new album submission
-  const handleCreateAlbum = (e: React.FormEvent) => {
+  const handleCreateAlbum = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!albumForm.title.trim()) return;
 
@@ -158,22 +158,26 @@ export const ManageGallery: React.FC = () => {
 
     const allImages = [cover, ...remaining];
 
-    addGalleryAlbum({
-      title: albumForm.title.trim(),
-      category: albumForm.category,
-      imageUrl: cover,
-      itemCountText: `${allImages.length} টি ছবি`,
-      images: allImages,
-    });
+    try {
+      await addGalleryAlbum({
+        title: albumForm.title.trim(),
+        category: albumForm.category,
+        imageUrl: cover,
+        itemCountText: `${allImages.length} টি ছবি`,
+        images: allImages,
+      });
 
-    setAlbumModalOpen(false);
-    setAlbumForm({
-      title: '',
-      category: 'campus',
-      imageUrl: '',
-      additionalImages: [],
-    });
-    setUploadError(null);
+      setAlbumModalOpen(false);
+      setAlbumForm({
+        title: '',
+        category: 'campus',
+        imageUrl: '',
+        additionalImages: [],
+      });
+      setUploadError(null);
+    } catch (err: any) {
+      setUploadError(err?.message || 'অ্যালবাম তৈরি করতে সমস্যা হয়েছে');
+    }
   };
 
   // Handle Multiple Photos Upload inside existing Album Manager modal

@@ -25,7 +25,7 @@ import { ManageStatistics } from './ManageStatistics';
 import { ManageDownloads } from './ManageDownloads';
 import { ManageAdminSecurity } from './ManageAdminSecurity';
 import { GenericSectionManager } from './GenericSectionManager';
-import { Eye, Bell, ShieldCheck, LogOut } from 'lucide-react';
+import { Eye, Bell, ShieldCheck, LogOut, AlertTriangle, X } from 'lucide-react';
 
 export const AdminPanel: React.FC = () => {
   const {
@@ -36,6 +36,8 @@ export const AdminPanel: React.FC = () => {
     adminSecuritySettings,
     adminUser,
     logoutAdmin,
+    firestoreError,
+    clearFirestoreError,
   } = useSchool();
 
   const renderActiveTab = () => {
@@ -149,6 +151,27 @@ export const AdminPanel: React.FC = () => {
             </div>
           </div>
         </header>
+
+        {/* Global Firestore Error Notification Banner */}
+        {firestoreError && (
+          <div className="bg-rose-50 border-b border-rose-200 px-6 py-3 flex items-center justify-between text-rose-800 text-sm animate-fadeIn">
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="font-bold">ডাটাবেস ত্রুটি:</span>
+                <span className="font-medium text-rose-700">{firestoreError}</span>
+              </div>
+            </div>
+            <button
+              onClick={clearFirestoreError}
+              className="inline-flex items-center gap-1 text-xs bg-rose-200 hover:bg-rose-300 text-rose-900 px-2.5 py-1 rounded-md font-semibold cursor-pointer transition shrink-0 ml-4"
+              title="বিজ্ঞপ্তি বন্ধ করুন"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>মুছে দিন</span>
+            </button>
+          </div>
+        )}
 
         {/* Dynamic Admin Body View */}
         <main className="flex-1 pb-16">

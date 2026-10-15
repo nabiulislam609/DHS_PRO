@@ -396,25 +396,29 @@ export const ManageTeachers: React.FC = () => {
     setForm((prev) => ({ ...prev, image: undefined }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return;
 
     const initial = form.initial || form.name.trim().charAt(0);
+    setUploadError(null);
 
-    if (editingTeacher) {
-      updateTeacher(editingTeacher.id, {
-        ...form,
-        initial,
-      });
-    } else {
-      addTeacher({
-        ...form,
-        initial,
-      });
+    try {
+      if (editingTeacher) {
+        await updateTeacher(editingTeacher.id, {
+          ...form,
+          initial,
+        });
+      } else {
+        await addTeacher({
+          ...form,
+          initial,
+        });
+      }
+      setModalOpen(false);
+    } catch (err: any) {
+      setUploadError(err?.message || 'শিক্ষকের তথ্য সংরক্ষণ করতে ব্যর্থ হয়েছে');
     }
-
-    setModalOpen(false);
   };
 
   // Single Teacher Print & PDF handlers

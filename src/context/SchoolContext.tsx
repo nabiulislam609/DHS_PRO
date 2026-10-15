@@ -17,6 +17,7 @@ import {
   fetchAllConfigDocsOnce,
   seedInitialCollectionIfEmpty,
   seedInitialConfigIfEmpty,
+  getBengaliFirestoreErrorMessage,
   COLLECTIONS,
   CONFIG_DOCS,
 } from '../services/firestoreService';
@@ -134,23 +135,23 @@ interface SchoolContextType {
   updateSiteSettings: (settings: Partial<SiteSettings>) => void;
 
   teachers: Teacher[];
-  addTeacher: (teacher: Omit<Teacher, 'id'>) => void;
-  addMultipleTeachers: (teachers: Omit<Teacher, 'id'>[]) => number;
-  updateTeacher: (id: string, teacher: Partial<Teacher>) => void;
-  deleteTeacher: (id: string) => void;
+  addTeacher: (teacher: Omit<Teacher, 'id'>) => Promise<void> | void;
+  addMultipleTeachers: (teachers: Omit<Teacher, 'id'>[]) => Promise<number>;
+  updateTeacher: (id: string, teacher: Partial<Teacher>) => Promise<void> | void;
+  deleteTeacher: (id: string) => Promise<void> | void;
 
   staff: Staff[];
-  addStaff: (staffMember: Omit<Staff, 'id'>) => void;
-  addMultipleStaff: (staffMembers: Omit<Staff, 'id'>[]) => number;
-  updateStaff: (id: string, staffMember: Partial<Staff>) => void;
-  deleteStaff: (id: string) => void;
+  addStaff: (staffMember: Omit<Staff, 'id'>) => Promise<void> | void;
+  addMultipleStaff: (staffMembers: Omit<Staff, 'id'>[]) => Promise<number>;
+  updateStaff: (id: string, staffMember: Partial<Staff>) => Promise<void> | void;
+  deleteStaff: (id: string) => Promise<void> | void;
 
   students: Student[];
   deletedStudents: Student[];
-  addStudent: (student: Omit<Student, 'id'> & { id?: string }) => void;
-  addMultipleStudents: (students: (Omit<Student, 'id'> & { id?: string })[]) => number;
-  updateStudent: (id: string, student: Partial<Student>) => void;
-  deleteStudent: (id: string, roll?: string) => void;
+  addStudent: (student: Omit<Student, 'id'> & { id?: string }) => Promise<void> | void;
+  addMultipleStudents: (students: (Omit<Student, 'id'> & { id?: string })[]) => Promise<number>;
+  updateStudent: (id: string, student: Partial<Student>) => Promise<void> | void;
+  deleteStudent: (id: string, roll?: string) => Promise<void> | void;
   deleteMultipleStudents: (ids: string[]) => void;
   removeDuplicateStudents: () => number;
   restoreStudent: (id: string) => void;
@@ -271,6 +272,8 @@ interface SchoolContextType {
 
   // Firestore sync & loading
   isFirestoreLoading: boolean;
+  firestoreError: string | null;
+  clearFirestoreError: () => void;
   loadDataFromFirestore: () => Promise<void>;
   seedDemoDataToFirestore: () => Promise<void>;
 }
@@ -611,398 +614,31 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   }, [adminSecuritySettings.customLoginPath]);
 
-  // Load from localStorage or fallback to initial
-  const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => {
-    const saved = localStorage.getItem('dhs_site_settings');
-    return saved ? JSON.parse(saved) : initialSiteSettings;
-  });
-
-  const [teachers, setTeachers] = useState<Teacher[]>(() => {
-    const saved = localStorage.getItem('dhs_teachers');
-    return saved ? JSON.parse(saved) : initialTeachers;
-  });
-
-  const [staff, setStaff] = useState<Staff[]>(() => {
-    const saved = localStorage.getItem('dhs_staff');
-    return saved ? JSON.parse(saved) : initialStaff;
-  });
-
-  const [students, setStudents] = useState<Student[]>(() => {
-    const saved = localStorage.getItem('dhs_students');
-    if (saved) {
-      try {
-        const parsed: Student[] = JSON.parse(saved);
-        const normalized = parsed.map((s) => {
-          const updated = { ...s };
-          if (!updated.image) {
-            const initMatch = initialStudents.find(
-              (init) =>
-                init.id === updated.id ||
-                init.roll === updated.roll ||
-                init.name.toLowerCase() === updated.name.toLowerCase()
-            );
-            if (initMatch && initMatch.image) {
-              updated.image = initMatch.image;
-            }
-          }
-          return updated;
-        });
-        const existingIds = new Set(normalized.map((s) => s.id));
-        const missing = initialStudents.filter((s) => !existingIds.has(s.id));
-        return [...normalized, ...missing];
-      } catch {
-        return initialStudents;
-      }
-    }
-    return initialStudents;
-  });
-
-  const [deletedStudents, setDeletedStudents] = useState<Student[]>(() => {
-    const saved = localStorage.getItem('dhs_deleted_students');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [notices, setNotices] = useState<Notice[]>(() => {
-    const saved = localStorage.getItem('dhs_notices');
-    return saved ? JSON.parse(saved) : initialNotices;
-  });
-
-  const [leadership, setLeadership] = useState<LeadershipMessage[]>(() => {
-    const saved = localStorage.getItem('dhs_leadership');
-    return saved ? JSON.parse(saved) : initialLeadership;
-  });
-
-  const [academicPrograms, setAcademicPrograms] = useState<AcademicProgram[]>(() => {
-    const saved = localStorage.getItem('dhs_programs');
-    return saved ? JSON.parse(saved) : initialAcademicPrograms;
-  });
-
-  const [news, setNews] = useState<NewsItem[]>(() => {
-    const saved = localStorage.getItem('dhs_news');
-    return saved ? JSON.parse(saved) : initialNews;
-  });
-
-  const [events, setEvents] = useState<EventItem[]>(() => {
-    const saved = localStorage.getItem('dhs_events');
-    return saved ? JSON.parse(saved) : initialEvents;
-  });
-
-  const [achievements, setAchievements] = useState<AchievementItem[]>(() => {
-    const saved = localStorage.getItem('dhs_achievements');
-    return saved ? JSON.parse(saved) : initialAchievements;
-  });
-
-  const [galleryAlbums, setGalleryAlbums] = useState<GalleryAlbum[]>(() => {
-    const saved = localStorage.getItem('dhs_gallery');
-    return saved ? JSON.parse(saved) : initialGalleryAlbums;
-  });
-
-  const [admissions, setAdmissions] = useState<AdmissionApplication[]>(() => {
-    const saved = localStorage.getItem('dhs_admissions');
-    return saved ? JSON.parse(saved) : initialAdmissions;
-  });
-
-  const [messages, setMessages] = useState<ContactMessage[]>(() => {
-    const saved = localStorage.getItem('dhs_messages');
-    return saved ? JSON.parse(saved) : initialMessages;
-  });
-
-  const [activities, setActivities] = useState<ActivityLog[]>(() => {
-    const saved = localStorage.getItem('dhs_activities');
-    if (saved) {
-      try {
-        const parsed: ActivityLog[] = JSON.parse(saved);
-        const seenIds = new Set<string>();
-        return parsed.map((act, idx) => {
-          let uniqueId = act.id || `act-${Date.now()}-${idx}`;
-          if (seenIds.has(uniqueId)) {
-            uniqueId = `${uniqueId}-${idx}-${Math.random().toString(36).substring(2, 6)}`;
-          }
-          seenIds.add(uniqueId);
-          return { ...act, id: uniqueId };
-        });
-      } catch (e) {
-        console.error('Failed to parse activities from localStorage', e);
-      }
-    }
-    return initialActivities;
-  });
-
-  const [examResults, setExamResults] = useState<ExamResult[]>(() => {
-    const saved = localStorage.getItem('dhs_exam_results');
-    if (saved) {
-      try {
-        const parsed: ExamResult[] = JSON.parse(saved);
-        const normalized = parsed.map((r) => {
-          const updated = { ...r };
-          if (updated.studentClass === 'Class 10 (১০ম শ্রেণি - বিজ্ঞান)') {
-            updated.studentClass = '১০ম শ্রেণি (বিজ্ঞান বিভাগ)';
-          }
-          if (!updated.studentImage) {
-            const initMatch = initialExamResults.find((init) => init.id === updated.id);
-            if (initMatch && initMatch.studentImage) {
-              updated.studentImage = initMatch.studentImage;
-            }
-          }
-          return updated;
-        });
-        const existingIds = new Set(normalized.map((r) => r.id));
-        const missing = initialExamResults.filter((r) => !existingIds.has(r.id));
-        return [...normalized, ...missing];
-      } catch {
-        return initialExamResults;
-      }
-    }
-    return initialExamResults;
-  });
-
-  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(() => {
-    const saved = localStorage.getItem('dhs_hero_slides');
-    return saved ? JSON.parse(saved) : initialHeroSlides;
-  });
-
-  const [performanceTrends, setPerformanceTrends] = useState<PerformanceTrendItem[]>(() => {
-    const saved = localStorage.getItem('dhs_performance_trends');
-    return saved ? JSON.parse(saved) : initialPerformanceTrends;
-  });
-
-  const [sectionVisibility, setSectionVisibility] = useState<SectionVisibility>(() => {
-    const saved = localStorage.getItem('dhs_section_visibility');
-    return saved ? { ...initialSectionVisibility, ...JSON.parse(saved) } : initialSectionVisibility;
-  });
-
-  const [navigationItems, setNavigationItems] = useState<NavigationItem[]>(() => {
-    const saved = localStorage.getItem('dhs_navigation_items');
-    if (saved) {
-      try {
-        const parsed: NavigationItem[] = JSON.parse(saved);
-        // Exclude standalone শিক্ষক and কর্মকর্তা ও কর্মচারী since they belong inside the 'পরিচিতি' submenu
-        let filtered = parsed.filter(
-          (item) =>
-            item.url !== '#teachers' &&
-            item.url !== '#staff' &&
-            item.label !== 'শিক্ষক' &&
-            !item.label.includes('কর্মচারী')
-        );
-
-        // Ensure ফলাফল is placed right after নোটিশ
-        const resultsIdx = filtered.findIndex((item) => item.label === 'ফলাফল' || item.url === '/results' || item.url === '#results');
-        let resultsItem: NavigationItem;
-        if (resultsIdx !== -1) {
-          resultsItem = filtered[resultsIdx];
-          filtered.splice(resultsIdx, 1);
-        } else {
-          resultsItem = {
-            id: 'nav-results',
-            label: 'ফলাফল',
-            url: '/results',
-            iconName: '—',
-            order: 3,
-            visible: true,
-          };
-        }
-
-        const noticeIdx = filtered.findIndex((item) => item.label === 'নোটিশ' || item.url === '#notices' || item.url === '/notices');
-        if (noticeIdx !== -1) {
-          filtered[noticeIdx].url = '/notices';
-          filtered.splice(noticeIdx + 1, 0, resultsItem);
-        } else {
-          filtered.push(resultsItem);
-        }
-
-        // Ensure ডাউনলোড (Downloads) menu is present with its submenus (Admit Card, Important Forms)
-        const defaultDownloadItem: NavigationItem = {
-          id: 'nav-downloads',
-          label: 'ডাউনলোড',
-          url: '#downloads',
-          iconName: 'Download',
-          order: 4,
-          visible: true,
-          subItems: [
-            {
-              id: 'sub-admit',
-              label: 'অ্যাডমিট কার্ড',
-              url: '/admit-card',
-              order: 0,
-              visible: true,
-              description: 'পরীক্ষার প্রবেশপত্র ও সিট প্ল্যান ডাউনলোড',
-              badge: 'Admit Card',
-              iconName: 'CreditCard',
-            },
-            {
-              id: 'sub-forms',
-              label: 'গুরুত্বপূর্ণ ফরমসমূহ',
-              url: '/important-forms',
-              order: 1,
-              visible: true,
-              description: 'ভর্তি ফরম, প্রশংসাপত্র, প্রত্যয়ন ও প্রাতিষ্ঠানিক ফরম',
-              badge: 'Forms',
-              iconName: 'FileText',
-            },
-          ],
-        };
-
-        const downloadIdx = filtered.findIndex(
-          (item) => item.id === 'nav-downloads' || item.label === 'ডাউনলোড' || item.url === '#downloads'
-        );
-        if (downloadIdx === -1) {
-          const resPos = filtered.findIndex((item) => item.label === 'ফলাফল' || item.url === '/results');
-          if (resPos !== -1) {
-            filtered.splice(resPos + 1, 0, defaultDownloadItem);
-          } else {
-            filtered.push(defaultDownloadItem);
-          }
-        } else {
-          // If existing downloads item has no subItems, backfill default subItems
-          if (!filtered[downloadIdx].subItems || filtered[downloadIdx].subItems.length === 0) {
-            filtered[downloadIdx] = {
-              ...filtered[downloadIdx],
-              subItems: defaultDownloadItem.subItems,
-            };
-          }
-        }
-
-        return filtered.map((item, idx) => ({ ...item, order: idx }));
-      } catch (e) {
-        return initialNavigationItems;
-      }
-    }
-    return initialNavigationItems;
-  });
-
-  // Downloadable Forms State
-  const [downloadableForms, setDownloadableForms] = useState<DownloadableForm[]>(() => {
-    const saved = localStorage.getItem('dhs_downloadable_forms');
-    return saved ? JSON.parse(saved) : initialDownloadableForms;
-  });
-
-  // Admit Card Config State
-  const [admitCardConfig, setAdmitCardConfig] = useState<AdmitCardConfig>(() => {
-    const saved = localStorage.getItem('dhs_admit_card_config');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (!parsed.availableExams || parsed.availableExams.length === 0) {
-          parsed.availableExams = initialAdmitCardConfig.availableExams;
-          parsed.activeExamId = parsed.activeExamId || initialAdmitCardConfig.activeExamId;
-        } else {
-          // Backfill eligibleClasses on existing exams if missing
-          parsed.availableExams = parsed.availableExams.map((ex: ActiveExam) => {
-            if (!ex.eligibleClasses || ex.eligibleClasses.length === 0) {
-              const matched = initialAdmitCardConfig.availableExams?.find(
-                (d) => d.id === ex.id || d.examTerm === ex.examTerm
-              );
-              return {
-                ...ex,
-                eligibleClasses: matched?.eligibleClasses || [
-                  '৬ষ্ঠ শ্রেণি',
-                  '৭ম শ্রেণি',
-                  '৮ম শ্রেণি',
-                  '৯ম শ্রেণি',
-                  '১০ম শ্রেণি',
-                ],
-              };
-            }
-            return ex;
-          });
-        }
-        return parsed;
-      } catch (e) {
-        return initialAdmitCardConfig;
-      }
-    }
-    return initialAdmitCardConfig;
-  });
-
-  // Sync with LocalStorage
-  useEffect(() => {
-    localStorage.setItem('dhs_downloadable_forms', JSON.stringify(downloadableForms));
-  }, [downloadableForms]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_admit_card_config', JSON.stringify(admitCardConfig));
-  }, [admitCardConfig]);
-
-  // Sync with LocalStorage
-  useEffect(() => {
-    localStorage.setItem('dhs_hero_slides', JSON.stringify(heroSlides));
-  }, [heroSlides]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_performance_trends', JSON.stringify(performanceTrends));
-  }, [performanceTrends]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_section_visibility', JSON.stringify(sectionVisibility));
-  }, [sectionVisibility]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_navigation_items', JSON.stringify(navigationItems));
-  }, [navigationItems]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_exam_results', JSON.stringify(examResults));
-  }, [examResults]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_site_settings', JSON.stringify(siteSettings));
-  }, [siteSettings]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_teachers', JSON.stringify(teachers));
-  }, [teachers]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_staff', JSON.stringify(staff));
-  }, [staff]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_students', JSON.stringify(students));
-  }, [students]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_deleted_students', JSON.stringify(deletedStudents));
-  }, [deletedStudents]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_notices', JSON.stringify(notices));
-  }, [notices]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_leadership', JSON.stringify(leadership));
-  }, [leadership]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_programs', JSON.stringify(academicPrograms));
-  }, [academicPrograms]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_news', JSON.stringify(news));
-  }, [news]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_events', JSON.stringify(events));
-  }, [events]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_achievements', JSON.stringify(achievements));
-  }, [achievements]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_gallery', JSON.stringify(galleryAlbums));
-  }, [galleryAlbums]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_admissions', JSON.stringify(admissions));
-  }, [admissions]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_messages', JSON.stringify(messages));
-  }, [messages]);
-
-  useEffect(() => {
-    localStorage.setItem('dhs_activities', JSON.stringify(activities));
-  }, [activities]);
+  // Firestore-driven State Initialization (No localStorage)
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(initialSiteSettings);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [staff, setStaff] = useState<Staff[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [deletedStudents, setDeletedStudents] = useState<Student[]>([]);
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [leadership, setLeadership] = useState<LeadershipMessage[]>(initialLeadership);
+  const [academicPrograms, setAcademicPrograms] = useState<AcademicProgram[]>(initialAcademicPrograms);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [achievements, setAchievements] = useState<AchievementItem[]>([]);
+  const [galleryAlbums, setGalleryAlbums] = useState<GalleryAlbum[]>([]);
+  const [admissions, setAdmissions] = useState<AdmissionApplication[]>([]);
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [activities, setActivities] = useState<ActivityLog[]>([]);
+  const [examResults, setExamResults] = useState<ExamResult[]>([]);
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(initialHeroSlides);
+  const [performanceTrends, setPerformanceTrends] = useState<PerformanceTrendItem[]>(initialPerformanceTrends);
+  const [sectionVisibility, setSectionVisibility] = useState<SectionVisibility>(initialSectionVisibility);
+  const [navigationItems, setNavigationItems] = useState<NavigationItem[]>(initialNavigationItems);
+  const [downloadableForms, setDownloadableForms] = useState<DownloadableForm[]>(initialDownloadableForms);
+  const [admitCardConfig, setAdmitCardConfig] = useState<AdmitCardConfig>(initialAdmitCardConfig);
+  const [firestoreError, setFirestoreError] = useState<string | null>(null);
+  const clearFirestoreError = () => setFirestoreError(null);
 
   // Single-read Firestore Data Loader on initial page mount (reduces reads dramatically)
   const [isFirestoreLoading, setIsFirestoreLoading] = useState(false);
@@ -1146,194 +782,265 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
   };
 
-  const logActivity = (action: string, type: ActivityLog['type']) => {
+  const handleMutationError = (error: unknown, actionDesc: string) => {
+    const bengali = getBengaliFirestoreErrorMessage(error);
+    const fullMsg = `${actionDesc}: ${bengali}`;
+    setFirestoreError(fullMsg);
+    console.error('Firestore mutation error:', error);
+    throw new Error(fullMsg);
+  };
+
+  const logActivity = async (action: string, type: ActivityLog['type']) => {
     const newAct: ActivityLog = {
       id: generateUniqueId('act'),
       action,
       timestamp: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
       type,
     };
-    setActivities((prev) => [newAct, ...prev.slice(0, 49)]);
-    saveDocument(COLLECTIONS.ACTIVITIES, newAct);
+    try {
+      await saveDocument(COLLECTIONS.ACTIVITIES, newAct);
+      setActivities((prev) => [newAct, ...prev.slice(0, 49)]);
+    } catch (e) {
+      console.warn('Activity log notice:', e);
+    }
   };
 
-  const clearActivities = () => {
-    activities.forEach((act) => deleteDocument(COLLECTIONS.ACTIVITIES, act.id));
-    setActivities([]);
+  const clearActivities = async () => {
+    try {
+      await Promise.allSettled(activities.map((act) => deleteDocument(COLLECTIONS.ACTIVITIES, act.id)));
+      setActivities([]);
+    } catch (err) {
+      handleMutationError(err, 'কার্যক্রম লগ মুছতে সমস্যা হয়েছে');
+    }
   };
 
-  const updateSiteSettings = (settings: Partial<SiteSettings>) => {
-    setSiteSettings((prev) => {
-      const updated = { ...prev, ...settings };
-      saveConfigDoc(CONFIG_DOCS.SITE_SETTINGS, updated);
-      return updated;
-    });
-    logActivity('ওয়েবসাইটের সাধারণ সেটিংস আপডেট করা হয়েছে', 'setting');
+  const updateSiteSettings = async (settings: Partial<SiteSettings>) => {
+    const updated = { ...siteSettings, ...settings };
+    try {
+      await saveConfigDoc(CONFIG_DOCS.SITE_SETTINGS, updated);
+      setSiteSettings(updated);
+      logActivity('ওয়েবসাইটের সাধারণ সেটিংস আপডেট করা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'সেটিংস আপডেট করা সম্ভব হয়নি');
+    }
   };
 
   // Teachers CRUD
-  const addTeacher = (item: Omit<Teacher, 'id'>) => {
+  const addTeacher = async (item: Omit<Teacher, 'id'>) => {
     const id = generateUniqueId('t');
     const newT: Teacher = { id, ...item };
-    setTeachers((prev) => [...prev, newT]);
-    saveDocument(COLLECTIONS.TEACHERS, newT);
-    logActivity(`নতুন শিক্ষক "${newT.name}" যোগ করা হয়েছে`, 'teacher');
+    try {
+      await saveDocument(COLLECTIONS.TEACHERS, newT);
+      setTeachers((prev) => [...prev, newT]);
+      logActivity(`নতুন শিক্ষক "${newT.name}" যোগ করা হয়েছে`, 'teacher');
+    } catch (err) {
+      handleMutationError(err, 'নতুন শিক্ষকের তথ্য সংরক্ষণ করা সম্ভব হয়নি');
+    }
   };
 
-  const addMultipleTeachers = (items: Omit<Teacher, 'id'>[]): number => {
+  const addMultipleTeachers = async (items: Omit<Teacher, 'id'>[]): Promise<number> => {
     if (!items || items.length === 0) return 0;
     const newItems: Teacher[] = items.map((item, idx) => ({
       id: generateUniqueId(`t_${Date.now()}_${idx}`),
       ...item,
     }));
-    setTeachers((prev) => [...prev, ...newItems]);
-    batchSaveDocuments(COLLECTIONS.TEACHERS, newItems);
-    logActivity(`বাল্ক আপলোডের মাধ্যমে ${newItems.length} জন নতুন শিক্ষক যোগ করা হয়েছে`, 'teacher');
-    return newItems.length;
+    try {
+      await batchSaveDocuments(COLLECTIONS.TEACHERS, newItems);
+      setTeachers((prev) => [...prev, ...newItems]);
+      logActivity(`বাল্ক আপলোডের মাধ্যমে ${newItems.length} জন নতুন শিক্ষক যোগ করা হয়েছে`, 'teacher');
+      return newItems.length;
+    } catch (err) {
+      handleMutationError(err, 'শিক্ষকদের বাল্ক আপলোড সফল হয়নি');
+      return 0;
+    }
   };
 
-  const updateTeacher = (id: string, item: Partial<Teacher>) => {
-    setTeachers((prev) => {
-      const updated = prev.map((t) => (t.id === id ? { ...t, ...item } : t));
-      const target = updated.find((t) => t.id === id);
-      if (target) saveDocument(COLLECTIONS.TEACHERS, target);
-      return updated;
-    });
-    logActivity(`শিক্ষকের তথ্য আপডেট করা হয়েছে`, 'teacher');
-  };
-
-  const deleteTeacher = (id: string) => {
+  const updateTeacher = async (id: string, item: Partial<Teacher>) => {
     const target = teachers.find((t) => t.id === id);
-    setTeachers((prev) => prev.filter((t) => t.id !== id));
-    deleteDocument(COLLECTIONS.TEACHERS, id);
-    logActivity(`শিক্ষক "${target?.name || ''}" মুছে ফেলা হয়েছে`, 'teacher');
+    if (!target) return;
+    const updated = { ...target, ...item };
+    try {
+      await saveDocument(COLLECTIONS.TEACHERS, updated);
+      setTeachers((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      logActivity(`শিক্ষকের তথ্য আপডেট করা হয়েছে`, 'teacher');
+    } catch (err) {
+      handleMutationError(err, 'শিক্ষকের তথ্য আপডেট করা সম্ভব হয়নি');
+    }
+  };
+
+  const deleteTeacher = async (id: string) => {
+    const target = teachers.find((t) => t.id === id);
+    try {
+      await deleteDocument(COLLECTIONS.TEACHERS, id);
+      setTeachers((prev) => prev.filter((t) => t.id !== id));
+      logActivity(`শিক্ষক "${target?.name || ''}" মুছে ফেলা হয়েছে`, 'teacher');
+    } catch (err) {
+      handleMutationError(err, 'শিক্ষক মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
   // Staff CRUD
-  const addStaff = (item: Omit<Staff, 'id'>) => {
+  const addStaff = async (item: Omit<Staff, 'id'>) => {
     const id = generateUniqueId('s');
     const newS: Staff = { id, ...item };
-    setStaff((prev) => [...prev, newS]);
-    saveDocument(COLLECTIONS.STAFF, newS);
-    logActivity(`নতুন কর্মচারী "${newS.name}" যোগ করা হয়েছে`, 'setting');
+    try {
+      await saveDocument(COLLECTIONS.STAFF, newS);
+      setStaff((prev) => [...prev, newS]);
+      logActivity(`নতুন কর্মচারী "${newS.name}" যোগ করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'নতুন কর্মচারীর তথ্য সংরক্ষণ করা সম্ভব হয়নি');
+    }
   };
 
-  const addMultipleStaff = (items: Omit<Staff, 'id'>[]): number => {
+  const addMultipleStaff = async (items: Omit<Staff, 'id'>[]): Promise<number> => {
     if (!items || items.length === 0) return 0;
     const newItems: Staff[] = items.map((item, idx) => ({
       id: generateUniqueId(`s_${Date.now()}_${idx}`),
       ...item,
     }));
-    setStaff((prev) => [...prev, ...newItems]);
-    batchSaveDocuments(COLLECTIONS.STAFF, newItems);
-    logActivity(`বাল্ক আপলোডের মাধ্যমে ${newItems.length} জন নতুন কর্মচারী যোগ করা হয়েছে`, 'setting');
-    return newItems.length;
+    try {
+      await batchSaveDocuments(COLLECTIONS.STAFF, newItems);
+      setStaff((prev) => [...prev, ...newItems]);
+      logActivity(`বাল্ক আপলোডের মাধ্যমে ${newItems.length} জন নতুন কর্মচারী যোগ করা হয়েছে`, 'setting');
+      return newItems.length;
+    } catch (err) {
+      handleMutationError(err, 'কর্মচারীদের বাল্ক আপলোড সফল হয়নি');
+      return 0;
+    }
   };
 
-  const updateStaff = (id: string, item: Partial<Staff>) => {
-    setStaff((prev) => {
-      const updated = prev.map((s) => (s.id === id ? { ...s, ...item } : s));
-      const target = updated.find((s) => s.id === id);
-      if (target) saveDocument(COLLECTIONS.STAFF, target);
-      return updated;
-    });
-    logActivity(`কর্মচারীর তথ্য আপডেট করা হয়েছে`, 'setting');
+  const updateStaff = async (id: string, item: Partial<Staff>) => {
+    const target = staff.find((s) => s.id === id);
+    if (!target) return;
+    const updated = { ...target, ...item };
+    try {
+      await saveDocument(COLLECTIONS.STAFF, updated);
+      setStaff((prev) => prev.map((s) => (s.id === id ? updated : s)));
+      logActivity(`কর্মচারীর তথ্য আপডেট করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'কর্মচারীর তথ্য আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteStaff = (id: string) => {
-    setStaff((prev) => prev.filter((s) => s.id !== id));
-    deleteDocument(COLLECTIONS.STAFF, id);
-    logActivity(`কর্মচারী মুছে ফেলা হয়েছে`, 'setting');
+  const deleteStaff = async (id: string) => {
+    try {
+      await deleteDocument(COLLECTIONS.STAFF, id);
+      setStaff((prev) => prev.filter((s) => s.id !== id));
+      logActivity(`কর্মচারী মুছে ফেলা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'কর্মচারী মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
   // Students CRUD
-  const addStudent = (item: Omit<Student, 'id'> & { id?: string }) => {
+  const addStudent = async (item: Omit<Student, 'id'> & { id?: string }) => {
     const id = (item.id && item.id.trim()) ? item.id.trim() : generateUniqueId('stu');
     const newStu: Student = { ...item, id };
-    setStudents((prev) => [...prev, newStu]);
-    saveDocument(COLLECTIONS.STUDENTS, newStu);
-    logActivity(`শিক্ষার্থী "${newStu.name}" (আইডি: ${id}, রোল: ${newStu.roll}) তালিকাভুক্ত করা হয়েছে`, 'setting');
+    try {
+      await saveDocument(COLLECTIONS.STUDENTS, newStu);
+      setStudents((prev) => [...prev, newStu]);
+      logActivity(`শিক্ষার্থী "${newStu.name}" (আইডি: ${id}, রোল: ${newStu.roll}) তালিকাভুক্ত করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'শিক্ষার্থী তথ্য সংরক্ষণ করা সম্ভব হয়নি');
+    }
   };
 
-  const addMultipleStudents = (items: (Omit<Student, 'id'> & { id?: string })[]): number => {
+  const addMultipleStudents = async (items: (Omit<Student, 'id'> & { id?: string })[]): Promise<number> => {
     if (!items || items.length === 0) return 0;
     const newItems: Student[] = items.map((item, idx) => {
       const id = item.id && item.id.trim() ? item.id.trim() : generateUniqueId(`stu_${Date.now()}_${idx}`);
       return { ...item, id };
     });
-    setStudents((prev) => [...prev, ...newItems]);
-    batchSaveDocuments(COLLECTIONS.STUDENTS, newItems);
-    logActivity(`বাল্ক আপলোডের মাধ্যমে ${newItems.length} জন শিক্ষার্থী তালিকাভুক্ত করা হয়েছে`, 'setting');
-    return newItems.length;
+    try {
+      await batchSaveDocuments(COLLECTIONS.STUDENTS, newItems);
+      setStudents((prev) => [...prev, ...newItems]);
+      logActivity(`বাল্ক আপলোডের মাধ্যমে ${newItems.length} জন শিক্ষার্থী তালিকাভুক্ত করা হয়েছে`, 'setting');
+      return newItems.length;
+    } catch (err) {
+      handleMutationError(err, 'শিক্ষার্থীদের বাল্ক আপলোড সফল হয়নি');
+      return 0;
+    }
   };
 
-  const updateStudent = (id: string, item: Partial<Student>) => {
-    setStudents((prev) => {
-      const updated = prev.map((s) => (s.id === id ? { ...s, ...item } : s));
-      const target = updated.find((s) => s.id === id);
-      if (target) saveDocument(COLLECTIONS.STUDENTS, target);
-      return updated;
-    });
-    logActivity(`শিক্ষার্থীর তথ্য আপডেট করা হয়েছে`, 'setting');
+  const updateStudent = async (id: string, item: Partial<Student>) => {
+    const target = students.find((s) => s.id === id);
+    if (!target) return;
+    const updated = { ...target, ...item };
+    try {
+      await saveDocument(COLLECTIONS.STUDENTS, updated);
+      setStudents((prev) => prev.map((s) => (s.id === id ? updated : s)));
+      logActivity(`শিক্ষার্থীর তথ্য আপডেট করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'শিক্ষার্থীর তথ্য আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteStudent = (id: string, roll?: string) => {
-    setStudents((prev) => {
-      let target = prev.find((s) => s.id === id);
-      if (!target && roll) {
-        target = prev.find((s) => s.roll === roll);
-      }
+  const deleteStudent = async (id: string, roll?: string) => {
+    let target = students.find((s) => s.id === id);
+    if (!target && roll) {
+      target = students.find((s) => s.roll === roll);
+    }
+    try {
       if (target) {
+        await saveDocument(COLLECTIONS.DELETED_STUDENTS, target);
         setDeletedStudents((del) => [target!, ...del.filter((d) => d.id !== target!.id)]);
-        saveDocument(COLLECTIONS.DELETED_STUDENTS, target);
       }
-      let filtered = prev.filter((s) => s.id && s.id === id ? false : s.id !== id);
-      if (filtered.length === prev.length && roll) {
-        filtered = prev.filter((s) => s.roll !== roll);
-      }
-      deleteDocument(COLLECTIONS.STUDENTS, id);
-      return filtered;
-    });
-    logActivity(`শিক্ষার্থীর তথ্য মুছে ফেলা হয়েছে (রিসাইকেল বিনে সংরক্ষিত)`, 'setting');
+      await deleteDocument(COLLECTIONS.STUDENTS, id);
+      setStudents((prev) => prev.filter((s) => s.id !== id && (roll ? s.roll !== roll : true)));
+      logActivity(`শিক্ষার্থীর তথ্য মুছে ফেলা হয়েছে (রিসাইকেল বিনে সংরক্ষিত)`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'শিক্ষার্থী মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
-  const deleteMultipleStudents = (ids: string[]) => {
+  const deleteMultipleStudents = async (ids: string[]) => {
     const idSet = new Set(ids);
-    setStudents((prev) => {
-      const toDelete = prev.filter((s) => idSet.has(s.id));
+    const toDelete = students.filter((s) => idSet.has(s.id));
+    try {
       if (toDelete.length > 0) {
+        await batchSaveDocuments(COLLECTIONS.DELETED_STUDENTS, toDelete);
         setDeletedStudents((del) => [...toDelete, ...del.filter((d) => !idSet.has(d.id))]);
-        batchSaveDocuments(COLLECTIONS.DELETED_STUDENTS, toDelete);
+        await Promise.all(toDelete.map((s) => deleteDocument(COLLECTIONS.STUDENTS, s.id)));
       }
-      toDelete.forEach((s) => deleteDocument(COLLECTIONS.STUDENTS, s.id));
-      return prev.filter((s) => !idSet.has(s.id));
-    });
-    logActivity(`${ids.length} জন শিক্ষার্থীর তথ্য মুছে ফেলা হয়েছে (রিসাইকেল বিনে সংরক্ষিত)`, 'setting');
+      setStudents((prev) => prev.filter((s) => !idSet.has(s.id)));
+      logActivity(`${ids.length} জন শিক্ষার্থীর তথ্য মুছে ফেলা হয়েছে (রিসাইকেল বিনে সংরক্ষিত)`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'শিক্ষার্থীদের তথ্য মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
-  const restoreStudent = (id: string) => {
+  const restoreStudent = async (id: string) => {
     const target = deletedStudents.find((s) => s.id === id);
     if (!target) return;
-    setDeletedStudents((prev) => prev.filter((s) => s.id !== id));
-    deleteDocument(COLLECTIONS.DELETED_STUDENTS, id);
-    setStudents((prev) => {
-      if (prev.some((s) => s.id === target.id)) return prev;
-      saveDocument(COLLECTIONS.STUDENTS, target);
-      return [...prev, target];
-    });
-    logActivity(`মুছে ফেলা শিক্ষার্থী "${target.name}" সফলভাবে পুনরুদ্ধার করা হয়েছে`, 'setting');
+    try {
+      await saveDocument(COLLECTIONS.STUDENTS, target);
+      await deleteDocument(COLLECTIONS.DELETED_STUDENTS, id);
+      setDeletedStudents((prev) => prev.filter((s) => s.id !== id));
+      setStudents((prev) => (prev.some((s) => s.id === target.id) ? prev : [...prev, target]));
+      logActivity(`মুছে ফেলা শিক্ষার্থী "${target.name}" সফলভাবে পুনরুদ্ধার করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'শিক্ষার্থী পুনরুদ্ধার করা সম্ভব হয়নি');
+    }
   };
 
-  const permanentlyDeleteStudent = (id: string) => {
-    setDeletedStudents((prev) => prev.filter((s) => s.id !== id));
-    deleteDocument(COLLECTIONS.DELETED_STUDENTS, id);
-    logActivity('শিক্ষার্থীর তথ্য স্থায়ীভাবে সম্পূর্ণ মুছে ফেলা হয়েছে', 'setting');
+  const permanentlyDeleteStudent = async (id: string) => {
+    try {
+      await deleteDocument(COLLECTIONS.DELETED_STUDENTS, id);
+      setDeletedStudents((prev) => prev.filter((s) => s.id !== id));
+      logActivity('শিক্ষার্থীর তথ্য স্থায়ীভাবে সম্পূর্ণ মুছে ফেলা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'স্থায়ীভাবে মুছতে সমস্যা হয়েছে');
+    }
   };
 
-  const emptyDeletedStudents = () => {
-    deletedStudents.forEach((s) => deleteDocument(COLLECTIONS.DELETED_STUDENTS, s.id));
-    setDeletedStudents([]);
-    logActivity('রিসাইকেল বিনের সকল শিক্ষার্থী স্থায়ীভাবে মুছে ফেলা হয়েছে', 'setting');
+  const emptyDeletedStudents = async () => {
+    try {
+      await Promise.all(deletedStudents.map((s) => deleteDocument(COLLECTIONS.DELETED_STUDENTS, s.id)));
+      setDeletedStudents([]);
+      logActivity('রিসাইকেল বিনের সকল শিক্ষার্থী স্থায়ীভাবে মুছে ফেলা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'রিসাইকেল বিন খালি করা সম্ভব হয়নি');
+    }
   };
 
   const removeDuplicateStudents = (): number => {
@@ -1354,7 +1061,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       return result;
     });
-    removedIds.forEach((id) => deleteDocument(COLLECTIONS.STUDENTS, id));
+    removedIds.forEach((id) => deleteDocument(COLLECTIONS.STUDENTS, id).catch(() => {}));
     if (removed > 0) {
       logActivity(`${removed}টি ডুপ্লিকেট শিক্ষার্থী মুছে ফেলা হয়েছে`, 'setting');
     }
@@ -1362,646 +1069,755 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   // Notices CRUD
-  const addNotice = (item: Omit<Notice, 'id'>) => {
+  const addNotice = async (item: Omit<Notice, 'id'>) => {
     const id = generateUniqueId('not');
     const newN: Notice = { id, ...item };
-    setNotices((prev) => [newN, ...prev]);
-    saveDocument(COLLECTIONS.NOTICES, newN);
-    logActivity(`নতুন নোটিশ "${newN.title}" প্রকাশ করা হয়েছে`, 'notice');
+    try {
+      await saveDocument(COLLECTIONS.NOTICES, newN);
+      setNotices((prev) => [newN, ...prev]);
+      logActivity(`নতুন নোটিশ "${newN.title}" প্রকাশ করা হয়েছে`, 'notice');
+    } catch (err) {
+      handleMutationError(err, 'নোটিশ প্রকাশ করা সম্ভব হয়নি');
+    }
   };
 
-  const updateNotice = (id: string, item: Partial<Notice>) => {
-    setNotices((prev) => {
-      const updated = prev.map((n) => (n.id === id ? { ...n, ...item } : n));
-      const target = updated.find((n) => n.id === id);
-      if (target) saveDocument(COLLECTIONS.NOTICES, target);
-      return updated;
-    });
-    logActivity(`নোটিশ আপডেট করা হয়েছে`, 'notice');
+  const updateNotice = async (id: string, item: Partial<Notice>) => {
+    const target = notices.find((n) => n.id === id);
+    if (!target) return;
+    const updated = { ...target, ...item };
+    try {
+      await saveDocument(COLLECTIONS.NOTICES, updated);
+      setNotices((prev) => prev.map((n) => (n.id === id ? updated : n)));
+      logActivity(`নোটিশ আপডেট করা হয়েছে`, 'notice');
+    } catch (err) {
+      handleMutationError(err, 'নোটিশ আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteNotice = (id: string) => {
-    setNotices((prev) => prev.filter((n) => n.id !== id));
-    deleteDocument(COLLECTIONS.NOTICES, id);
-    logActivity(`একটি নোটিশ মুছে ফেলা হয়েছে`, 'notice');
+  const deleteNotice = async (id: string) => {
+    try {
+      await deleteDocument(COLLECTIONS.NOTICES, id);
+      setNotices((prev) => prev.filter((n) => n.id !== id));
+      logActivity(`একটি নোটিশ মুছে ফেলা হয়েছে`, 'notice');
+    } catch (err) {
+      handleMutationError(err, 'নোটিশ মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
-  const deleteMultipleNotices = (ids: string[]) => {
+  const deleteMultipleNotices = async (ids: string[]) => {
     if (!ids || ids.length === 0) return;
-    const idSet = new Set(ids);
-    setNotices((prev) => prev.filter((n) => !idSet.has(n.id)));
-    ids.forEach((id) => deleteDocument(COLLECTIONS.NOTICES, id));
-    logActivity(`${ids.length}টি নোটিশ মুছে ফেলা হয়েছে`, 'notice');
+    try {
+      await Promise.all(ids.map((id) => deleteDocument(COLLECTIONS.NOTICES, id)));
+      setNotices((prev) => prev.filter((n) => !ids.includes(n.id)));
+      logActivity(`${ids.length}টি নোটিশ মুছে ফেলা হয়েছে`, 'notice');
+    } catch (err) {
+      handleMutationError(err, 'নোটিশসমূহ মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
-  const togglePinNotice = (id: string) => {
-    setNotices((prev) => {
-      const updated = prev.map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n));
-      const target = updated.find((n) => n.id === id);
-      if (target) saveDocument(COLLECTIONS.NOTICES, target);
-      return updated;
-    });
+  const togglePinNotice = async (id: string) => {
+    const target = notices.find((n) => n.id === id);
+    if (!target) return;
+    const updated = { ...target, pinned: !target.pinned };
+    try {
+      await saveDocument(COLLECTIONS.NOTICES, updated);
+      setNotices((prev) => prev.map((n) => (n.id === id ? updated : n)));
+    } catch (err) {
+      handleMutationError(err, 'পিন পরিবর্তন করা সম্ভব হয়নি');
+    }
   };
 
   // Leadership
-  const updateLeadership = (id: string, updated: Partial<LeadershipMessage>) => {
-    setLeadership((prev) => {
-      const next = prev.map((l) => (l.id === id ? { ...l, ...updated } : l));
-      saveConfigDoc(CONFIG_DOCS.LEADERSHIP, next);
-      return next;
-    });
-    logActivity('নেতৃত্বের বার্তা হালনাগাদ করা হয়েছে', 'setting');
+  const updateLeadership = async (id: string, updated: Partial<LeadershipMessage>) => {
+    const next = leadership.map((l) => (l.id === id ? { ...l, ...updated } : l));
+    try {
+      await saveConfigDoc(CONFIG_DOCS.LEADERSHIP, next);
+      setLeadership(next);
+      logActivity('নেতৃত্বের বার্তা হালনাগাদ করা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'নেতৃত্বের বার্তা সংরক্ষণ সম্ভব হয়নি');
+    }
   };
 
   // Hero Slides
-  const addHeroSlide = (slide: Omit<HeroSlide, 'id'>) => {
+  const addHeroSlide = async (slide: Omit<HeroSlide, 'id'>) => {
     const id = generateUniqueId('slide');
     const newSlide: HeroSlide = { id, ...slide };
-    setHeroSlides((prev) => {
-      const next = [...prev, newSlide];
-      saveConfigDoc(CONFIG_DOCS.HERO_SLIDES, next);
-      return next;
-    });
-    logActivity(`নতুন হিরো স্লাইড "${slide.title}" যোগ করা হয়েছে`, 'setting');
+    const next = [...heroSlides, newSlide];
+    try {
+      await saveConfigDoc(CONFIG_DOCS.HERO_SLIDES, next);
+      setHeroSlides(next);
+      logActivity(`নতুন হিরো স্লাইড "${slide.title}" যোগ করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'স্লাইড যোগ করা সম্ভব হয়নি');
+    }
   };
 
-  const updateHeroSlide = (id: string, slide: Partial<HeroSlide>) => {
-    setHeroSlides((prev) => {
-      const next = prev.map((s) => (s.id === id ? { ...s, ...slide } : s));
-      saveConfigDoc(CONFIG_DOCS.HERO_SLIDES, next);
-      return next;
-    });
-    logActivity('হিরো স্লাইড আপডেট করা হয়েছে', 'setting');
+  const updateHeroSlide = async (id: string, slide: Partial<HeroSlide>) => {
+    const next = heroSlides.map((s) => (s.id === id ? { ...s, ...slide } : s));
+    try {
+      await saveConfigDoc(CONFIG_DOCS.HERO_SLIDES, next);
+      setHeroSlides(next);
+      logActivity('হিরো স্লাইড আপডেট করা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'স্লাইড আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteHeroSlide = (id: string) => {
-    setHeroSlides((prev) => {
-      const next = prev.filter((s) => s.id !== id);
-      saveConfigDoc(CONFIG_DOCS.HERO_SLIDES, next);
-      return next;
-    });
-    logActivity('হিরো স্লাইড মুছে ফেলা হয়েছে', 'setting');
+  const deleteHeroSlide = async (id: string) => {
+    const next = heroSlides.filter((s) => s.id !== id);
+    try {
+      await saveConfigDoc(CONFIG_DOCS.HERO_SLIDES, next);
+      setHeroSlides(next);
+      logActivity('হিরো স্লাইড মুছে ফেলা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'স্লাইড মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
-  const toggleHeroSlideActive = (id: string) => {
-    setHeroSlides((prev) => {
-      const next = prev.map((s) => (s.id === id ? { ...s, active: !s.active } : s));
-      saveConfigDoc(CONFIG_DOCS.HERO_SLIDES, next);
-      return next;
-    });
+  const toggleHeroSlideActive = async (id: string) => {
+    const next = heroSlides.map((s) => (s.id === id ? { ...s, active: !s.active } : s));
+    try {
+      await saveConfigDoc(CONFIG_DOCS.HERO_SLIDES, next);
+      setHeroSlides(next);
+    } catch (err) {
+      handleMutationError(err, 'স্লাইড সক্রিয় অবস্থা পরিবর্তন করা সম্ভব হয়নি');
+    }
   };
 
   // Navigation Items
-  const addNavigationItem = (item: Omit<NavigationItem, 'id'>) => {
+  const addNavigationItem = async (item: Omit<NavigationItem, 'id'>) => {
     const id = generateUniqueId('nav');
     const newItem: NavigationItem = { id, ...item };
-    setNavigationItems((prev) => {
-      const next = [...prev, newItem];
-      saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
-      return next;
-    });
-    logActivity(`নতুন মেনু আইটেম "${item.label}" যুক্ত করা হয়েছে`, 'setting');
+    const next = [...navigationItems, newItem];
+    try {
+      await saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
+      setNavigationItems(next);
+      logActivity(`নতুন মেনু আইটেম "${item.label}" যুক্ত করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'মেনু আইটেম যুক্ত করা সম্ভব হয়নি');
+    }
   };
 
-  const updateNavigationItem = (id: string, item: Partial<NavigationItem>) => {
-    setNavigationItems((prev) => {
-      const next = prev.map((n) => (n.id === id ? { ...n, ...item } : n));
-      saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
-      return next;
-    });
-    logActivity('নেভিগেশন মেনু আইটেম আপডেট করা হয়েছে', 'setting');
+  const updateNavigationItem = async (id: string, item: Partial<NavigationItem>) => {
+    const next = navigationItems.map((n) => (n.id === id ? { ...n, ...item } : n));
+    try {
+      await saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
+      setNavigationItems(next);
+      logActivity('নেভিগেশন মেনু আইটেম আপডেট করা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'মেনু আইটেম আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteNavigationItem = (id: string) => {
-    setNavigationItems((prev) => {
-      const next = prev.filter((n) => n.id !== id);
-      saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
-      return next;
-    });
-    logActivity('নেভিগেশন মেনু আইটেম মুছে ফেলা হয়েছে', 'setting');
+  const deleteNavigationItem = async (id: string) => {
+    const next = navigationItems.filter((n) => n.id !== id);
+    try {
+      await saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
+      setNavigationItems(next);
+      logActivity('নেভিগেশন মেনু আইটেম মুছে ফেলা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'মেনু আইটেম মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
-  const toggleNavigationItemVisible = (id: string) => {
-    setNavigationItems((prev) => {
-      const next = prev.map((n) => (n.id === id ? { ...n, visible: !n.visible } : n));
-      saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
-      return next;
-    });
+  const toggleNavigationItemVisible = async (id: string) => {
+    const next = navigationItems.map((n) => (n.id === id ? { ...n, visible: !n.visible } : n));
+    try {
+      await saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
+      setNavigationItems(next);
+    } catch (err) {
+      handleMutationError(err, 'দৃশ্যমানতা পরিবর্তন করা সম্ভব হয়নি');
+    }
   };
 
-  const moveNavigationItem = (id: string, direction: 'up' | 'down') => {
-    setNavigationItems((prev) => {
-      const sorted = [...prev].sort((a, b) => a.order - b.order);
-      const index = sorted.findIndex((item) => item.id === id);
-      if (index === -1) return prev;
-      if (direction === 'up' && index === 0) return prev;
-      if (direction === 'down' && index === sorted.length - 1) return prev;
+  const moveNavigationItem = async (id: string, direction: 'up' | 'down') => {
+    const sorted = [...navigationItems].sort((a, b) => a.order - b.order);
+    const index = sorted.findIndex((item) => item.id === id);
+    if (index === -1) return;
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === sorted.length - 1) return;
 
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      const temp = sorted[index];
-      sorted[index] = sorted[targetIndex];
-      sorted[targetIndex] = temp;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    const temp = sorted[index];
+    sorted[index] = sorted[targetIndex];
+    sorted[targetIndex] = temp;
 
-      const next = sorted.map((item, idx) => ({ ...item, order: idx }));
-      saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
-      return next;
-    });
-    logActivity('নেভিগেশন মেনুর ক্রম পরিবর্তন করা হয়েছে', 'setting');
+    const next = sorted.map((item, idx) => ({ ...item, order: idx }));
+    try {
+      await saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
+      setNavigationItems(next);
+      logActivity('নেভিগেশন মেনুর ক্রম পরিবর্তন করা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'ক্রম পরিবর্তন করা সম্ভব হয়নি');
+    }
   };
 
-  const reorderNavigationItems = (items: NavigationItem[]) => {
+  const reorderNavigationItems = async (items: NavigationItem[]) => {
     const updated = items.map((item, idx) => ({ ...item, order: idx }));
-    setNavigationItems(updated);
-    saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, updated);
-    logActivity('নেভিগেশন মেনুর সামগ্রিক বিন্যাস আপডেট করা হয়েছে', 'setting');
+    try {
+      await saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, updated);
+      setNavigationItems(updated);
+      logActivity('নেভিগেশন মেনুর সামগ্রিক বিন্যাস আপডেট করা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'মেনু পুনর্বিন্যাস করা সম্ভব হয়নি');
+    }
   };
 
-  const resetNavigationItems = () => {
-    setNavigationItems(initialNavigationItems);
-    saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, initialNavigationItems);
-    logActivity('নেভিগেশন মেনু ডিফল্ট বিন্যাসে রিসেট করা হয়েছে', 'setting');
+  const resetNavigationItems = async () => {
+    try {
+      await saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, initialNavigationItems);
+      setNavigationItems(initialNavigationItems);
+      logActivity('নেভিগেশন মেনু ডিফল্ট বিন্যাসে রিসেট করা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'রিসেট করা সম্ভব হয়নি');
+    }
   };
 
   // Submenu Management Functions
-  const addSubItem = (parentId: string, subItem: Omit<NavigationSubItem, 'id'>) => {
+  const addSubItem = async (parentId: string, subItem: Omit<NavigationSubItem, 'id'>) => {
     const id = generateUniqueId('sub');
-    setNavigationItems((prev) => {
-      const next = prev.map((item) => {
-        if (item.id === parentId) {
-          const subItems = item.subItems ? [...item.subItems] : [];
-          return {
-            ...item,
-            subItems: [...subItems, { id, ...subItem }],
-          };
-        }
-        return item;
-      });
-      saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
-      return next;
+    const next = navigationItems.map((item) => {
+      if (item.id === parentId) {
+        const subItems = item.subItems ? [...item.subItems] : [];
+        return {
+          ...item,
+          subItems: [...subItems, { id, ...subItem }],
+        };
+      }
+      return item;
     });
-    logActivity(`সাবমেনু "${subItem.label}" যোগ করা হয়েছে`, 'setting');
+    try {
+      await saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
+      setNavigationItems(next);
+      logActivity(`সাবমেনু "${subItem.label}" যোগ করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'সাবমেনু যোগ করা সম্ভব হয়নি');
+    }
   };
 
-  const updateSubItem = (parentId: string, subItemId: string, updated: Partial<NavigationSubItem>) => {
-    setNavigationItems((prev) => {
-      const next = prev.map((item) => {
-        if (item.id === parentId && item.subItems) {
-          return {
-            ...item,
-            subItems: item.subItems.map((sub) => (sub.id === subItemId ? { ...sub, ...updated } : sub)),
-          };
-        }
-        return item;
-      });
-      saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
-      return next;
+  const updateSubItem = async (parentId: string, subItemId: string, updated: Partial<NavigationSubItem>) => {
+    const next = navigationItems.map((item) => {
+      if (item.id === parentId && item.subItems) {
+        return {
+          ...item,
+          subItems: item.subItems.map((sub) => (sub.id === subItemId ? { ...sub, ...updated } : sub)),
+        };
+      }
+      return item;
     });
-    logActivity('সাবমেনু আপডেট করা হয়েছে', 'setting');
+    try {
+      await saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
+      setNavigationItems(next);
+      logActivity('সাবমেনু আপডেট করা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'সাবমেনু আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteSubItem = (parentId: string, subItemId: string) => {
-    setNavigationItems((prev) => {
-      const next = prev.map((item) => {
-        if (item.id === parentId && item.subItems) {
-          return {
-            ...item,
-            subItems: item.subItems.filter((sub) => sub.id !== subItemId),
-          };
-        }
-        return item;
-      });
-      saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
-      return next;
+  const deleteSubItem = async (parentId: string, subItemId: string) => {
+    const next = navigationItems.map((item) => {
+      if (item.id === parentId && item.subItems) {
+        return {
+          ...item,
+          subItems: item.subItems.filter((sub) => sub.id !== subItemId),
+        };
+      }
+      return item;
     });
-    logActivity('সাবমেনু মুছে ফেলা হয়েছে', 'setting');
+    try {
+      await saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
+      setNavigationItems(next);
+      logActivity('সাবমেনু মুছে ফেলা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'সাবমেনু মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
-  const moveSubItem = (parentId: string, subItemId: string, direction: 'up' | 'down') => {
-    setNavigationItems((prev) => {
-      const next = prev.map((item) => {
-        if (item.id === parentId && item.subItems) {
-          const sorted = [...item.subItems].sort((a, b) => a.order - b.order);
-          const index = sorted.findIndex((sub) => sub.id === subItemId);
-          if (index === -1) return item;
-          if (direction === 'up' && index === 0) return item;
-          if (direction === 'down' && index === sorted.length - 1) return item;
+  const moveSubItem = async (parentId: string, subItemId: string, direction: 'up' | 'down') => {
+    const next = navigationItems.map((item) => {
+      if (item.id === parentId && item.subItems) {
+        const sorted = [...item.subItems].sort((a, b) => a.order - b.order);
+        const index = sorted.findIndex((sub) => sub.id === subItemId);
+        if (index === -1) return item;
+        if (direction === 'up' && index === 0) return item;
+        if (direction === 'down' && index === sorted.length - 1) return item;
 
-          const targetIndex = direction === 'up' ? index - 1 : index + 1;
-          const temp = sorted[index];
-          sorted[index] = sorted[targetIndex];
-          sorted[targetIndex] = temp;
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        const temp = sorted[index];
+        sorted[index] = sorted[targetIndex];
+        sorted[targetIndex] = temp;
 
-          return {
-            ...item,
-            subItems: sorted.map((s, idx) => ({ ...s, order: idx })),
-          };
-        }
-        return item;
-      });
-      saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
-      return next;
+        return {
+          ...item,
+          subItems: sorted.map((s, idx) => ({ ...s, order: idx })),
+        };
+      }
+      return item;
     });
+    try {
+      await saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
+      setNavigationItems(next);
+    } catch (err) {
+      handleMutationError(err, 'সাবমেনু সরানো সম্ভব হয়নি');
+    }
   };
 
-  const toggleSubItemVisible = (parentId: string, subItemId: string) => {
-    setNavigationItems((prev) => {
-      const next = prev.map((item) => {
-        if (item.id === parentId && item.subItems) {
-          return {
-            ...item,
-            subItems: item.subItems.map((sub) =>
-              sub.id === subItemId ? { ...sub, visible: !sub.visible } : sub
-            ),
-          };
-        }
-        return item;
-      });
-      saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
-      return next;
+  const toggleSubItemVisible = async (parentId: string, subItemId: string) => {
+    const next = navigationItems.map((item) => {
+      if (item.id === parentId && item.subItems) {
+        return {
+          ...item,
+          subItems: item.subItems.map((sub) =>
+            sub.id === subItemId ? { ...sub, visible: !sub.visible } : sub
+          ),
+        };
+      }
+      return item;
     });
+    try {
+      await saveConfigDoc(CONFIG_DOCS.NAVIGATION_ITEMS, next);
+      setNavigationItems(next);
+    } catch (err) {
+      handleMutationError(err, 'সাবমেনু দৃশ্যমানতা পরিবর্তন করা সম্ভব হয়নি');
+    }
   };
 
   // Downloadable Forms Methods
-  const addDownloadableForm = (form: Omit<DownloadableForm, 'id'>) => {
+  const addDownloadableForm = async (form: Omit<DownloadableForm, 'id'>) => {
     const id = generateUniqueId('form');
     const newForm: DownloadableForm = { id, ...form };
-    setDownloadableForms((prev) => {
-      const next = [newForm, ...prev];
-      saveConfigDoc(CONFIG_DOCS.DOWNLOADABLE_FORMS, next);
-      return next;
-    });
-    logActivity(`নতুন ফরম "${form.title}" যুক্ত করা হয়েছে`, 'notice');
+    const next = [newForm, ...downloadableForms];
+    try {
+      await saveConfigDoc(CONFIG_DOCS.DOWNLOADABLE_FORMS, next);
+      setDownloadableForms(next);
+      logActivity(`নতুন ফরম "${form.title}" যুক্ত করা হয়েছে`, 'notice');
+    } catch (err) {
+      handleMutationError(err, 'নতুন ফরম সংরক্ষণ সম্ভব হয়নি');
+    }
   };
 
-  const updateDownloadableForm = (id: string, updated: Partial<DownloadableForm>) => {
-    setDownloadableForms((prev) => {
-      const next = prev.map((f) => (f.id === id ? { ...f, ...updated } : f));
-      saveConfigDoc(CONFIG_DOCS.DOWNLOADABLE_FORMS, next);
-      return next;
-    });
-    logActivity('ফরম তথ্য আপডেট করা হয়েছে', 'notice');
+  const updateDownloadableForm = async (id: string, updated: Partial<DownloadableForm>) => {
+    const next = downloadableForms.map((f) => (f.id === id ? { ...f, ...updated } : f));
+    try {
+      await saveConfigDoc(CONFIG_DOCS.DOWNLOADABLE_FORMS, next);
+      setDownloadableForms(next);
+      logActivity('ফরম তথ্য আপডেট করা হয়েছে', 'notice');
+    } catch (err) {
+      handleMutationError(err, 'ফরম আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteDownloadableForm = (id: string) => {
-    setDownloadableForms((prev) => {
-      const next = prev.filter((f) => f.id !== id);
-      saveConfigDoc(CONFIG_DOCS.DOWNLOADABLE_FORMS, next);
-      return next;
-    });
-    logActivity('ফরম মুছে ফেলা হয়েছে', 'notice');
+  const deleteDownloadableForm = async (id: string) => {
+    const next = downloadableForms.filter((f) => f.id !== id);
+    try {
+      await saveConfigDoc(CONFIG_DOCS.DOWNLOADABLE_FORMS, next);
+      setDownloadableForms(next);
+      logActivity('ফরম মুছে ফেলা হয়েছে', 'notice');
+    } catch (err) {
+      handleMutationError(err, 'ফরম মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
-  const toggleFormActive = (id: string) => {
-    setDownloadableForms((prev) => {
-      const next = prev.map((f) => (f.id === id ? { ...f, active: !f.active } : f));
-      saveConfigDoc(CONFIG_DOCS.DOWNLOADABLE_FORMS, next);
-      return next;
-    });
+  const toggleFormActive = async (id: string) => {
+    const next = downloadableForms.map((f) => (f.id === id ? { ...f, active: !f.active } : f));
+    try {
+      await saveConfigDoc(CONFIG_DOCS.DOWNLOADABLE_FORMS, next);
+      setDownloadableForms(next);
+    } catch (err) {
+      handleMutationError(err, 'ফরম অবস্থা পরিবর্তন করা সম্ভব হয়নি');
+    }
   };
 
-  const updateAdmitCardConfig = (config: Partial<AdmitCardConfig>) => {
-    setAdmitCardConfig((prev) => {
-      const next = { ...prev, ...config };
-      saveConfigDoc(CONFIG_DOCS.ADMIT_CARD_CONFIG, next);
-      return next;
-    });
-    logActivity('প্রবেশপত্র (Admit Card) কনফিগারেশন আপডেট করা হয়েছে', 'setting');
+  const updateAdmitCardConfig = async (config: Partial<AdmitCardConfig>) => {
+    const next = { ...admitCardConfig, ...config };
+    try {
+      await saveConfigDoc(CONFIG_DOCS.ADMIT_CARD_CONFIG, next);
+      setAdmitCardConfig(next);
+      logActivity('প্রবেশপত্র (Admit Card) কনফিগারেশন আপডেট করা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'প্রবেশপত্র কনফিগারেশন আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const addActiveExam = (exam: Omit<ActiveExam, 'id'>) => {
+  const addActiveExam = async (exam: Omit<ActiveExam, 'id'>) => {
     const id = generateUniqueId('exam');
     const newExam: ActiveExam = { id, ...exam };
-    setAdmitCardConfig((prev) => {
-      const available = prev.availableExams ? [...prev.availableExams] : [];
-      // Support multiple active exams: do NOT deactivate other exams!
-      const next = {
-        ...prev,
-        examTerm: newExam.isActive ? newExam.examTerm : prev.examTerm,
-        examYear: newExam.isActive ? newExam.examYear : prev.examYear,
-        examStartDate: newExam.isActive ? newExam.examStartDate : prev.examStartDate,
-        activeExamId: newExam.isActive ? id : prev.activeExamId,
-        availableExams: [newExam, ...available],
-      };
-      saveConfigDoc(CONFIG_DOCS.ADMIT_CARD_CONFIG, next);
-      return next;
-    });
-    logActivity(`নতুন পরীক্ষা "${exam.examTerm}" প্রবেশপত্র মডিউলে যুক্ত করা হয়েছে`, 'setting');
+    const available = admitCardConfig.availableExams ? [...admitCardConfig.availableExams] : [];
+    const next = {
+      ...admitCardConfig,
+      examTerm: newExam.isActive ? newExam.examTerm : admitCardConfig.examTerm,
+      examYear: newExam.isActive ? newExam.examYear : admitCardConfig.examYear,
+      examStartDate: newExam.isActive ? newExam.examStartDate : admitCardConfig.examStartDate,
+      activeExamId: newExam.isActive ? id : admitCardConfig.activeExamId,
+      availableExams: [newExam, ...available],
+    };
+    try {
+      await saveConfigDoc(CONFIG_DOCS.ADMIT_CARD_CONFIG, next);
+      setAdmitCardConfig(next);
+      logActivity(`নতুন পরীক্ষা "${exam.examTerm}" প্রবেশপত্র মডিউলে যুক্ত করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'পরীক্ষা যুক্ত করা সম্ভব হয়নি');
+    }
   };
 
-  const updateActiveExam = (id: string, updated: Partial<ActiveExam>) => {
-    setAdmitCardConfig((prev) => {
-      const available = prev.availableExams ? [...prev.availableExams] : [];
-      // Update targeted exam independently without deactivating others
-      const updatedAvailable = available.map((ex) => {
-        if (ex.id === id) {
-          return { ...ex, ...updated };
-        }
-        return ex;
-      });
-      const activeOne = updatedAvailable.find((ex) => ex.isActive) || updatedAvailable.find((ex) => ex.id === id);
-      const next = {
-        ...prev,
-        examTerm: activeOne && activeOne.isActive ? activeOne.examTerm : prev.examTerm,
-        examYear: activeOne && activeOne.isActive ? activeOne.examYear : prev.examYear,
-        examStartDate: activeOne && activeOne.isActive ? activeOne.examStartDate : prev.examStartDate,
-        activeExamId: activeOne && activeOne.isActive ? activeOne.id : prev.activeExamId,
-        availableExams: updatedAvailable,
-      };
-      saveConfigDoc(CONFIG_DOCS.ADMIT_CARD_CONFIG, next);
-      return next;
-    });
-    logActivity('পরীক্ষার তথ্য আপডেট করা হয়েছে', 'setting');
+  const updateActiveExam = async (id: string, updated: Partial<ActiveExam>) => {
+    const available = admitCardConfig.availableExams ? [...admitCardConfig.availableExams] : [];
+    const updatedAvailable = available.map((ex) => (ex.id === id ? { ...ex, ...updated } : ex));
+    const activeOne = updatedAvailable.find((ex) => ex.isActive) || updatedAvailable.find((ex) => ex.id === id);
+    const next = {
+      ...admitCardConfig,
+      examTerm: activeOne && activeOne.isActive ? activeOne.examTerm : admitCardConfig.examTerm,
+      examYear: activeOne && activeOne.isActive ? activeOne.examYear : admitCardConfig.examYear,
+      examStartDate: activeOne && activeOne.isActive ? activeOne.examStartDate : admitCardConfig.examStartDate,
+      activeExamId: activeOne && activeOne.isActive ? activeOne.id : admitCardConfig.activeExamId,
+      availableExams: updatedAvailable,
+    };
+    try {
+      await saveConfigDoc(CONFIG_DOCS.ADMIT_CARD_CONFIG, next);
+      setAdmitCardConfig(next);
+      logActivity('পরীক্ষার তথ্য আপডেট করা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'পরীক্ষার তথ্য আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteActiveExam = (id: string) => {
-    setAdmitCardConfig((prev) => {
-      const available = (prev.availableExams || []).filter((ex) => ex.id !== id);
-      const isCurrentActive = prev.activeExamId === id;
-      const nextActive = isCurrentActive && available.length > 0 ? available[0] : null;
-      const next = {
-        ...prev,
-        examTerm: nextActive ? nextActive.examTerm : (available.length === 0 ? '' : prev.examTerm),
-        examYear: nextActive ? nextActive.examYear : prev.examYear,
-        examStartDate: nextActive ? nextActive.examStartDate : prev.examStartDate,
-        activeExamId: nextActive ? nextActive.id : (isCurrentActive ? undefined : prev.activeExamId),
-        isActive: available.some((e) => e.isActive) ? prev.isActive : (available.length > 0 ? prev.isActive : false),
-        availableExams: available,
-      };
-      saveConfigDoc(CONFIG_DOCS.ADMIT_CARD_CONFIG, next);
-      return next;
-    });
-    logActivity('পরীক্ষা মুছে ফেলা হয়েছে', 'setting');
+  const deleteActiveExam = async (id: string) => {
+    const available = (admitCardConfig.availableExams || []).filter((ex) => ex.id !== id);
+    const isCurrentActive = admitCardConfig.activeExamId === id;
+    const nextActive = isCurrentActive && available.length > 0 ? available[0] : null;
+    const next = {
+      ...admitCardConfig,
+      examTerm: nextActive ? nextActive.examTerm : (available.length === 0 ? '' : admitCardConfig.examTerm),
+      examYear: nextActive ? nextActive.examYear : admitCardConfig.examYear,
+      examStartDate: nextActive ? nextActive.examStartDate : admitCardConfig.examStartDate,
+      activeExamId: nextActive ? nextActive.id : (isCurrentActive ? undefined : admitCardConfig.activeExamId),
+      isActive: available.some((e) => e.isActive) ? admitCardConfig.isActive : (available.length > 0 ? admitCardConfig.isActive : false),
+      availableExams: available,
+    };
+    try {
+      await saveConfigDoc(CONFIG_DOCS.ADMIT_CARD_CONFIG, next);
+      setAdmitCardConfig(next);
+      logActivity('পরীক্ষা মুছে ফেলা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'পরীক্ষা মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
-  const setActiveExam = (id: string, activeState?: boolean) => {
-    setAdmitCardConfig((prev) => {
-      const available = (prev.availableExams || []).map((ex) => {
-        if (ex.id === id) {
-          return {
-            ...ex,
-            isActive: activeState !== undefined ? activeState : true,
-          };
-        }
-        return ex;
-      });
-      const chosen = available.find((ex) => ex.id === id);
-      if (!chosen) return prev;
-      const next = {
-        ...prev,
-        examTerm: chosen.examTerm,
-        examYear: chosen.examYear,
-        examStartDate: chosen.examStartDate,
-        activeExamId: chosen.id,
-        availableExams: available,
-      };
-      saveConfigDoc(CONFIG_DOCS.ADMIT_CARD_CONFIG, next);
-      return next;
+  const setActiveExam = async (id: string, activeState?: boolean) => {
+    const available = (admitCardConfig.availableExams || []).map((ex) => {
+      if (ex.id === id) {
+        return {
+          ...ex,
+          isActive: activeState !== undefined ? activeState : true,
+        };
+      }
+      return ex;
     });
-    logActivity('পরীক্ষার সক্রিয় অবস্থা পরিবর্তন করা হয়েছে', 'setting');
+    const chosen = available.find((ex) => ex.id === id);
+    if (!chosen) return;
+    const next = {
+      ...admitCardConfig,
+      examTerm: chosen.examTerm,
+      examYear: chosen.examYear,
+      examStartDate: chosen.examStartDate,
+      activeExamId: chosen.id,
+      availableExams: available,
+    };
+    try {
+      await saveConfigDoc(CONFIG_DOCS.ADMIT_CARD_CONFIG, next);
+      setAdmitCardConfig(next);
+      logActivity('পরীক্ষার সক্রিয় অবস্থা পরিবর্তন করা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'সক্রিয় অবস্থা পরিবর্তন করা সম্ভব হয়নি');
+    }
   };
 
-  const toggleActiveExam = (id: string) => {
-    setAdmitCardConfig((prev) => {
-      const available = (prev.availableExams || []).map((ex) => {
-        if (ex.id === id) {
-          return {
-            ...ex,
-            isActive: !ex.isActive,
-          };
-        }
-        return ex;
-      });
-      const next = {
-        ...prev,
-        availableExams: available,
-      };
-      saveConfigDoc(CONFIG_DOCS.ADMIT_CARD_CONFIG, next);
-      return next;
+  const toggleActiveExam = async (id: string) => {
+    const available = (admitCardConfig.availableExams || []).map((ex) => {
+      if (ex.id === id) {
+        return {
+          ...ex,
+          isActive: !ex.isActive,
+        };
+      }
+      return ex;
     });
-    logActivity('পরীক্ষার অবস্থা টগল করা হয়েছে', 'setting');
+    const next = {
+      ...admitCardConfig,
+      availableExams: available,
+    };
+    try {
+      await saveConfigDoc(CONFIG_DOCS.ADMIT_CARD_CONFIG, next);
+      setAdmitCardConfig(next);
+      logActivity('পরীক্ষার অবস্থা টগল করা হয়েছে', 'setting');
+    } catch (err) {
+      handleMutationError(err, 'অবস্থা টগল করা সম্ভব হয়নি');
+    }
   };
 
   // Academic Programs
-  const addProgram = (item: Omit<AcademicProgram, 'id'>) => {
+  const addProgram = async (item: Omit<AcademicProgram, 'id'>) => {
     const id = generateUniqueId('prog');
     const newProg: AcademicProgram = { id, ...item };
-    setAcademicPrograms((prev) => {
-      const next = [...prev, newProg];
-      saveConfigDoc(CONFIG_DOCS.PROGRAMS, next);
-      return next;
-    });
-    logActivity(`নতুন একাডেমিক প্রোগ্রাম "${item.title}" যুক্ত করা হয়েছে`, 'setting');
+    const next = [...academicPrograms, newProg];
+    try {
+      await saveConfigDoc(CONFIG_DOCS.PROGRAMS, next);
+      setAcademicPrograms(next);
+      logActivity(`নতুন একাডেমিক প্রোগ্রাম "${item.title}" যুক্ত করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'প্রোগ্রাম যুক্ত করা সম্ভব হয়নি');
+    }
   };
 
-  const updateProgram = (id: string, item: Partial<AcademicProgram>) => {
-    setAcademicPrograms((prev) => {
-      const next = prev.map((p) => (p.id === id ? { ...p, ...item } : p));
-      saveConfigDoc(CONFIG_DOCS.PROGRAMS, next);
-      return next;
-    });
-    logActivity(`একাডেমিক প্রোগ্রাম আপডেট করা হয়েছে`, 'setting');
+  const updateProgram = async (id: string, item: Partial<AcademicProgram>) => {
+    const next = academicPrograms.map((p) => (p.id === id ? { ...p, ...item } : p));
+    try {
+      await saveConfigDoc(CONFIG_DOCS.PROGRAMS, next);
+      setAcademicPrograms(next);
+      logActivity(`একাডেমিক প্রোগ্রাম আপডেট করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'প্রোগ্রাম আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteProgram = (id: string) => {
-    setAcademicPrograms((prev) => {
-      const next = prev.filter((p) => p.id !== id);
-      saveConfigDoc(CONFIG_DOCS.PROGRAMS, next);
-      return next;
-    });
-    logActivity(`একাডেমিক প্রোগ্রাম মুছে ফেলা হয়েছে`, 'setting');
+  const deleteProgram = async (id: string) => {
+    const next = academicPrograms.filter((p) => p.id !== id);
+    try {
+      await saveConfigDoc(CONFIG_DOCS.PROGRAMS, next);
+      setAcademicPrograms(next);
+      logActivity(`একাডেমিক প্রোগ্রাম মুছে ফেলা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'প্রোগ্রাম মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
   // News CRUD
-  const addNews = (item: Omit<NewsItem, 'id'>) => {
+  const addNews = async (item: Omit<NewsItem, 'id'>) => {
     const id = generateUniqueId('news');
     const newN: NewsItem = { id, ...item };
-    setNews((prev) => [newN, ...prev]);
-    saveDocument(COLLECTIONS.NEWS, newN);
-    logActivity(`নতুন সংবাদ "${item.title}" প্রকাশিত হয়েছে`, 'notice');
+    try {
+      await saveDocument(COLLECTIONS.NEWS, newN);
+      setNews((prev) => [newN, ...prev]);
+      logActivity(`নতুন সংবাদ "${item.title}" প্রকাশিত হয়েছে`, 'notice');
+    } catch (err) {
+      handleMutationError(err, 'সংবাদ প্রকাশ করা সম্ভব হয়নি');
+    }
   };
 
-  const updateNews = (id: string, item: Partial<NewsItem>) => {
-    setNews((prev) => {
-      const next = prev.map((n) => (n.id === id ? { ...n, ...item } : n));
-      const target = next.find((n) => n.id === id);
-      if (target) saveDocument(COLLECTIONS.NEWS, target);
-      return next;
-    });
-    logActivity(`সংবাদ আপডেট করা হয়েছে`, 'notice');
+  const updateNews = async (id: string, item: Partial<NewsItem>) => {
+    const target = news.find((n) => n.id === id);
+    if (!target) return;
+    const updated = { ...target, ...item };
+    try {
+      await saveDocument(COLLECTIONS.NEWS, updated);
+      setNews((prev) => prev.map((n) => (n.id === id ? updated : n)));
+      logActivity(`সংবাদ আপডেট করা হয়েছে`, 'notice');
+    } catch (err) {
+      handleMutationError(err, 'সংবাদ আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteNews = (id: string) => {
-    setNews((prev) => prev.filter((n) => n.id !== id));
-    deleteDocument(COLLECTIONS.NEWS, id);
-    logActivity(`সংবাদ মুছে ফেলা হয়েছে`, 'notice');
+  const deleteNews = async (id: string) => {
+    try {
+      await deleteDocument(COLLECTIONS.NEWS, id);
+      setNews((prev) => prev.filter((n) => n.id !== id));
+      logActivity(`সংবাদ মুছে ফেলা হয়েছে`, 'notice');
+    } catch (err) {
+      handleMutationError(err, 'সংবাদ মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
   // Events CRUD
-  const addEvent = (item: Omit<EventItem, 'id'>) => {
+  const addEvent = async (item: Omit<EventItem, 'id'>) => {
     const id = generateUniqueId('evt');
     const newE: EventItem = { id, ...item };
-    setEvents((prev) => [...prev, newE]);
-    saveDocument(COLLECTIONS.EVENTS, newE);
-    logActivity(`নতুন ইভেন্ট "${item.title}" ক্যালেন্ডারে যুক্ত হয়েছে`, 'event');
+    try {
+      await saveDocument(COLLECTIONS.EVENTS, newE);
+      setEvents((prev) => [...prev, newE]);
+      logActivity(`নতুন ইভেন্ট "${item.title}" ক্যালেন্ডারে যুক্ত হয়েছে`, 'event');
+    } catch (err) {
+      handleMutationError(err, 'ইভেন্ট যোগ করা সম্ভব হয়নি');
+    }
   };
 
-  const updateEvent = (id: string, item: Partial<EventItem>) => {
-    setEvents((prev) => {
-      const next = prev.map((e) => (e.id === id ? { ...e, ...item } : e));
-      const target = next.find((e) => e.id === id);
-      if (target) saveDocument(COLLECTIONS.EVENTS, target);
-      return next;
-    });
-    logActivity(`ইভেন্টের বিবরণ আপডেট করা হয়েছে`, 'event');
+  const updateEvent = async (id: string, item: Partial<EventItem>) => {
+    const target = events.find((e) => e.id === id);
+    if (!target) return;
+    const updated = { ...target, ...item };
+    try {
+      await saveDocument(COLLECTIONS.EVENTS, updated);
+      setEvents((prev) => prev.map((e) => (e.id === id ? updated : e)));
+      logActivity(`ইভেন্টের বিবরণ আপডেট করা হয়েছে`, 'event');
+    } catch (err) {
+      handleMutationError(err, 'ইভেন্ট আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteEvent = (id: string) => {
-    setEvents((prev) => prev.filter((e) => e.id !== id));
-    deleteDocument(COLLECTIONS.EVENTS, id);
-    logActivity(`ইভেন্ট বাতিল/মুছে ফেলা হয়েছে`, 'event');
+  const deleteEvent = async (id: string) => {
+    try {
+      await deleteDocument(COLLECTIONS.EVENTS, id);
+      setEvents((prev) => prev.filter((e) => e.id !== id));
+      logActivity(`ইভেন্ট বাতিল/মুছে ফেলা হয়েছে`, 'event');
+    } catch (err) {
+      handleMutationError(err, 'ইভেন্ট মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
   // Achievements CRUD
-  const addAchievement = (item: Omit<AchievementItem, 'id'>) => {
+  const addAchievement = async (item: Omit<AchievementItem, 'id'>) => {
     const id = generateUniqueId('ach');
     const newA: AchievementItem = { id, ...item };
-    setAchievements((prev) => [...prev, newA]);
-    saveDocument(COLLECTIONS.ACHIEVEMENTS, newA);
-    logActivity(`নতুন অর্জন "${item.title}" সংরক্ষিত হয়েছে`, 'setting');
+    try {
+      await saveDocument(COLLECTIONS.ACHIEVEMENTS, newA);
+      setAchievements((prev) => [...prev, newA]);
+      logActivity(`নতুন অর্জন "${item.title}" সংরক্ষিত হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'অর্জন সংরক্ষণ সম্ভব হয়নি');
+    }
   };
 
-  const updateAchievement = (id: string, item: Partial<AchievementItem>) => {
-    setAchievements((prev) => {
-      const next = prev.map((a) => (a.id === id ? { ...a, ...item } : a));
-      const target = next.find((a) => a.id === id);
-      if (target) saveDocument(COLLECTIONS.ACHIEVEMENTS, target);
-      return next;
-    });
-    logActivity(`অর্জনের তথ্য আপডেট করা হয়েছে`, 'setting');
+  const updateAchievement = async (id: string, item: Partial<AchievementItem>) => {
+    const target = achievements.find((a) => a.id === id);
+    if (!target) return;
+    const updated = { ...target, ...item };
+    try {
+      await saveDocument(COLLECTIONS.ACHIEVEMENTS, updated);
+      setAchievements((prev) => prev.map((a) => (a.id === id ? updated : a)));
+      logActivity(`অর্জনের তথ্য আপডেট করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'অর্জনের তথ্য আপডেট সম্ভব হয়নি');
+    }
   };
 
-  const deleteAchievement = (id: string) => {
-    setAchievements((prev) => prev.filter((a) => a.id !== id));
-    deleteDocument(COLLECTIONS.ACHIEVEMENTS, id);
-    logActivity(`অর্জন তালিকা থেকে মুছে ফেলা হয়েছে`, 'setting');
+  const deleteAchievement = async (id: string) => {
+    try {
+      await deleteDocument(COLLECTIONS.ACHIEVEMENTS, id);
+      setAchievements((prev) => prev.filter((a) => a.id !== id));
+      logActivity(`অর্জন তালিকা থেকে মুছে ফেলা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'অর্জন মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
   // Gallery
-  const addGalleryAlbum = (item: Omit<GalleryAlbum, 'id'>) => {
+  const addGalleryAlbum = async (item: Omit<GalleryAlbum, 'id'>) => {
     const id = generateUniqueId('gal');
     const newG: GalleryAlbum = { id, ...item };
-    setGalleryAlbums((prev) => [...prev, newG]);
-    saveDocument(COLLECTIONS.GALLERY, newG);
-    logActivity(`নতুন গ্যালারি অ্যালবাম "${item.title}" যোগ করা হয়েছে`, 'setting');
+    try {
+      await saveDocument(COLLECTIONS.GALLERY, newG);
+      setGalleryAlbums((prev) => [...prev, newG]);
+      logActivity(`নতুন গ্যালারি অ্যালবাম "${item.title}" যোগ করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'অ্যালবাম যোগ করা সম্ভব হয়নি');
+    }
   };
 
-  const updateGalleryAlbum = (id: string, item: Partial<GalleryAlbum>) => {
-    setGalleryAlbums((prev) => {
-      const next = prev.map((g) => (g.id === id ? { ...g, ...item } : g));
-      const target = next.find((g) => g.id === id);
-      if (target) saveDocument(COLLECTIONS.GALLERY, target);
-      return next;
-    });
-    logActivity(`গ্যালারি অ্যালবাম আপডেট করা হয়েছে`, 'setting');
+  const updateGalleryAlbum = async (id: string, item: Partial<GalleryAlbum>) => {
+    const target = galleryAlbums.find((g) => g.id === id);
+    if (!target) return;
+    const updated = { ...target, ...item };
+    try {
+      await saveDocument(COLLECTIONS.GALLERY, updated);
+      setGalleryAlbums((prev) => prev.map((g) => (g.id === id ? updated : g)));
+      logActivity(`গ্যালারি অ্যালবাম আপডেট করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'অ্যালবাম আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteGalleryAlbum = (id: string) => {
-    setGalleryAlbums((prev) => prev.filter((g) => g.id !== id));
-    deleteDocument(COLLECTIONS.GALLERY, id);
-    logActivity(`গ্যালারি অ্যালবাম মুছে ফেলা হয়েছে`, 'setting');
+  const deleteGalleryAlbum = async (id: string) => {
+    try {
+      await deleteDocument(COLLECTIONS.GALLERY, id);
+      setGalleryAlbums((prev) => prev.filter((g) => g.id !== id));
+      logActivity(`গ্যালারি অ্যালবাম মুছে ফেলা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'অ্যালবাম মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
-  const addImageToAlbum = (albumId: string, imageUrl: string) => {
-    setGalleryAlbums((prev) => {
-      const next = prev.map((alb) => {
-        if (alb.id === albumId) {
-          const current = alb.images || (alb.imageUrl ? [alb.imageUrl] : []);
-          const updatedImgs = [...current, imageUrl];
-          const updatedAlb = {
-            ...alb,
-            images: updatedImgs,
-            itemCountText: `${updatedImgs.length} টি ছবি`,
-          };
-          saveDocument(COLLECTIONS.GALLERY, updatedAlb);
-          return updatedAlb;
-        }
-        return alb;
-      });
-      return next;
-    });
-    logActivity(`অ্যালবামে নতুন ছবি যোগ করা হয়েছে`, 'setting');
+  const addImageToAlbum = async (albumId: string, imageUrl: string) => {
+    const target = galleryAlbums.find((alb) => alb.id === albumId);
+    if (!target) return;
+    const current = target.images || (target.imageUrl ? [target.imageUrl] : []);
+    const updatedImgs = [...current, imageUrl];
+    const updatedAlb = {
+      ...target,
+      images: updatedImgs,
+      itemCountText: `${updatedImgs.length} টি ছবি`,
+    };
+    try {
+      await saveDocument(COLLECTIONS.GALLERY, updatedAlb);
+      setGalleryAlbums((prev) => prev.map((alb) => (alb.id === albumId ? updatedAlb : alb)));
+      logActivity(`অ্যালবামে নতুন ছবি যোগ করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'ছবি যোগ করা সম্ভব হয়নি');
+    }
   };
 
-  const addImagesToAlbum = (albumId: string, imageUrls: string[]) => {
+  const addImagesToAlbum = async (albumId: string, imageUrls: string[]) => {
     if (!imageUrls || imageUrls.length === 0) return;
-    setGalleryAlbums((prev) => {
-      const next = prev.map((alb) => {
-        if (alb.id === albumId) {
-          const current = alb.images || (alb.imageUrl ? [alb.imageUrl] : []);
-          const updatedImgs = [...current, ...imageUrls];
-          const updatedAlb = {
-            ...alb,
-            images: updatedImgs,
-            itemCountText: `${updatedImgs.length} টি ছবি`,
-          };
-          saveDocument(COLLECTIONS.GALLERY, updatedAlb);
-          return updatedAlb;
-        }
-        return alb;
-      });
-      return next;
-    });
-    logActivity(`অ্যালবামে ${imageUrls.length}টি নতুন ছবি যোগ করা হয়েছে`, 'setting');
+    const target = galleryAlbums.find((alb) => alb.id === albumId);
+    if (!target) return;
+    const current = target.images || (target.imageUrl ? [target.imageUrl] : []);
+    const updatedImgs = [...current, ...imageUrls];
+    const updatedAlb = {
+      ...target,
+      images: updatedImgs,
+      itemCountText: `${updatedImgs.length} টি ছবি`,
+    };
+    try {
+      await saveDocument(COLLECTIONS.GALLERY, updatedAlb);
+      setGalleryAlbums((prev) => prev.map((alb) => (alb.id === albumId ? updatedAlb : alb)));
+      logActivity(`অ্যালবামে ${imageUrls.length}টি নতুন ছবি যোগ করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'ছবিসমূহ যোগ করা সম্ভব হয়নি');
+    }
   };
 
-  const removeImageFromAlbum = (albumId: string, index: number) => {
-    setGalleryAlbums((prev) => {
-      const next = prev.map((alb) => {
-        if (alb.id === albumId) {
-          const current = alb.images ? [...alb.images] : (alb.imageUrl ? [alb.imageUrl] : []);
-          if (index >= 0 && index < current.length) {
-            const removedUrl = current[index];
-            current.splice(index, 1);
-            const newCover = alb.imageUrl === removedUrl ? (current[0] || '') : alb.imageUrl;
-            const updatedAlb = {
-              ...alb,
-              imageUrl: newCover,
-              images: current,
-              itemCountText: `${current.length} টি ছবি`,
-            };
-            saveDocument(COLLECTIONS.GALLERY, updatedAlb);
-            return updatedAlb;
-          }
-        }
-        return alb;
-      });
-      return next;
-    });
-    logActivity(`অ্যালবাম থেকে ছবি মুছে ফেলা হয়েছে`, 'setting');
+  const removeImageFromAlbum = async (albumId: string, index: number) => {
+    const target = galleryAlbums.find((alb) => alb.id === albumId);
+    if (!target) return;
+    const current = target.images ? [...target.images] : (target.imageUrl ? [target.imageUrl] : []);
+    if (index < 0 || index >= current.length) return;
+    const removedUrl = current[index];
+    current.splice(index, 1);
+    const newCover = target.imageUrl === removedUrl ? (current[0] || '') : target.imageUrl;
+    const updatedAlb = {
+      ...target,
+      imageUrl: newCover,
+      images: current,
+      itemCountText: `${current.length} টি ছবি`,
+    };
+    try {
+      await saveDocument(COLLECTIONS.GALLERY, updatedAlb);
+      setGalleryAlbums((prev) => prev.map((alb) => (alb.id === albumId ? updatedAlb : alb)));
+      logActivity(`অ্যালবাম থেকে ছবি মুছে ফেলা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'ছবি মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
-  const setAlbumCoverImage = (albumId: string, imageUrl: string) => {
-    setGalleryAlbums((prev) => {
-      const next = prev.map((alb) => {
-        if (alb.id === albumId) {
-          const current = alb.images ? [...alb.images] : (alb.imageUrl ? [alb.imageUrl] : []);
-          if (!current.includes(imageUrl)) {
-            current.unshift(imageUrl);
-          }
-          const updatedAlb = {
-            ...alb,
-            imageUrl,
-            images: current,
-            itemCountText: `${current.length} টি ছবি`,
-          };
-          saveDocument(COLLECTIONS.GALLERY, updatedAlb);
-          return updatedAlb;
-        }
-        return alb;
-      });
-      return next;
-    });
-    logActivity(`অ্যালবামের কভার ছবি পরিবর্তন করা হয়েছে`, 'setting');
+  const setAlbumCoverImage = async (albumId: string, imageUrl: string) => {
+    const target = galleryAlbums.find((alb) => alb.id === albumId);
+    if (!target) return;
+    const current = target.images ? [...target.images] : (target.imageUrl ? [target.imageUrl] : []);
+    if (!current.includes(imageUrl)) {
+      current.unshift(imageUrl);
+    }
+    const updatedAlb = {
+      ...target,
+      imageUrl,
+      images: current,
+      itemCountText: `${current.length} টি ছবি`,
+    };
+    try {
+      await saveDocument(COLLECTIONS.GALLERY, updatedAlb);
+      setGalleryAlbums((prev) => prev.map((alb) => (alb.id === albumId ? updatedAlb : alb)));
+      logActivity(`অ্যালবামের কভার ছবি পরিবর্তন করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'কভার ছবি পরিবর্তন করা সম্ভব হয়নি');
+    }
   };
 
   // Admissions
@@ -2014,57 +1830,80 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       appliedDate: dateStr,
       status: 'অপেক্ষমাণ',
     };
-    setAdmissions((prev) => [newApp, ...prev]);
-    saveDocument(COLLECTIONS.ADMISSIONS, newApp);
-    logActivity(`নতুন ভর্তি আবেদন জমা হয়েছে: "${newApp.applicantName}" (${newApp.applyingClass})`, 'admission');
+    saveDocument(COLLECTIONS.ADMISSIONS, newApp)
+      .then(() => {
+        setAdmissions((prev) => [newApp, ...prev]);
+        logActivity(`নতুন ভর্তি আবেদন জমা হয়েছে: "${newApp.applicantName}" (${newApp.applyingClass})`, 'admission');
+      })
+      .catch((err) => {
+        handleMutationError(err, 'ভর্তি আবেদন জমা দিতে সমস্যা হয়েছে');
+      });
     return newApp;
   };
 
-  const updateAdmissionStatus = (id: string, status: AdmissionApplication['status']) => {
-    setAdmissions((prev) => {
-      const next = prev.map((a) => (a.id === id ? { ...a, status } : a));
-      const target = next.find((a) => a.id === id);
-      if (target) saveDocument(COLLECTIONS.ADMISSIONS, target);
-      return next;
-    });
-    logActivity(`ভর্তি আবেদনের স্ট্যাটাস পরিবর্তন: ${status}`, 'admission');
+  const updateAdmissionStatus = async (id: string, status: AdmissionApplication['status']) => {
+    const target = admissions.find((a) => a.id === id);
+    if (!target) return;
+    const updated = { ...target, status };
+    try {
+      await saveDocument(COLLECTIONS.ADMISSIONS, updated);
+      setAdmissions((prev) => prev.map((a) => (a.id === id ? updated : a)));
+      logActivity(`ভর্তি আবেদনের স্ট্যাটাস পরিবর্তন: ${status}`, 'admission');
+    } catch (err) {
+      handleMutationError(err, 'স্ট্যাটাস আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteAdmission = (id: string) => {
-    setAdmissions((prev) => prev.filter((a) => a.id !== id));
-    deleteDocument(COLLECTIONS.ADMISSIONS, id);
-    logActivity(`ভর্তি আবেদন তালিকা থেকে সরানো হয়েছে`, 'admission');
+  const deleteAdmission = async (id: string) => {
+    try {
+      await deleteDocument(COLLECTIONS.ADMISSIONS, id);
+      setAdmissions((prev) => prev.filter((a) => a.id !== id));
+      logActivity(`ভর্তি আবেদন তালিকা থেকে সরানো হয়েছে`, 'admission');
+    } catch (err) {
+      handleMutationError(err, 'ভর্তি আবেদন মুছতে সমস্যা হয়েছে');
+    }
   };
 
   // Exam Results
-  const addExamResult = (result: Omit<ExamResult, 'id'>) => {
+  const addExamResult = async (result: Omit<ExamResult, 'id'>) => {
     const newResult: ExamResult = {
       ...result,
       id: generateUniqueId('res'),
     };
-    setExamResults((prev) => [newResult, ...prev]);
-    saveDocument(COLLECTIONS.EXAM_RESULTS, newResult);
-    logActivity(`নতুন পরীক্ষার ফলাফল যুক্ত করা হয়েছে: ${newResult.studentName}`, 'setting');
+    try {
+      await saveDocument(COLLECTIONS.EXAM_RESULTS, newResult);
+      setExamResults((prev) => [newResult, ...prev]);
+      logActivity(`নতুন পরীক্ষার ফলাফল যুক্ত করা হয়েছে: ${newResult.studentName}`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'পরীক্ষার ফলাফল সংরক্ষণ করা সম্ভব হয়নি');
+    }
   };
 
-  const updateExamResult = (id: string, updated: Partial<ExamResult>) => {
-    setExamResults((prev) => {
-      const next = prev.map((r) => (r.id === id ? { ...r, ...updated } : r));
-      const target = next.find((r) => r.id === id);
-      if (target) saveDocument(COLLECTIONS.EXAM_RESULTS, target);
-      return next;
-    });
-    logActivity(`পরীক্ষার ফলাফল আপডেট করা হয়েছে`, 'setting');
+  const updateExamResult = async (id: string, updated: Partial<ExamResult>) => {
+    const target = examResults.find((r) => r.id === id);
+    if (!target) return;
+    const updatedRes = { ...target, ...updated };
+    try {
+      await saveDocument(COLLECTIONS.EXAM_RESULTS, updatedRes);
+      setExamResults((prev) => prev.map((r) => (r.id === id ? updatedRes : r)));
+      logActivity(`পরীক্ষার ফলাফল আপডেট করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'ফলাফল আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteExamResult = (id: string) => {
-    setExamResults((prev) => prev.filter((r) => r.id !== id));
-    deleteDocument(COLLECTIONS.EXAM_RESULTS, id);
-    logActivity(`পরীক্ষার ফলাফল মুছে ফেলা হয়েছে`, 'setting');
+  const deleteExamResult = async (id: string) => {
+    try {
+      await deleteDocument(COLLECTIONS.EXAM_RESULTS, id);
+      setExamResults((prev) => prev.filter((r) => r.id !== id));
+      logActivity(`পরীক্ষার ফলাফল মুছে ফেলা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'ফলাফল মুছতে সমস্যা হয়েছে');
+    }
   };
 
   // Messages
-  const submitContactMessage = (msg: Omit<ContactMessage, 'id' | 'date' | 'read'>) => {
+  const submitContactMessage = async (msg: Omit<ContactMessage, 'id' | 'date' | 'read'>) => {
     const id = generateUniqueId('msg');
     const now = new Date();
     const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -2074,102 +1913,123 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       date: dateStr,
       read: false,
     };
-    setMessages((prev) => [newMsg, ...prev]);
-    saveDocument(COLLECTIONS.MESSAGES, newMsg);
-    logActivity(`ওয়েবসাইট থেকে বার্তা পেয়েছেন: ${newMsg.name}`, 'message');
+    try {
+      await saveDocument(COLLECTIONS.MESSAGES, newMsg);
+      setMessages((prev) => [newMsg, ...prev]);
+      logActivity(`ওয়েবসাইট থেকে বার্তা পেয়েছেন: ${newMsg.name}`, 'message');
+    } catch (err) {
+      handleMutationError(err, 'বার্তা পাঠাতে সমস্যা হয়েছে');
+    }
   };
 
-  const markMessageRead = (id: string, read: boolean) => {
-    setMessages((prev) => {
-      const next = prev.map((m) => (m.id === id ? { ...m, read } : m));
-      const target = next.find((m) => m.id === id);
-      if (target) saveDocument(COLLECTIONS.MESSAGES, target);
-      return next;
-    });
+  const markMessageRead = async (id: string, read: boolean) => {
+    const target = messages.find((m) => m.id === id);
+    if (!target) return;
+    const updated = { ...target, read };
+    try {
+      await saveDocument(COLLECTIONS.MESSAGES, updated);
+      setMessages((prev) => prev.map((m) => (m.id === id ? updated : m)));
+    } catch (err) {
+      handleMutationError(err, 'বার্তা স্ট্যাটাস পরিবর্তন করা সম্ভব হয়নি');
+    }
   };
 
-  const deleteMessage = (id: string) => {
-    setMessages((prev) => prev.filter((m) => m.id !== id));
-    deleteDocument(COLLECTIONS.MESSAGES, id);
-    logActivity(`বার্তা মুছে ফেলা হয়েছে`, 'message');
+  const deleteMessage = async (id: string) => {
+    try {
+      await deleteDocument(COLLECTIONS.MESSAGES, id);
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+      logActivity(`বার্তা মুছে ফেলা হয়েছে`, 'message');
+    } catch (err) {
+      handleMutationError(err, 'বার্তা মুছতে সমস্যা হয়েছে');
+    }
   };
 
   // Performance Trends Methods
-  const addPerformanceTrend = (trend: Omit<PerformanceTrendItem, 'id'>) => {
+  const addPerformanceTrend = async (trend: Omit<PerformanceTrendItem, 'id'>) => {
     const newItem: PerformanceTrendItem = {
       ...trend,
       id: generateUniqueId('trend'),
     };
-    setPerformanceTrends((prev) => {
-      const next = [...prev, newItem].sort((a, b) => a.year.localeCompare(b.year));
-      saveConfigDoc(CONFIG_DOCS.PERFORMANCE_TRENDS, next);
-      return next;
-    });
-    logActivity(`নতুন পারফরম্যান্স চার্ট ডাটা যোগ করা হয়েছে (${trend.year})`, 'setting');
+    const next = [...performanceTrends, newItem].sort((a, b) => a.year.localeCompare(b.year));
+    try {
+      await saveConfigDoc(CONFIG_DOCS.PERFORMANCE_TRENDS, next);
+      setPerformanceTrends(next);
+      logActivity(`নতুন পারফরম্যান্স চার্ট ডাটা যোগ করা হয়েছে (${trend.year})`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'চার্ট ডাটা যোগ করা সম্ভব হয়নি');
+    }
   };
 
-  const updatePerformanceTrend = (id: string, updated: Partial<PerformanceTrendItem>) => {
-    setPerformanceTrends((prev) => {
-      const next = prev
-        .map((t) => (t.id === id ? { ...t, ...updated } : t))
-        .sort((a, b) => a.year.localeCompare(b.year));
-      saveConfigDoc(CONFIG_DOCS.PERFORMANCE_TRENDS, next);
-      return next;
-    });
-    logActivity(`পারফরম্যান্স চার্ট ডাটা আপডেট করা হয়েছে`, 'setting');
+  const updatePerformanceTrend = async (id: string, updated: Partial<PerformanceTrendItem>) => {
+    const next = performanceTrends
+      .map((t) => (t.id === id ? { ...t, ...updated } : t))
+      .sort((a, b) => a.year.localeCompare(b.year));
+    try {
+      await saveConfigDoc(CONFIG_DOCS.PERFORMANCE_TRENDS, next);
+      setPerformanceTrends(next);
+      logActivity(`পারফরম্যান্স চার্ট ডাটা আপডেট করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'চার্ট ডাটা আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const deletePerformanceTrend = (id: string) => {
-    setPerformanceTrends((prev) => {
-      const next = prev.filter((t) => t.id !== id);
-      saveConfigDoc(CONFIG_DOCS.PERFORMANCE_TRENDS, next);
-      return next;
-    });
-    logActivity(`পারফরম্যান্স চার্ট ডাটা মুছে ফেলা হয়েছে`, 'setting');
+  const deletePerformanceTrend = async (id: string) => {
+    const next = performanceTrends.filter((t) => t.id !== id);
+    try {
+      await saveConfigDoc(CONFIG_DOCS.PERFORMANCE_TRENDS, next);
+      setPerformanceTrends(next);
+      logActivity(`পারফরম্যান্স চার্ট ডাটা মুছে ফেলা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'চার্ট ডাটা মুছে ফেলা সম্ভব হয়নি');
+    }
   };
 
-  const resetPerformanceTrends = () => {
-    setPerformanceTrends(initialPerformanceTrends);
-    saveConfigDoc(CONFIG_DOCS.PERFORMANCE_TRENDS, initialPerformanceTrends);
-    localStorage.setItem(
-      'dhs_performance_trends',
-      JSON.stringify(initialPerformanceTrends)
-    );
-    logActivity(`পারফরম্যান্স চার্ট ডাটা ডিফল্ট অবস্থায় রিসেট করা হয়েছে`, 'setting');
+  const resetPerformanceTrends = async () => {
+    try {
+      await saveConfigDoc(CONFIG_DOCS.PERFORMANCE_TRENDS, initialPerformanceTrends);
+      setPerformanceTrends(initialPerformanceTrends);
+      logActivity(`পারফরম্যান্স চার্ট ডাটা ডিফল্ট অবস্থায় রিসেট করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'চার্ট ডাটা রিসেট করা সম্ভব হয়নি');
+    }
   };
 
   // Section Visibility Methods
-  const toggleSectionVisibility = (sectionKey: keyof SectionVisibility) => {
-    setSectionVisibility((prev) => {
-      const next = {
-        ...prev,
-        [sectionKey]: !prev[sectionKey],
-      };
-      saveConfigDoc(CONFIG_DOCS.SECTION_VISIBILITY, next);
-      return next;
-    });
-    logActivity(`হোমপেজ সেকশন শো/হাইড পরিবর্তিত হয়েছে (${sectionKey})`, 'setting');
+  const toggleSectionVisibility = async (sectionKey: keyof SectionVisibility) => {
+    const next = {
+      ...sectionVisibility,
+      [sectionKey]: !sectionVisibility[sectionKey],
+    };
+    try {
+      await saveConfigDoc(CONFIG_DOCS.SECTION_VISIBILITY, next);
+      setSectionVisibility(next);
+      logActivity(`হোমপেজ সেকশন শো/হাইড পরিবর্তিত হয়েছে (${sectionKey})`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'সেকশন দৃশ্যমানতা পরিবর্তন করা সম্ভব হয়নি');
+    }
   };
 
-  const updateSectionVisibility = (updates: Partial<SectionVisibility>) => {
-    setSectionVisibility((prev) => {
-      const next = {
-        ...prev,
-        ...updates,
-      };
-      saveConfigDoc(CONFIG_DOCS.SECTION_VISIBILITY, next);
-      return next;
-    });
+  const updateSectionVisibility = async (updates: Partial<SectionVisibility>) => {
+    const next = {
+      ...sectionVisibility,
+      ...updates,
+    };
+    try {
+      await saveConfigDoc(CONFIG_DOCS.SECTION_VISIBILITY, next);
+      setSectionVisibility(next);
+    } catch (err) {
+      handleMutationError(err, 'সেকশন আপডেট করা সম্ভব হয়নি');
+    }
   };
 
-  const resetSectionVisibility = () => {
-    setSectionVisibility(initialSectionVisibility);
-    saveConfigDoc(CONFIG_DOCS.SECTION_VISIBILITY, initialSectionVisibility);
-    localStorage.setItem(
-      'dhs_section_visibility',
-      JSON.stringify(initialSectionVisibility)
-    );
-    logActivity(`হোমপেজ সেকশনসমূহ ডিফল্ট অবস্থায় রিসেট করা হয়েছে`, 'setting');
+  const resetSectionVisibility = async () => {
+    try {
+      await saveConfigDoc(CONFIG_DOCS.SECTION_VISIBILITY, initialSectionVisibility);
+      setSectionVisibility(initialSectionVisibility);
+      logActivity(`হোমপেজ সেকশনসমূহ ডিফল্ট অবস্থায় রিসেট করা হয়েছে`, 'setting');
+    } catch (err) {
+      handleMutationError(err, 'সেকশন রিসেট করা সম্ভব হয়নি');
+    }
   };
 
   const unreadMessageCount = messages.filter((m) => !m.read).length;
@@ -2308,6 +2168,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         loginWithGoogle,
         logoutAdmin,
         isFirestoreLoading,
+        firestoreError,
+        clearFirestoreError,
         loadDataFromFirestore,
         seedDemoDataToFirestore,
       }}

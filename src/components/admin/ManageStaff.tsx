@@ -396,28 +396,32 @@ export const ManageStaff: React.FC = () => {
     }
   };
 
-  const handleAddStaff = (e: React.FormEvent) => {
+  const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStaffName.trim() || !newStaffRole.trim()) return;
 
-    addStaff({
-      name: newStaffName.trim(),
-      designation: newStaffRole.trim(),
-      department: newStaffDept.trim() || 'প্রশাসন',
-      phone: newStaffPhone.trim() || '+8801700000000',
-      email: newStaffEmail.trim() || 'staff@dadrahs.edu.bd',
-      initial: newStaffName.trim().charAt(0),
-      image: newStaffImage,
-    });
+    try {
+      await addStaff({
+        name: newStaffName.trim(),
+        designation: newStaffRole.trim(),
+        department: newStaffDept.trim() || 'প্রশাসন',
+        phone: newStaffPhone.trim() || '+8801700000000',
+        email: newStaffEmail.trim() || 'staff@dadrahs.edu.bd',
+        initial: newStaffName.trim().charAt(0),
+        image: newStaffImage,
+      });
 
-    setNewStaffName('');
-    setNewStaffRole('');
-    setNewStaffDept('প্রশাসন');
-    setNewStaffPhone('');
-    setNewStaffEmail('');
-    setNewStaffImage(undefined);
-    setAddUploadError(null);
-    showNotification('নতুন কর্মচারী সফলভাবে যুক্ত করা হয়েছে');
+      setNewStaffName('');
+      setNewStaffRole('');
+      setNewStaffDept('প্রশাসন');
+      setNewStaffPhone('');
+      setNewStaffEmail('');
+      setNewStaffImage(undefined);
+      setAddUploadError(null);
+      showNotification('নতুন কর্মচারী সফলভাবে যুক্ত করা হয়েছে');
+    } catch (err: any) {
+      setAddUploadError(err?.message || 'কর্মচারীর তথ্য সংরক্ষণ করতে ব্যর্থ হয়েছে');
+    }
   };
 
   const openEditModal = (s: Staff) => {
@@ -433,22 +437,26 @@ export const ManageStaff: React.FC = () => {
     });
   };
 
-  const handleUpdateStaff = (e: React.FormEvent) => {
+  const handleUpdateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingStaff || !editForm.name.trim()) return;
 
-    updateStaff(editingStaff.id, {
-      name: editForm.name.trim(),
-      designation: editForm.designation.trim(),
-      department: editForm.department.trim(),
-      phone: editForm.phone.trim(),
-      email: editForm.email.trim(),
-      initial: editForm.name.trim().charAt(0),
-      image: editForm.image,
-    });
+    try {
+      await updateStaff(editingStaff.id, {
+        name: editForm.name.trim(),
+        designation: editForm.designation.trim(),
+        department: editForm.department.trim(),
+        phone: editForm.phone.trim(),
+        email: editForm.email.trim(),
+        initial: editForm.name.trim().charAt(0),
+        image: editForm.image,
+      });
 
-    setEditingStaff(null);
-    showNotification('কর্মচারীর তথ্য সফলভাবে আপডেট করা হয়েছে');
+      setEditingStaff(null);
+      showNotification('কর্মচারীর তথ্য সফলভাবে আপডেট করা হয়েছে');
+    } catch (err: any) {
+      setEditUploadError(err?.message || 'কর্মচারীর তথ্য আপডেট করতে ব্যর্থ হয়েছে');
+    }
   };
 
   // Single Staff Print & PDF handlers

@@ -10,6 +10,7 @@ export const ManageNews: React.FC = () => {
   const [editingItem, setEditingItem] = useState<NewsItem | null>(null);
   const [itemToDelete, setItemToDelete] = useState<NewsItem | null>(null);
   const [previewZoomImage, setPreviewZoomImage] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: '',
@@ -24,6 +25,7 @@ export const ManageNews: React.FC = () => {
 
   const openAddModal = () => {
     setEditingItem(null);
+    setFormError(null);
     setForm({
       title: '',
       category: 'একাডেমিক',
@@ -39,6 +41,7 @@ export const ManageNews: React.FC = () => {
 
   const openEditModal = (item: NewsItem) => {
     setEditingItem(item);
+    setFormError(null);
     setForm({
       title: item.title,
       category: item.category,
@@ -52,7 +55,7 @@ export const ManageNews: React.FC = () => {
     setModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) return;
 
@@ -67,13 +70,17 @@ export const ManageNews: React.FC = () => {
       featured: form.featured,
     };
 
-    if (editingItem) {
-      updateNews(editingItem.id, payload);
-    } else {
-      addNews(payload);
+    setFormError(null);
+    try {
+      if (editingItem) {
+        await updateNews(editingItem.id, payload);
+      } else {
+        await addNews(payload);
+      }
+      setModalOpen(false);
+    } catch (err: any) {
+      setFormError(err?.message || 'সংবাদ সংরক্ষণ করতে ব্যর্থ হয়েছে');
     }
-
-    setModalOpen(false);
   };
 
   return (
@@ -241,6 +248,12 @@ export const ManageNews: React.FC = () => {
               </div>
             </div>
 
+            {formError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-semibold mb-2">
+                {formError}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-gray-700 mb-1">সংবাদের শিরোনাম *</label>
@@ -368,9 +381,13 @@ export const ManageNews: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  deleteNews(itemToDelete.id);
-                  setItemToDelete(null);
+                onClick={async () => {
+                  try {
+                    await deleteNews(itemToDelete.id);
+                    setItemToDelete(null);
+                  } catch (err: any) {
+                    alert(err?.message || 'সংবাদ মুছতে সমস্যা হয়েছে');
+                  }
                 }}
                 className="flex-1 py-2 px-3 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl cursor-pointer shadow-xs transition"
               >

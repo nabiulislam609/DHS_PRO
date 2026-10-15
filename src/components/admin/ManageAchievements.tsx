@@ -10,6 +10,7 @@ export const ManageAchievements: React.FC = () => {
   const [editingItem, setEditingItem] = useState<AchievementItem | null>(null);
   const [itemToDelete, setItemToDelete] = useState<AchievementItem | null>(null);
   const [previewZoomImage, setPreviewZoomImage] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: '',
@@ -24,6 +25,7 @@ export const ManageAchievements: React.FC = () => {
 
   const openAddModal = () => {
     setEditingItem(null);
+    setFormError(null);
     setForm({
       title: '',
       category: 'একাডেমিক',
@@ -39,6 +41,7 @@ export const ManageAchievements: React.FC = () => {
 
   const openEditModal = (item: AchievementItem) => {
     setEditingItem(item);
+    setFormError(null);
     setForm({
       title: item.title,
       category: item.category,
@@ -52,7 +55,7 @@ export const ManageAchievements: React.FC = () => {
     setModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) return;
 
@@ -67,13 +70,17 @@ export const ManageAchievements: React.FC = () => {
       images: form.images.length > 0 ? form.images : undefined,
     };
 
-    if (editingItem) {
-      updateAchievement(editingItem.id, payload);
-    } else {
-      addAchievement(payload);
+    setFormError(null);
+    try {
+      if (editingItem) {
+        await updateAchievement(editingItem.id, payload);
+      } else {
+        await addAchievement(payload);
+      }
+      setModalOpen(false);
+    } catch (err: any) {
+      setFormError(err?.message || 'অর্জন সংরক্ষণ করতে ব্যর্থ হয়েছে');
     }
-
-    setModalOpen(false);
   };
 
   const getAchievementIcon = (type: AchievementItem['iconType']) => {
@@ -262,6 +269,12 @@ export const ManageAchievements: React.FC = () => {
               </div>
             </div>
 
+            {formError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-semibold mb-2">
+                {formError}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
@@ -400,9 +413,13 @@ export const ManageAchievements: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  deleteAchievement(itemToDelete.id);
-                  setItemToDelete(null);
+                onClick={async () => {
+                  try {
+                    await deleteAchievement(itemToDelete.id);
+                    setItemToDelete(null);
+                  } catch (err: any) {
+                    alert(err?.message || 'অর্জন মুছতে সমস্যা হয়েছে');
+                  }
                 }}
                 className="flex-1 py-2 px-3 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl cursor-pointer shadow-xs transition"
               >

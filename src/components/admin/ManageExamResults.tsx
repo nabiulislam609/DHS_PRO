@@ -105,6 +105,7 @@ export const ManageExamResults: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewingResult, setViewingResult] = useState<ExamResult | null>(null);
   const [editingResultId, setEditingResultId] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   // Form State
   const [searchFeedback, setSearchFeedback] = useState<{
@@ -471,7 +472,7 @@ export const ManageExamResults: React.FC = () => {
     setModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.studentName.trim() || !form.roll.trim() || !form.studentClass.trim()) {
       alert('শিক্ষার্থীর নাম, রোল এবং শ্রেণি পূরণ করা বাধ্যতামূলক।');
@@ -513,41 +514,46 @@ export const ManageExamResults: React.FC = () => {
             students
           );
 
-    if (editingResultId) {
-      updateExamResult(editingResultId, {
-        studentName: form.studentName.trim(),
-        studentId: form.studentId.trim(),
-        studentImage: finalStudentImage,
-        roll: form.roll.trim(),
-        studentClass: fullClassString,
-        section: form.section,
-        examTerm: termToUse,
-        totalMarks,
-        gpa: avgGp,
-        grade: overallGrade,
-        status: form.status,
-        subjects,
-      });
-    } else {
-      addExamResult({
-        studentName: form.studentName.trim(),
-        studentId: form.studentId.trim() || `DHS-2026-${Date.now()}`,
-        studentImage: finalStudentImage,
-        roll: form.roll.trim(),
-        studentClass: fullClassString,
-        section: form.section,
-        examTerm: termToUse,
-        totalMarks,
-        gpa: avgGp,
-        grade: overallGrade,
-        status: form.status,
-        subjects,
-        publishedDate: new Date().toISOString().split('T')[0],
-      });
-    }
+    setModalError(null);
+    try {
+      if (editingResultId) {
+        await updateExamResult(editingResultId, {
+          studentName: form.studentName.trim(),
+          studentId: form.studentId.trim(),
+          studentImage: finalStudentImage,
+          roll: form.roll.trim(),
+          studentClass: fullClassString,
+          section: form.section,
+          examTerm: termToUse,
+          totalMarks,
+          gpa: avgGp,
+          grade: overallGrade,
+          status: form.status,
+          subjects,
+        });
+      } else {
+        await addExamResult({
+          studentName: form.studentName.trim(),
+          studentId: form.studentId.trim() || `DHS-2026-${Date.now()}`,
+          studentImage: finalStudentImage,
+          roll: form.roll.trim(),
+          studentClass: fullClassString,
+          section: form.section,
+          examTerm: termToUse,
+          totalMarks,
+          gpa: avgGp,
+          grade: overallGrade,
+          status: form.status,
+          subjects,
+          publishedDate: new Date().toISOString().split('T')[0],
+        });
+      }
 
-    setModalOpen(false);
-    setEditingResultId(null);
+      setModalOpen(false);
+      setEditingResultId(null);
+    } catch (err: any) {
+      setModalError(err?.message || 'পরীক্ষার ফলাফল সংরক্ষণ করতে সমস্যা হয়েছে');
+    }
   };
 
   const filteredResults = examResults.filter((r) => {
@@ -702,9 +708,13 @@ export const ManageExamResults: React.FC = () => {
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => {
+                          onClick={async () => {
                             if (confirm(`Are you sure you want to delete ${result.studentName}'s result?`)) {
-                              deleteExamResult(result.id);
+                              try {
+                                await deleteExamResult(result.id);
+                              } catch (err: any) {
+                                alert(err?.message || 'ফলাফল মুছতে সমস্যা হয়েছে');
+                              }
                             }
                           }}
                           className="p-1.5 rounded-md hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition cursor-pointer"
@@ -760,6 +770,13 @@ export const ManageExamResults: React.FC = () => {
             {/* Scrollable Form Body */}
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
               <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-4 sm:py-5 space-y-4 text-xs">
+                {modalError && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span className="font-semibold">{modalError}</span>
+                  </div>
+                )}
+
                 {/* Search & Data Validation Section (Search by Class, Group & Roll) */}
                 <div className="bg-emerald-50/70 p-3.5 sm:p-4 rounded-2xl border border-emerald-200/90 space-y-3">
                   <div className="flex items-center justify-between">

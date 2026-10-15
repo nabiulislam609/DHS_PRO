@@ -10,6 +10,7 @@ export const ManageEvents: React.FC = () => {
   const [editingItem, setEditingItem] = useState<EventItem | null>(null);
   const [itemToDelete, setItemToDelete] = useState<EventItem | null>(null);
   const [previewZoomImage, setPreviewZoomImage] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: '',
@@ -24,6 +25,7 @@ export const ManageEvents: React.FC = () => {
 
   const openAddModal = () => {
     setEditingItem(null);
+    setFormError(null);
     setForm({
       title: '',
       date: '15 Jan 2026',
@@ -39,6 +41,7 @@ export const ManageEvents: React.FC = () => {
 
   const openEditModal = (item: EventItem) => {
     setEditingItem(item);
+    setFormError(null);
     setForm({
       title: item.title,
       date: item.date,
@@ -52,7 +55,7 @@ export const ManageEvents: React.FC = () => {
     setModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) return;
 
@@ -67,13 +70,17 @@ export const ManageEvents: React.FC = () => {
       images: form.images.length > 0 ? form.images : undefined,
     };
 
-    if (editingItem) {
-      updateEvent(editingItem.id, payload);
-    } else {
-      addEvent(payload);
+    setFormError(null);
+    try {
+      if (editingItem) {
+        await updateEvent(editingItem.id, payload);
+      } else {
+        await addEvent(payload);
+      }
+      setModalOpen(false);
+    } catch (err: any) {
+      setFormError(err?.message || 'ইভেন্ট সংরক্ষণ করতে ব্যর্থ হয়েছে');
     }
-
-    setModalOpen(false);
   };
 
   return (
@@ -245,6 +252,12 @@ export const ManageEvents: React.FC = () => {
               </div>
             </div>
 
+            {formError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-semibold mb-2">
+                {formError}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-gray-700 mb-1">ইভেন্টের নাম *</label>
@@ -370,9 +383,13 @@ export const ManageEvents: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  deleteEvent(itemToDelete.id);
-                  setItemToDelete(null);
+                onClick={async () => {
+                  try {
+                    await deleteEvent(itemToDelete.id);
+                    setItemToDelete(null);
+                  } catch (err: any) {
+                    alert(err?.message || 'ইভেন্ট মুছতে সমস্যা হয়েছে');
+                  }
                 }}
                 className="flex-1 py-2 px-3 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl cursor-pointer shadow-xs transition"
               >

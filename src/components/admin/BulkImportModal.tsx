@@ -29,9 +29,9 @@ interface BulkImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   type: BulkImportType;
-  onImportTeachers?: (teachers: Omit<Teacher, 'id'>[]) => void;
-  onImportStaff?: (staff: Omit<Staff, 'id'>[]) => void;
-  onImportStudents?: (students: (Omit<Student, 'id'> & { id?: string })[]) => void;
+  onImportTeachers?: (teachers: Omit<Teacher, 'id'>[]) => any;
+  onImportStaff?: (staff: Omit<Staff, 'id'>[]) => any;
+  onImportStudents?: (students: (Omit<Student, 'id'> & { id?: string })[]) => any;
 }
 
 // Convert Bengali digits to English
@@ -530,7 +530,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
   };
 
   // Submit and save to database
-  const handleConfirmImport = () => {
+  const handleConfirmImport = async () => {
     const selectedRows = parsedRows.filter((_, idx) => selectedIndices.includes(idx));
     if (selectedRows.length === 0) {
       setErrorMessage('কমপক্ষে একটি রেকর্ড নির্বাচন করুন।');
@@ -550,7 +550,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
           initial: cleanStr(r.initial),
           image: r.image || undefined,
         }));
-        onImportTeachers(payload);
+        await onImportTeachers(payload);
       } else if (type === 'staff' && onImportStaff) {
         const payload: Omit<Staff, 'id'>[] = selectedRows.map((r) => ({
           name: cleanStr(r.name),
@@ -562,7 +562,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
           initial: cleanStr(r.initial),
           image: r.image || undefined,
         }));
-        onImportStaff(payload);
+        await onImportStaff(payload);
       } else if (type === 'students' && onImportStudents) {
         const payload: (Omit<Student, 'id'> & { id?: string })[] = selectedRows.map((r) => {
           const sClass = cleanStr(r.studentClass) || '১০ম শ্রেণি';
@@ -584,7 +584,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
             image: r.image || undefined,
           };
         });
-        onImportStudents(payload);
+        await onImportStudents(payload);
       }
 
       setSuccessCount(selectedRows.length);
@@ -593,7 +593,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
       }, 1200);
     } catch (err: any) {
       console.error('Import confirmation error:', err);
-      setErrorMessage('ডাটাবেজে যুক্ত করার সময় ত্রুটি ঘটেছে।');
+      setErrorMessage(err?.message || 'ডাটাবেজে যুক্ত করার সময় ত্রুটি ঘটেছে।');
     } finally {
       setIsLoading(false);
     }

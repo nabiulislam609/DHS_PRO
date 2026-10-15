@@ -102,31 +102,88 @@ export const CONFIG_DOCS = {
   PROGRAMS: 'programs',
 } as const;
 
+// Helper to recursively sanitize data for Firestore by removing or nulling undefined values
+export function cleanForFirestore(data: any): any {
+  if (data === undefined) {
+    return null;
+  }
+  if (data === null || typeof data !== 'object') {
+    return data;
+  }
+  if (data instanceof Date) {
+    return data.toISOString();
+  }
+  if (Array.isArray(data)) {
+    return data.map((item) => cleanForFirestore(item));
+  }
+  const cleaned: Record<string, any> = {};
+  for (const key of Object.keys(data)) {
+    const val = data[key];
+    if (val !== undefined) {
+      cleaned[key] = cleanForFirestore(val);
+    }
+  }
+  return cleaned;
+}
+
+// Bengali error message translator for Firestore operations
+export function getBengaliFirestoreErrorMessage(error: any): string {
+  const code = error?.code || '';
+  const message = error?.message || String(error);
+  if (
+    code === 'permission-denied' ||
+    message.includes('permission-denied') ||
+    message.includes('Missing or insufficient permissions')
+  ) {
+    return 'অনুমতি নেই: শুধুমাত্র অনুমোদিত অ্যাডমিন হিসেবে Firebase Authentication-এ লগইন থাকলেই Firestore-এ ডেটা সেভ করা যায়।';
+  }
+  if (
+    code === 'unavailable' ||
+    message.includes('unavailable') ||
+    code === 'network-request-failed' ||
+    message.includes('network')
+  ) {
+    return 'নেটওয়ার্ক সংযোগ ত্রুটি: Firestore সার্ভারে সংযোগ স্থাপন করা যায়নি। আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন।';
+  }
+  if (code === 'resource-exhausted') {
+    return 'Firestore কোটা অতিক্রম করেছে। অনুগ্রহ করে কিছুক্ষণ পর চেষ্টা করুন।';
+  }
+  if (code === 'invalid-argument' || message.includes('invalid data') || message.includes('undefined')) {
+    return 'অপ্রত্যাশিত ডাটা ফরম্যাট: তথ্য সংরক্ষণ করা সম্ভব হয়নি।';
+  }
+  return 'Firestore-এ ডেটা সংরক্ষণে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।';
+}
+
 // --- Generic Document Helpers ---
-export async function saveDocument<T extends { id: string }>(collectionName: string, item: T) {
+export async function saveDocument<T extends { id: string }>(collectionName: string, item: T): Promise<void> {
   try {
+    const cleaned = cleanForFirestore(item);
     const docRef = doc(db, collectionName, item.id);
-    await setDoc(docRef, item, { merge: true });
-  } catch (error) {
+    await setDoc(docRef, cleaned, { merge: true });
+  } catch (error: any) {
     handleFirestoreError(error, OperationType.WRITE, `${collectionName}/${item.id}`);
+    throw error;
   }
 }
 
-export async function deleteDocument(collectionName: string, id: string) {
+export async function deleteDocument(collectionName: string, id: string): Promise<void> {
   try {
     const docRef = doc(db, collectionName, id);
     await deleteDoc(docRef);
-  } catch (error) {
+  } catch (error: any) {
     handleFirestoreError(error, OperationType.DELETE, `${collectionName}/${id}`);
+    throw error;
   }
 }
 
-export async function saveConfigDoc<T>(docKey: string, data: T) {
+export async function saveConfigDoc<T>(docKey: string, data: T): Promise<void> {
   try {
+    const cleaned = cleanForFirestore(data);
     const docRef = doc(db, COLLECTIONS.CONFIG, docKey);
-    await setDoc(docRef, { data, updatedAt: new Date().toISOString() }, { merge: true });
-  } catch (error) {
+    await setDoc(docRef, { data: cleaned, updatedAt: new Date().toISOString() }, { merge: true });
+  } catch (error: any) {
     handleFirestoreError(error, OperationType.WRITE, `${COLLECTIONS.CONFIG}/${docKey}`);
+    throw error;
   }
 }
 
@@ -135,19 +192,21 @@ export async function batchSaveDocuments<T extends { id: string }>(
   collectionName: string,
   items: T[],
   chunkSize = 250
-) {
+): Promise<void> {
   try {
     for (let i = 0; i < items.length; i += chunkSize) {
       const chunk = items.slice(i, i + chunkSize);
       const batch = writeBatch(db);
       for (const item of chunk) {
+        const cleaned = cleanForFirestore(item);
         const ref = doc(db, collectionName, item.id);
-        batch.set(ref, item, { merge: true });
+        batch.set(ref, cleaned, { merge: true });
       }
       await batch.commit();
     }
-  } catch (error) {
+  } catch (error: any) {
     handleFirestoreError(error, OperationType.WRITE, `${collectionName}/batch`);
+    throw error;
   }
 }
 

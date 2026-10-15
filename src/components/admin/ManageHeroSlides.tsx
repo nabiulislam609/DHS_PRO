@@ -113,16 +113,20 @@ export const ManageHeroSlides: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim() || !form.imageUrl.trim()) return;
 
-    if (editingSlide) {
-      updateHeroSlide(editingSlide.id, form);
-    } else {
-      addHeroSlide(form);
+    try {
+      if (editingSlide) {
+        await updateHeroSlide(editingSlide.id, form);
+      } else {
+        await addHeroSlide(form);
+      }
+      setModalOpen(false);
+    } catch (err: any) {
+      alert(err?.message || 'স্লাইড সংরক্ষণ করতে ব্যর্থ হয়েছে');
     }
-    setModalOpen(false);
   };
 
   return (
