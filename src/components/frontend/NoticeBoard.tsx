@@ -52,18 +52,22 @@ export const NoticeBoard: React.FC = () => {
     }
   };
 
+  const badgeText = siteSettings.noticesBadge || 'নোটিশ বোর্ড';
+  const titleText = siteSettings.noticesTitle || 'সর্বশেষ নোটিশ';
+  const subtitleText = siteSettings.noticesSubtitle || 'বিদ্যালয়ের সকল গুরুত্বপূর্ণ নোটিশ ও বিজ্ঞপ্তির একনজরে';
+
   return (
     <section id="notices" className="py-16 px-4 sm:px-8 max-w-7xl mx-auto">
       {/* Section Header */}
       <div className="text-center mb-10">
         <span className="text-xs font-bold text-emerald-700 tracking-wider uppercase bg-emerald-50 px-3 py-1 rounded-full">
-          নোটিশ বোর্ড
+          {badgeText}
         </span>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
-          সর্বশেষ নোটিশ
+          {titleText}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          বিদ্যালয়ের সকল গুরুত্বপূর্ণ নোটিশ ও বিজ্ঞপ্তির একনজরে
+          {subtitleText}
         </p>
       </div>
 

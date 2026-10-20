@@ -2,7 +2,7 @@ import React from 'react';
 import { useSchool } from '../../context/SchoolContext';
 
 export const ResultsTrend: React.FC = () => {
-  const { performanceTrends } = useSchool();
+  const { performanceTrends, siteSettings } = useSchool();
 
   // Sort by year ascending
   const sortedTrends = [...performanceTrends].sort((a, b) =>
@@ -27,18 +27,26 @@ export const ResultsTrend: React.FC = () => {
       ? `${pathD} L ${points[points.length - 1].x} 190 L ${points[0].x} 190 Z`
       : '';
 
+  const badgeText = siteSettings.resultsTrendBadge || 'একাডেমিক পারফরম্যান্স';
+  const titleText = siteSettings.resultsTrendTitle || 'এসএসসি ফলাফলের ধারা';
+  const subtitleText = siteSettings.resultsTrendSubtitle || 'গত ৫ বছরের একাডেমিক পারফরম্যান্স এক নজরে';
+  const chart1Title = siteSettings.resultsTrendChart1Title || 'পাশের হার ও A+ হার';
+  const chart1Subtitle = siteSettings.resultsTrendChart1Subtitle || 'গত ৫ বছরে পাশের হার ও জিপিএ ৫';
+  const chart2Title = siteSettings.resultsTrendChart2Title || 'গড় জিপিএ ধারা';
+  const chart2Subtitle = siteSettings.resultsTrendChart2Subtitle || 'গড় GPA — গত ৫ বছর';
+
   return (
     <section id="results-trend" className="py-12 px-4 sm:px-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="text-center mb-10">
         <span className="text-xs font-bold text-emerald-700 tracking-wider uppercase bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-          একাডেমিক পারফরম্যান্স
+          {badgeText}
         </span>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
-          এসএসসি ফলাফলের ধারা
+          {titleText}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          গত ৫ বছরের একাডেমিক পারফরম্যান্স এক নজরে
+          {subtitleText}
         </p>
       </div>
 
@@ -53,8 +61,8 @@ export const ResultsTrend: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="font-bold text-base text-gray-900">পাশের হার ও A+ হার</h3>
-                <p className="text-xs text-gray-500">গত ৫ বছরে পাশের হার ও জিপিএ ৫</p>
+                <h3 className="font-bold text-base text-gray-900">{chart1Title}</h3>
+                <p className="text-xs text-gray-500">{chart1Subtitle}</p>
               </div>
               {/* Legend */}
               <div className="flex items-center gap-4 text-xs font-medium">
@@ -108,8 +116,8 @@ export const ResultsTrend: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="font-bold text-base text-gray-900">গড় জিপিএ ধারা</h3>
-                <p className="text-xs text-gray-500">গড় GPA — গত ৫ বছর</p>
+                <h3 className="font-bold text-base text-gray-900">{chart2Title}</h3>
+                <p className="text-xs text-gray-500">{chart2Subtitle}</p>
               </div>
               {/* Legend */}
               <div className="flex items-center gap-2 text-xs font-medium text-rose-600">

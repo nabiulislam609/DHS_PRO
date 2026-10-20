@@ -16,9 +16,9 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
-import jsPDF from 'jspdf';
 import { ExamResult } from '../../types';
 import { getStudentResultImage, getStudentPhoto } from '../../utils/studentPhoto';
+import { generatePdfFromElement } from '../../utils/universalPdfGenerator';
 
 // Convert Bengali numerals to English digits for flexible search
 const toEnglishDigits = (str: string): string => {
@@ -186,7 +186,7 @@ export const isTermMatchStrict = (recordTerm: string, selectedTerm: string): boo
 };
 
 export const AcademicResultsSearch: React.FC = () => {
-  const { examResults, students, admitCardConfig } = useSchool();
+  const { examResults, students, admitCardConfig, siteSettings } = useSchool();
   const [searchRoll, setSearchRoll] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('');
@@ -296,131 +296,21 @@ export const AcademicResultsSearch: React.FC = () => {
     if (!marksheetRef.current || !searchedResult) return;
     setIsGeneratingPdf(true);
     try {
-      const element = marksheetRef.current;
-
-      // 1. Create a dedicated off-screen capture container attached directly to document.body
-      // This completely eliminates any parent container overflow clipping, viewport constraints, or mobile width limitations!
-      const container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.left = '-9999px';
-      container.style.top = '0';
-      container.style.width = '800px';
-      container.style.zIndex = '-99999';
-      container.style.pointerEvents = 'none';
-      container.style.opacity = '1';
-      container.style.overflow = 'visible';
-      container.style.background = '#ffffff';
-
-      const clone = element.cloneNode(true) as HTMLElement;
-      clone.id = 'marksheet-pdf-render-clone';
-      clone.style.width = '800px';
-      clone.style.minWidth = '800px';
-      clone.style.maxWidth = '800px';
-      clone.style.height = 'auto';
-      clone.style.minHeight = 'unset';
-      clone.style.maxHeight = 'unset';
-      clone.style.margin = '0';
-      clone.style.boxSizing = 'border-box';
-      clone.style.overflow = 'visible';
-
-      container.appendChild(clone);
-      document.body.appendChild(container);
-
-      // Brief tick for DOM reflow
-      await new Promise((resolve) => setTimeout(resolve, 80));
-
-      const captureWidth = 800;
-      const captureHeight = clone.offsetHeight || clone.scrollHeight || 1130;
-
-      let dataUrl: string;
-      try {
-        dataUrl = await toPng(clone, {
-          width: captureWidth,
-          height: captureHeight,
-          canvasWidth: captureWidth * 2,
-          canvasHeight: captureHeight * 2,
-          pixelRatio: 2,
-          backgroundColor: '#ffffff',
-          skipFonts: true,
-          cacheBust: true,
-        });
-      } catch (err) {
-        console.warn('html-to-image with skipFonts failed, trying fallback:', err);
-        dataUrl = await toPng(clone, {
-          width: captureWidth,
-          height: captureHeight,
-          pixelRatio: 1.5,
-          backgroundColor: '#ffffff',
-        });
-      } finally {
-        if (container.parentElement) {
-          document.body.removeChild(container);
-        }
-      }
-
-      // 2. Load the rendered image to get exact natural dimensions
-      const img = new Image();
-      img.src = dataUrl;
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Image failed to load'));
-      });
-
-      // 3. Create single-page A4 PDF
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true,
-      });
-
-      const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
-      const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
-      // Comfortable top margin (12mm) as requested by user, with side & bottom margins to guarantee 1 single page!
-      const marginTop = 12; // 12mm space from the top of the A4 page
-      const marginBottom = 10;
-      const marginSide = 8;
-      const printableWidth = pageWidth - marginSide * 2; // 194mm
-      const printableHeight = pageHeight - marginTop - marginBottom; // 275mm
-
-      let renderWidth = printableWidth;
-      let renderHeight = (img.height * printableWidth) / img.width;
-
-      if (renderHeight > printableHeight) {
-        const scale = printableHeight / renderHeight;
-        renderHeight = printableHeight;
-        renderWidth = printableWidth * scale;
-      }
-
-      const posX = (pageWidth - renderWidth) / 2;
-      const posY = marginTop; // Positioned with top spacing from the A4 page
-
-      pdf.addImage(dataUrl, 'PNG', posX, posY, renderWidth, renderHeight, undefined, 'FAST');
-
       const safeRoll = searchedResult.roll.replace(/[^a-zA-Z0-9]/g, '_');
-      const fileName = `Dadra_High_School_Marksheet_Roll_${safeRoll || 'Student'}.pdf`;
+      const safeName = searchedResult.studentName.replace(/[\s/\\?%*:|"<>]/g, '_').slice(0, 30);
+      const fileName = `Dadra_High_School_Marksheet_${safeName}_Roll_${safeRoll || 'Student'}.pdf`;
 
-      // 4. Trigger download reliably (native save + direct Blob link fallback for sandboxed iframes)
-      try {
-        const blob = pdf.output('blob');
-        const blobUrl = window.URL.createObjectURL(blob);
-        const downloadLink = document.createElement('a');
-        downloadLink.style.display = 'none';
-        downloadLink.href = blobUrl;
-        downloadLink.download = fileName;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
+      const ok = await generatePdfFromElement(marksheetRef.current, {
+        orientation: 'portrait',
+        docKind: 'marksheet',
+        fileName,
+      });
 
-        setTimeout(() => {
-          document.body.removeChild(downloadLink);
-          window.URL.revokeObjectURL(blobUrl);
-        }, 1500);
-      } catch {
-        pdf.save(fileName);
+      if (!ok) {
+        window.print();
       }
     } catch (error) {
       console.error('PDF generation error:', error);
-      // Fallback: If browser completely blocks canvas/pdf download, open browser print dialog
       window.print();
     } finally {
       setIsGeneratingPdf(false);
@@ -670,12 +560,12 @@ export const AcademicResultsSearch: React.FC = () => {
                   </div>
                 </div>
 
-                {/* The Marksheet Document Itself (Ref captured by html-to-image and isolated for Print) */}
+                {/* The Marksheet Document Itself (Ref captured by universalPdfGenerator and isolated for Print) */}
                 <div
                   ref={marksheetRef}
                   id="marksheet-printable-card"
-                  className="bg-white rounded-2xl border-4 border-double border-emerald-950 shadow-2xl p-5 sm:p-7 max-w-[800px] mx-auto relative overflow-hidden text-gray-900"
-                  style={{ width: '100%', maxWidth: '800px' }}
+                  className="bg-white rounded-2xl border-4 border-double border-emerald-950 shadow-2xl p-4 sm:p-6 max-w-[794px] mx-auto relative overflow-hidden text-gray-900"
+                  style={{ width: '100%', maxWidth: '794px', boxSizing: 'border-box' }}
                 >
                   {/* Subtle Background Watermark */}
                   <div className="absolute inset-0 pointer-events-none opacity-[0.035] flex items-center justify-center">
@@ -691,18 +581,26 @@ export const AcademicResultsSearch: React.FC = () => {
                       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                         {/* Left Crest */}
                         <div className="flex items-center gap-3 text-left">
-                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-950 text-amber-300 font-black flex items-center justify-center text-xl shadow-md border-2 border-amber-400 shrink-0">
-                            দ
-                          </div>
+                          {siteSettings.logoUrl ? (
+                            <img
+                              src={siteSettings.logoUrl}
+                              alt="Logo"
+                              className="w-14 h-14 rounded-full object-cover border-2 border-emerald-800 bg-white shadow-xs shrink-0"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 rounded-full bg-amber-400 border-2 border-emerald-800 text-emerald-950 font-black flex items-center justify-center shadow-md shrink-0">
+                              <GraduationCap className="w-7 h-7 text-emerald-900" />
+                            </div>
+                          )}
                           <div>
                             <h3 className="text-xl sm:text-2xl font-black text-gray-950 tracking-tight leading-tight">
-                              দাদরা উচ্চ বিদ্যালয়
+                              {siteSettings.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}
                             </h3>
                             <p className="text-[10px] sm:text-[10.5px] font-semibold text-gray-700 uppercase tracking-wide">
-                              DADRA HIGH SCHOOL • স্থাপিত: ১৯৬৮
+                              {siteSettings.schoolNameEnglish || 'DADRA HIGH SCHOOL'} • স্থাপিত: {siteSettings.establishedYear || '১৯৮২'}
                             </p>
                             <p className="text-[10px] text-gray-600 font-medium">
-                              EIIN: ১২৩৪৫৬ • বিদ্যালয় কোড: ৫৬৭৮ • রাজশাহী শিক্ষা বোর্ড
+                              EIIN: {siteSettings.eiin || '121820'} • {siteSettings.boardAffiliation || 'রাজশাহী শিক্ষা বোর্ড'}
                             </p>
                           </div>
                         </div>

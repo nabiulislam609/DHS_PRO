@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { generatePdfFromElement } from '../../utils/universalPdfGenerator';
 import { Teacher } from '../../types';
 import { compressImageFile } from '../../utils/imageUpload';
 import { BulkImportModal } from './BulkImportModal';
@@ -188,7 +189,7 @@ export const ManageTeachers: React.FC = () => {
     }
   };
 
-  // Real PDF Generator using jsPDF and html2canvas
+  // Real PDF Generator using universalPdfGenerator (Landscape for Wide Teachers Sheet)
   const handleSavePdf = async () => {
     const sheetElement = document.getElementById('printable-teacher-sheet');
     if (!sheetElement) {
@@ -199,34 +200,16 @@ export const ManageTeachers: React.FC = () => {
     setIsExportingPdf(true);
 
     try {
-      const canvas = await html2canvas(sheetElement, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
+      const fileName = `teachers_list_${Date.now()}.pdf`;
+      const ok = await generatePdfFromElement(sheetElement, {
+        orientation: 'landscape',
+        docKind: 'roster',
+        fileName,
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfPageHeight = pdf.internal.pageSize.getHeight();
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-      heightLeft -= pdfPageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfPageHeight;
+      if (!ok) {
+        handleDownloadHtmlRoster();
       }
-
-      const fileName = `teachers_list_${Date.now()}.pdf`;
-      pdf.save(fileName);
     } catch (error) {
       console.error('PDF error:', error);
       handleDownloadHtmlRoster();
@@ -462,34 +445,18 @@ export const ManageTeachers: React.FC = () => {
           return;
         }
 
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
+        const cleanName = t.name.replace(/[\s/\\?%*:|"<>]/g, '_').slice(0, 30);
+        const fileName = `${cleanName}_শিক্ষক_জীবনবৃত্তান্ত.pdf`;
+
+        const ok = await generatePdfFromElement(element, {
+          orientation: 'portrait',
+          docKind: 'testimonial',
+          fileName,
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfPageHeight = pdf.internal.pageSize.getHeight();
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfPageHeight;
-
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-          heightLeft -= pdfPageHeight;
+        if (!ok) {
+          handleDownloadSingleTeacherHtml(t);
         }
-
-        const cleanName = t.name.replace(/\s+/g, '_');
-        pdf.save(`${cleanName}_শিক্ষক_জীবনবৃত্তান্ত.pdf`);
       } catch (err) {
         console.error('Single teacher PDF generation error:', err);
         handleDownloadSingleTeacherHtml(t);
@@ -1426,7 +1393,7 @@ export const ManageTeachers: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-between pt-1.5">
                       <span className="text-gray-500">বিদ্যালয় কোড / EIIN:</span>
-                      <span className="font-mono text-gray-700">{siteSettings?.eiin || '১২৩৪৫৬'}</span>
+                      <span className="font-mono text-gray-700">{siteSettings?.eiin || '121820'}</span>
                     </div>
                     <div className="flex flex-col gap-0.5 pt-1.5">
                       <span className="text-gray-500">কর্মস্থল ও ঠিকানা:</span>
@@ -1572,7 +1539,7 @@ export const ManageTeachers: React.FC = () => {
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 pt-1">
-                    {siteSettings?.address || 'দাদরা, বগুড়া'} • EIIN: {siteSettings?.eiin || '১২৩৪৫৬'} • ফোন: {siteSettings?.phone1 || '+৮৮০১৭১২-৩৪৫৬৭৮'}
+                    {siteSettings?.address || 'দাদরা, জয়পুরহাট'} • EIIN: {siteSettings?.eiin || '121820'} • ফোন: {siteSettings?.phone1 || '+৮৮০১৭১১-১২৩৪৫৬'}
                   </p>
                   <div className="inline-block mt-2 px-4 py-1 bg-emerald-50 text-emerald-900 rounded-full text-xs font-bold border border-emerald-200">
                     শিক্ষক পরিচিতি ও অফিসিয়াল তথ্য বিবরণী

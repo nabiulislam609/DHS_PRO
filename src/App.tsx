@@ -67,7 +67,14 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 }
 
 const MainApp: React.FC = () => {
-  const { viewMode, currentFrontendPage, isAdminAuthenticated } = useSchool();
+  const {
+    viewMode,
+    currentFrontendPage,
+    isAdminAuthenticated,
+    adminUser,
+    ADMIN_EMAILS,
+    isAuthLoading,
+  } = useSchool();
 
   const renderContent = () => {
     if (currentFrontendPage === 'admin-login') {
@@ -93,7 +100,16 @@ const MainApp: React.FC = () => {
     }
 
     if (viewMode === 'backend') {
-      if (!isAdminAuthenticated) {
+      if (isAuthLoading) {
+        return (
+          <div className="min-h-screen bg-[#0a0a0c] text-white flex flex-col items-center justify-center p-6 space-y-4 font-sans">
+            <div className="w-10 h-10 border-3 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+            <p className="text-sm font-semibold text-gray-300">অ্যাডমিন অ্যাক্সেস ও নিরাপত্তা যাচাই করা হচ্ছে...</p>
+          </div>
+        );
+      }
+      const userEmail = (adminUser?.email || '').trim().toLowerCase();
+      if (!isAdminAuthenticated || !adminUser || !ADMIN_EMAILS.includes(userEmail)) {
         return <AdminLoginPage />;
       }
       return <AdminPanel />;

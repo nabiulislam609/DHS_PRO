@@ -265,6 +265,9 @@ export interface SiteSettings {
   metaDescription?: string;
   ogImageUrl?: string;
   copyrightText?: string;
+  boardAffiliation?: string;
+  footerCreditPrefix?: string;
+  footerCreditText?: string;
   aboutIntro?: string;
   mission?: string;
   vision?: string;
@@ -303,6 +306,76 @@ export interface SiteSettings {
   noticeTickerLabel?: string;
   noticeTickerHeight?: 'compact' | 'normal' | 'spacious' | 'custom';
   noticeTickerPaddingY?: number; // in pixels (e.g. 2 to 24, default 8)
+
+  // Homepage Sections Custom Headings, Subtitles & Badges (Backend Editable)
+  resultsTrendBadge?: string;
+  resultsTrendTitle?: string;
+  resultsTrendSubtitle?: string;
+  resultsTrendChart1Title?: string;
+  resultsTrendChart1Subtitle?: string;
+  resultsTrendChart2Title?: string;
+  resultsTrendChart2Subtitle?: string;
+
+  galleryBadge?: string;
+  galleryTitle?: string;
+  gallerySubtitle?: string;
+
+  achievementsBadge?: string;
+  achievementsTitle?: string;
+  achievementsSubtitle?: string;
+
+  eventsBadge?: string;
+  eventsTitle?: string;
+  eventsSubtitle?: string;
+
+  newsBadge?: string;
+  newsTitle?: string;
+  newsSubtitle?: string;
+
+  teachersBadge?: string;
+  teachersTitle?: string;
+  teachersSubtitle?: string;
+
+  staffBadge?: string;
+  staffTitle?: string;
+  staffSubtitle?: string;
+
+  noticesBadge?: string;
+  noticesTitle?: string;
+  noticesSubtitle?: string;
+
+  aboutBadge?: string;
+  aboutTitle?: string;
+  aboutSubtitle?: string;
+
+  programsBadge?: string;
+  programsTitle?: string;
+  programsSubtitle?: string;
+
+  statsBadge?: string;
+  statsTitle?: string;
+  statsSubtitle?: string;
+
+  leadershipBadge?: string;
+  leadershipTitle?: string;
+  leadershipSubtitle?: string;
+
+  contactBadge?: string;
+  contactTitle?: string;
+  contactSubtitle?: string;
+
+  quickActionsTitle?: string;
+  quickActionsSubtitle?: string;
+
+  // Admission Portal Settings (Backend Editable)
+  admissionOpen?: boolean;
+  admissionTitle?: string;
+  admissionSubtitle?: string;
+  admissionSession?: string;
+  admissionNotice?: string;
+  admissionHelpline?: string;
+  admissionEndDate?: string;
+  admissionFee?: string;
 }
 
 export interface ActivityLog {

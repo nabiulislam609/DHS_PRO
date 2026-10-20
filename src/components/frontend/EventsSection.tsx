@@ -4,22 +4,26 @@ import { Calendar, Clock, MapPin, X, Layers } from 'lucide-react';
 import { EventItem } from '../../types';
 
 export const EventsSection: React.FC = () => {
-  const { events } = useSchool();
+  const { events, siteSettings } = useSchool();
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
+
+  const badgeText = siteSettings.eventsBadge || 'ইভেন্ট';
+  const titleText = siteSettings.eventsTitle || 'আসন্ন ইভেন্ট';
+  const subtitleText = siteSettings.eventsSubtitle || 'বিদ্যালয়ের আসন্ন কার্যক্রম ও অনুষ্ঠান';
 
   return (
     <section id="events" className="py-16 px-4 sm:px-8 max-w-7xl mx-auto bg-gray-50/50 rounded-3xl my-8">
       {/* Header */}
       <div className="text-center mb-10">
         <span className="text-xs font-bold text-emerald-700 tracking-wider uppercase bg-emerald-50 px-3 py-1 rounded-full">
-          ইভেন্ট
+          {badgeText}
         </span>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
-          আসন্ন ইভেন্ট
+          {titleText}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          বিদ্যালয়ের আসন্ন কার্যক্রম ও অনুষ্ঠান
+          {subtitleText}
         </p>
       </div>
 

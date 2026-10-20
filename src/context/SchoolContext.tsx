@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   signInWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
   User,
@@ -21,6 +19,7 @@ import {
   COLLECTIONS,
   CONFIG_DOCS,
 } from '../services/firestoreService';
+import { ADMIN_EMAILS } from '../constants/admins';
 import {
   Teacher,
   Staff,
@@ -122,10 +121,14 @@ interface SchoolContextType {
   setCurrentFrontendPage: (page: FrontendPage) => void;
 
   // Admin Security & Credentials
+  ADMIN_EMAILS: readonly string[];
   adminSecuritySettings: AdminSecuritySettings;
   updateAdminSecuritySettings: (settings: Partial<AdminSecuritySettings>) => void;
   isAdminAuthenticated: boolean;
   adminUser: User | null;
+  isAuthLoading: boolean;
+  adminLoginError: string | null;
+  setAdminLoginError: (error: string | null) => void;
   loginAdmin: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   loginWithGoogle: (email?: string) => Promise<{ success: boolean; message?: string }>;
   logoutAdmin: () => Promise<void>;
@@ -294,10 +297,16 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   });
 
   const [adminUser, setAdminUser] = useState<User | null>(null);
+  const [adminLoginError, setAdminLoginError] = useState<string | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     try {
       if (typeof window !== 'undefined') {
-        return sessionStorage.getItem('dhs_admin_auth') === 'true';
+        const stored = sessionStorage.getItem('dhs_admin_auth') === 'true';
+        const currentEmail = (auth.currentUser?.email || '').trim().toLowerCase();
+        if (stored && auth.currentUser && ADMIN_EMAILS.includes(currentEmail)) {
+          return true;
+        }
       }
     } catch {
       // ignore
@@ -305,20 +314,49 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return false;
   });
 
-  // Listen to Firebase Auth state
+  // Listen to Firebase Auth state on mount and reload
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        setAdminUser(user);
-        setIsAdminAuthenticated(true);
-        try {
-          sessionStorage.setItem('dhs_admin_auth', 'true');
-        } catch {
-          // ignore
+        const email = (user.email || '').trim().toLowerCase();
+        if (ADMIN_EMAILS.includes(email)) {
+          setAdminUser(user);
+          setIsAdminAuthenticated(true);
+          try {
+            sessionStorage.setItem('dhs_admin_auth', 'true');
+          } catch {
+            // ignore
+          }
+          setAdminLoginError(null);
+        } else {
+          // Explicit unauthorized user detection: immediately sign out and reject
+          console.warn(`Unauthorized login attempt by: ${email}. Signing out immediately.`);
+          try {
+            await signOut(auth);
+          } catch {
+            // ignore
+          }
+          setAdminUser(null);
+          setIsAdminAuthenticated(false);
+          try {
+            sessionStorage.removeItem('dhs_admin_auth');
+          } catch {
+            // ignore
+          }
+          setViewModeState('frontend');
+          setCurrentFrontendPageState('admin-login');
+          setAdminLoginError('আপনার অ্যাডমিন অ্যাক্সেস নেই');
         }
       } else {
         setAdminUser(null);
+        setIsAdminAuthenticated(false);
+        try {
+          sessionStorage.removeItem('dhs_admin_auth');
+        } catch {
+          // ignore
+        }
       }
+      setIsAuthLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -328,9 +366,13 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isAdmissionModalOpen, setIsAdmissionModalOpen] = useState(false);
 
   const setViewMode = (mode: ViewMode) => {
-    if (mode === 'backend' && !isAdminAuthenticated && !adminUser) {
-      setCurrentFrontendPage('admin-login');
-      return;
+    if (mode === 'backend') {
+      const email = (adminUser?.email || auth.currentUser?.email || '').trim().toLowerCase();
+      if (!isAdminAuthenticated || !adminUser || !ADMIN_EMAILS.includes(email)) {
+        setAdminLoginError('আপনার অ্যাডমিন অ্যাক্সেস নেই');
+        setCurrentFrontendPage('admin-login');
+        return;
+      }
     }
     setViewModeState(mode);
   };
@@ -352,7 +394,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const loginAdmin = async (emailOrUser: string, password: string): Promise<{ success: boolean; message?: string }> => {
-    const trimmed = emailOrUser.trim();
+    const trimmed = emailOrUser.trim().toLowerCase();
     if (!trimmed) {
       return { success: false, message: 'অনুগ্রহ করে অ্যাডমিন ইমেইল প্রদান করুন।' };
     }
@@ -360,48 +402,48 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return { success: false, message: 'অনুগ্রহ করে পাসওয়ার্ড প্রদান করুন।' };
     }
 
-    const emailToUse = trimmed.includes('@') ? trimmed : `${trimmed}@dhsedu.edu.bd`;
+    // Check against authorized admin emails
+    if (!ADMIN_EMAILS.includes(trimmed)) {
+      setAdminLoginError('আপনার অ্যাডমিন অ্যাক্সেস নেই');
+      return { success: false, message: 'আপনার অ্যাডমিন অ্যাক্সেস নেই' };
+    }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, emailToUse, password);
+      const userCredential = await signInWithEmailAndPassword(auth, trimmed, password);
+      const userEmail = (userCredential.user.email || '').trim().toLowerCase();
+
+      if (!ADMIN_EMAILS.includes(userEmail)) {
+        try {
+          await signOut(auth);
+        } catch {}
+        setAdminUser(null);
+        setIsAdminAuthenticated(false);
+        try {
+          sessionStorage.removeItem('dhs_admin_auth');
+        } catch {}
+        setAdminLoginError('আপনার অ্যাডমিন অ্যাক্সেস নেই');
+        return { success: false, message: 'আপনার অ্যাডমিন অ্যাক্সেস নেই' };
+      }
+
       setAdminUser(userCredential.user);
       setIsAdminAuthenticated(true);
       try {
         sessionStorage.setItem('dhs_admin_auth', 'true');
-      } catch {
-        // ignore
-      }
+      } catch {}
+      setAdminLoginError(null);
       setViewModeState('backend');
       setCurrentFrontendPageState('home');
       return { success: true };
     } catch (err: any) {
       console.warn('Firebase Auth email-password login attempt:', err);
 
-      // Graceful setup fallback if user tries default initial credentials before setting up Firebase user
-      const targetUser = (adminSecuritySettings.username || 'admin').trim().toLowerCase();
-      const targetPass = adminSecuritySettings.passwordHash || 'admin123';
-      if (
-        (trimmed.toLowerCase() === targetUser || emailToUse.toLowerCase() === 'admin@dhsedu.edu.bd') &&
-        password === targetPass
-      ) {
-        setIsAdminAuthenticated(true);
-        try {
-          sessionStorage.setItem('dhs_admin_auth', 'true');
-        } catch {
-          // ignore
-        }
-        setViewModeState('backend');
-        setCurrentFrontendPageState('home');
-        return { success: true };
-      }
-
       let msg = 'ইমেইল অথবা পাসওয়ার্ড সঠিক নয়।';
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found') {
-        msg = 'প্রদত্ত ইমেইল বা পাসওয়ার্ড সঠিক নয়। অনুগ্রহ করে Firebase কনসোলে তৈরি করা ইমেইল ও পাসওয়ার্ড ব্যবহার করুন।';
+        msg = 'প্রদত্ত ইমেইল বা পাসওয়ার্ড সঠিক নয়। অনুগ্রহ করে আপনার অনুমোদিত অ্যাডমিন ইমেইল ও পাসওয়ার্ড প্রদান করুন।';
       } else if (err.code === 'auth/wrong-password') {
         msg = 'ভুল পাসওয়ার্ড দেওয়া হয়েছে।';
       } else if (err.code === 'auth/invalid-email') {
-        msg = 'দয়া করে একটি সঠিক ইমেইল এড্রেস প্রদান করুন (যেমন: admin@dhsedu.edu.bd)।';
+        msg = 'দয়া করে একটি সঠিক ইমেইল এড্রেস প্রদান করুন।';
       } else if (err.code === 'auth/too-many-requests') {
         msg = 'অনেকবার ভুল চেষ্টা করা হয়েছে। অনুগ্রহ করে কিছুক্ষণ পর পুনরায় চেষ্টা করুন।';
       } else if (err.code === 'auth/network-request-failed') {
@@ -412,36 +454,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const loginWithGoogle = async (_email?: string): Promise<{ success: boolean; message?: string }> => {
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      setAdminUser(result.user);
-      setIsAdminAuthenticated(true);
-      try {
-        sessionStorage.setItem('dhs_admin_auth', 'true');
-      } catch {
-        // ignore
-      }
-      setViewModeState('backend');
-      setCurrentFrontendPageState('home');
-      return { success: true };
-    } catch (error: any) {
-      console.warn('Google sign-in attempt notice:', error);
-      // Fallback for iframe popup restrictions
-      const targetEmail = adminSecuritySettings.allowedGoogleEmail || 'aicourse.nabin@gmail.com';
-      if (_email && (_email === targetEmail || _email === 'aicourse.nabin@gmail.com')) {
-        setIsAdminAuthenticated(true);
-        try {
-          sessionStorage.setItem('dhs_admin_auth', 'true');
-        } catch {
-          // ignore
-        }
-        setViewModeState('backend');
-        setCurrentFrontendPageState('home');
-        return { success: true };
-      }
-      return { success: false, message: 'গুগল দিয়ে লগইন সম্পন্ন করা যায়নি।' };
-    }
+    return { success: false, message: 'গুগল দিয়ে লগইন অপশনটি সম্পূর্ণ নিষ্ক্রিয় করা হয়েছে। অনুগ্রহ করে অনুমোদিত ইমেইল ও পাসওয়ার্ড ব্যবহার করুন।' };
   };
 
   const logoutAdmin = async () => {
@@ -452,6 +465,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
     setAdminUser(null);
     setIsAdminAuthenticated(false);
+    setAdminLoginError(null);
     try {
       sessionStorage.removeItem('dhs_admin_auth');
     } catch {
@@ -616,8 +630,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Firestore-driven State Initialization (No localStorage)
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(initialSiteSettings);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [staff, setStaff] = useState<Staff[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>(initialTeachers);
+  const [staff, setStaff] = useState<Staff[]>(initialStaff);
   const [students, setStudents] = useState<Student[]>([]);
   const [deletedStudents, setDeletedStudents] = useState<Student[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -702,9 +716,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // If Firestore has data or empty collections, reflect them into state
       // This properly supports empty database states without crashing!
-      setTeachers(fetchedTeachers);
-      setStaff(fetchedStaff);
-      setStudents(fetchedStudents);
+      if (fetchedTeachers && fetchedTeachers.length > 0) setTeachers(fetchedTeachers);
+      if (fetchedStaff && fetchedStaff.length > 0) setStaff(fetchedStaff);
+      if (fetchedStudents && fetchedStudents.length > 0) setStudents(fetchedStudents);
       setNotices(fetchedNotices);
       setNews(fetchedNews);
       setEvents(fetchedEvents);
@@ -727,7 +741,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // When admin logs in, load admin-only collections (deleted_students, admissions, messages, activities)
   useEffect(() => {
-    if (!adminUser && !isAdminAuthenticated) return;
+    const userEmail = (adminUser?.email || '').trim().toLowerCase();
+    if (!adminUser || !isAdminAuthenticated || !ADMIN_EMAILS.includes(userEmail)) return;
     const loadAdminCollections = async () => {
       try {
         const [delStudents, adms, msgs, acts] = await Promise.all([
@@ -2160,10 +2175,14 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         resetSectionVisibility,
         unreadMessageCount,
         totalGalleryPhotos,
+        ADMIN_EMAILS,
         adminSecuritySettings,
         updateAdminSecuritySettings,
         adminUser,
         isAdminAuthenticated,
+        isAuthLoading,
+        adminLoginError,
+        setAdminLoginError,
         loginAdmin,
         loginWithGoogle,
         logoutAdmin,

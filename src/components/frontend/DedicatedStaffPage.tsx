@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useSchool } from '../../context/SchoolContext';
+import { DedicatedHeader } from './DedicatedHeader';
 import {
   ArrowLeft,
   Search,
@@ -71,42 +72,14 @@ export const DedicatedStaffPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#fafaf9] flex flex-col font-sans">
-      {/* Top Sticky Institutional Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xs print:hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
-          {/* Logo & School Branding */}
-          <div className="flex items-center gap-3.5 cursor-pointer" onClick={handleGoHome}>
-            {siteSettings.logoUrl ? (
-              <img
-                src={siteSettings.logoUrl}
-                alt={siteSettings.schoolNameBangla}
-                className="w-11 h-11 rounded-2xl object-cover border border-emerald-600/30 shadow-xs"
-              />
-            ) : (
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-800 to-emerald-950 flex items-center justify-center text-amber-300 font-extrabold text-xl shadow-md border border-emerald-600/30">
-                দ
-              </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-black text-gray-900 leading-tight">
-                  {siteSettings.schoolNameBangla}
-                </h1>
-                <span className="hidden sm:inline-block bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300">
-                  EIIN: ১২৩৪৫৬
-                </span>
-              </div>
-              <p className="text-[11px] text-gray-500 font-medium">
-                {siteSettings.schoolNameEnglish} • কর্মকর্তা ও কর্মচারী পোর্টাল
-              </p>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 sm:gap-3">
+      {/* Top Institutional Header matching Home Page logo & unified EIIN */}
+      <DedicatedHeader
+        portalTitle="কর্মকর্তা ও কর্মচারী পোর্টাল"
+        extraActions={
+          <>
             <button
               onClick={handleGoToTeachers}
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 text-emerald-800 hover:bg-emerald-50 text-xs font-semibold transition cursor-pointer"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-300 text-emerald-800 hover:bg-emerald-50 text-xs font-semibold transition cursor-pointer"
             >
               <GraduationCap className="w-3.5 h-3.5" />
               <span>শিক্ষক মণ্ডলী</span>
@@ -115,51 +88,52 @@ export const DedicatedStaffPage: React.FC = () => {
 
             <button
               onClick={() => window.print()}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100 text-xs font-semibold transition cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-100 text-xs font-semibold transition cursor-pointer"
               title="তালিকা প্রিন্ট করুন"
             >
               <Printer className="w-3.5 h-3.5 text-gray-500" />
               <span>প্রিন্ট</span>
             </button>
+          </>
+        }
+      />
 
-            <button
-              onClick={handleGoHome}
-              className="inline-flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>মূল ওয়েবসাইটে ফিরুন</span>
-            </button>
+      {/* Modern Top Dark Emerald Header Banner */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-6 sm:pt-8 w-full print:hidden">
+        <div className="bg-gradient-to-br from-[#063326] via-[#094132] to-[#042018] rounded-3xl p-6 sm:p-10 shadow-xl border border-emerald-900/40 relative overflow-hidden text-center sm:text-left">
+          {/* Subtle decorative glowing background */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2.5">
+              <div className="inline-flex items-center gap-1.5 bg-[#0f4d3a]/80 text-[#34d399] border border-[#16654a] px-3.5 py-1 rounded-full text-xs font-semibold">
+                <Users className="w-3.5 h-3.5 text-amber-300" />
+                <span>প্রশাসনিক ও দাপ্তরিক কর্মী</span>
+              </div>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                আমাদের কর্মকর্তা ও কর্মচারী
+              </h2>
+              <p className="text-emerald-100/80 text-xs sm:text-sm max-w-2xl leading-relaxed">
+                বিদ্যালয়ের প্রশাসনিক, হিসাব, গ্রন্থাগার ও সার্বিক দাপ্তরিক সেবায় নিরলস দায়িত্বশীল কর্মী ও কর্মকর্তাবৃন্দ।
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0 justify-center sm:justify-start">
+              <div className="bg-emerald-900/60 border border-emerald-600/40 rounded-2xl px-5 py-3 text-center backdrop-blur-xs">
+                <span className="block text-2xl font-black text-white">{staff.length}</span>
+                <span className="text-[11px] font-semibold text-emerald-200">মোট কর্মী</span>
+              </div>
+              <button
+                onClick={handleGoToTeachers}
+                className="hidden sm:inline-flex items-center gap-1.5 px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-2xl text-xs font-bold transition cursor-pointer backdrop-blur-xs"
+              >
+                <GraduationCap className="w-4 h-4 text-emerald-300" />
+                <span>শিক্ষক তালিকা →</span>
+              </button>
+            </div>
           </div>
         </div>
-      </header>
-
-      {/* Hero Banner */}
-      <section className="bg-gradient-to-b from-emerald-900 via-emerald-850 to-emerald-800 text-white py-10 sm:py-14 px-4 sm:px-8 border-b border-emerald-950/20">
-        <div className="max-w-7xl mx-auto text-center space-y-3">
-          <div className="inline-flex items-center gap-1.5 bg-emerald-700/60 border border-emerald-500/40 text-emerald-100 text-xs font-semibold px-3.5 py-1 rounded-full backdrop-blur-xs">
-            <Users className="w-3.5 h-3.5 text-amber-300" />
-            <span>প্রশাসনিক ও দাপ্তরিক কর্মী</span>
-          </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-            আমাদের কর্মকর্তা ও কর্মচারী
-          </h2>
-          <p className="text-emerald-100/90 text-sm max-w-2xl mx-auto font-light leading-relaxed">
-            বিদ্যালয়ের প্রশাসনিক, হিসাব, গ্রন্থাগার ও সার্বিক দাপ্তরিক সেবায় নিরলস দায়িত্বশীল কর্মী ও কর্মকর্তাবৃন্দ।
-          </p>
-
-          <div className="pt-2 flex items-center justify-center gap-4 text-xs text-emerald-200">
-            <span className="bg-emerald-800/80 px-3 py-1 rounded-md border border-emerald-700">
-              মোট কর্মী: <strong className="text-white font-bold text-sm ml-1">{staff.length}</strong> জন
-            </span>
-            <button
-              onClick={handleGoToTeachers}
-              className="text-amber-300 hover:text-white underline underline-offset-4 font-medium transition cursor-pointer md:hidden"
-            >
-              শিক্ষক মণ্ডলী দেখুন →
-            </button>
-          </div>
-        </div>
-      </section>
+      </div>
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-8 py-8 flex-1 w-full space-y-6">
@@ -245,17 +219,17 @@ export const DedicatedStaffPage: React.FC = () => {
                 className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-xs hover:shadow-md transition text-center flex flex-col items-center justify-between group hover:border-emerald-300 cursor-pointer"
               >
                 <div className="flex flex-col items-center w-full">
-                  {/* Photo / Avatar */}
+                  {/* Photo / Avatar (144px Desktop, 120px Mobile) */}
                   {member.image ? (
-                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-emerald-500 shadow-2xs mb-4 shrink-0 group-hover:scale-105 transition duration-300">
+                    <div className="w-[120px] h-[120px] sm:w-[144px] sm:h-[144px] aspect-square rounded-full overflow-hidden border-4 border-emerald-500 shadow-md mb-4 shrink-0 group-hover:scale-105 group-hover:border-emerald-600 transition duration-300 relative">
                       <img
                         src={member.image}
                         alt={member.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-[center_top] aspect-square"
                       />
                     </div>
                   ) : (
-                    <div className="w-20 h-20 rounded-full bg-emerald-50 border-2 border-emerald-200 text-emerald-800 font-bold text-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition duration-300 shrink-0 shadow-2xs">
+                    <div className="w-[120px] h-[120px] sm:w-[144px] sm:h-[144px] aspect-square rounded-full bg-emerald-50 border-4 border-emerald-200 text-emerald-800 font-bold text-4xl sm:text-5xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition duration-300 shrink-0 shadow-md">
                       {member.name.charAt(0)}
                     </div>
                   )}
@@ -459,7 +433,7 @@ export const DedicatedStaffPage: React.FC = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">EIIN নম্বর:</span>
-                    <span className="font-mono text-gray-700">{siteSettings?.eiin || '১২৩৪৫৬'}</span>
+                    <span className="font-mono text-gray-700">{siteSettings?.eiin || '121820'}</span>
                   </div>
                 </div>
               </div>

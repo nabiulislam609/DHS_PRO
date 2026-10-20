@@ -3,6 +3,7 @@ import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import { Notice, SiteSettings } from '../types';
 import { triggerFileDownload } from './fileDownloader';
+import { generatePdfFromHtml } from './universalPdfGenerator';
 
 /**
  * Utility functions for Printing and PDF generation of school notices
@@ -47,6 +48,7 @@ export const buildNoticeHtml = (
   const phone = siteSettings?.phone1 || siteSettings?.emergencyPhone || '০১৭১২-৩৪৫৬৭৮';
   const email = siteSettings?.email || 'info@dadrahs.edu.bd';
   const estd = siteSettings?.establishedYear || '১৯৮২';
+  const eiin = siteSettings?.eiin || '121820';
   const memoNo = notice.code ? `DHS/২০২৬/বিজ্ঞপ্তি-${notice.code}` : 'DHS/২০২৬/বিজ্ঞপ্তি';
   const logo = safeLogoDataUrl || siteSettings?.logoUrl || '';
   const attachmentImg = safeAttachmentDataUrl || notice.attachmentUrl || '';
@@ -90,7 +92,7 @@ export const buildNoticeHtml = (
             </div>
           </div>
           <p style="font-size: 11px; color: #64748b; margin: 4px 0 0 0;">
-            ${address} • স্থাপিত: ${estd} • EIIN: ১২৩৪৫৬ • ফোন: ${phone} • ইমেইল: ${email}
+            ${address} • স্থাপিত: ${estd} • EIIN: ${eiin} • ফোন: ${phone} • ইমেইল: ${email}
           </p>
         </div>
 
@@ -315,8 +317,6 @@ export const downloadNoticePdf = async (
   siteSettings?: Partial<SiteSettings>,
   _sourceElementId?: string
 ): Promise<boolean> => {
-  let createdTempContainer: HTMLElement | null = null;
-
   try {
     const cleanTitle = (notice.title || 'Notice')
       .replace(/[/\\?%*:|"<>]/g, '-')
@@ -331,141 +331,15 @@ export const downloadNoticePdf = async (
         ? await getSafeImageDataUrl(notice.attachmentUrl)
         : '';
 
-    // 2. Create capture container with explicit Portrait A4 dimensions (794px width x 1123px min-height)
-    createdTempContainer = document.createElement('div');
-    createdTempContainer.id = 'pdf-capture-temp-container';
-    createdTempContainer.style.position = 'fixed';
-    createdTempContainer.style.left = '0';
-    createdTempContainer.style.top = '0';
-    createdTempContainer.style.width = '794px'; // Exact A4 portrait width at 96 DPI
-    createdTempContainer.style.minHeight = '1123px'; // Exact A4 portrait height at 96 DPI
-    createdTempContainer.style.zIndex = '-99999';
-    createdTempContainer.style.background = '#ffffff';
-    createdTempContainer.style.opacity = '1';
-    createdTempContainer.style.pointerEvents = 'none';
-    createdTempContainer.style.overflow = 'visible';
-    createdTempContainer.style.boxSizing = 'border-box';
+    // 2. Build the official letterhead HTML
+    const htmlContent = buildNoticeHtml(notice, siteSettings, safeLogo, safeAttachment);
 
-    // Build the official letterhead HTML
-    createdTempContainer.innerHTML = buildNoticeHtml(notice, siteSettings, safeLogo, safeAttachment);
-    document.body.appendChild(createdTempContainer);
-
-    // Wait for Unicode fonts (Hind Siliguri) to be fully loaded
-    try {
-      if (document.fonts) {
-        await document.fonts.ready;
-      }
-    } catch {
-      // Continue even if document.fonts.ready rejects
-    }
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    const captureWidth = 794;
-    // Guaranteed to be at least 1123px to enforce strict portrait proportions
-    const captureHeight = Math.max(
-      createdTempContainer.scrollHeight || 0,
-      createdTempContainer.offsetHeight || 0,
-      1123
-    );
-
-    // 3. Render Canvas with native browser HarfBuzz Bengali text shaping in 2x resolution
-    let canvas: HTMLCanvasElement;
-    try {
-      canvas = await html2canvas(createdTempContainer, {
-        scale: 2, // 2x resolution for razor-sharp Bengali typography
-        useCORS: true,
-        allowTaint: false,
-        logging: false,
-        backgroundColor: '#ffffff',
-        width: captureWidth,
-        height: captureHeight,
-        windowWidth: captureWidth,
-        scrollX: 0,
-        scrollY: 0,
-        x: 0,
-        y: 0,
-      });
-    } catch (h2cErr) {
-      console.warn('html2canvas error, using html-to-image fallback:', h2cErr);
-      const dataUrl = await toPng(createdTempContainer, {
-        width: captureWidth,
-        height: captureHeight,
-        canvasWidth: captureWidth * 2,
-        canvasHeight: captureHeight * 2,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        skipFonts: true,
-        cacheBust: true,
-      });
-      const img = new Image();
-      img.src = dataUrl;
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Image render error'));
-      });
-      canvas = document.createElement('canvas');
-      canvas.width = captureWidth * 2;
-      canvas.height = captureHeight * 2;
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0);
-    }
-
-    const imgData = canvas.toDataURL('image/png', 1.0);
-
-    // 4. Construct Strict Portrait A4 PDF Document
-    const pdf = new jsPDF({
+    // 3. Render unclipped A4 Portrait PDF
+    return await generatePdfFromHtml(htmlContent, {
       orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-      compress: true,
+      docKind: 'notice',
+      fileName,
     });
-
-    const pdfWidth = pdf.internal.pageSize.getWidth(); // Exactly 210mm
-    const pdfPageHeight = pdf.internal.pageSize.getHeight(); // Exactly 297mm
-    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-    let heightLeft = imgHeight;
-    let position = 0;
-
-    // Draw first portrait page
-    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
-    heightLeft -= pdfPageHeight;
-
-    // Draw subsequent portrait pages if the notice content extends past 1 page
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage('a4', 'portrait');
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
-      heightLeft -= pdfPageHeight;
-    }
-
-    // 5. Trigger download (Blob URL link + pdf.save fallback)
-    let downloaded = false;
-    try {
-      const blob = pdf.output('blob');
-      const blobUrl = window.URL.createObjectURL(blob);
-      const downloadLink = document.createElement('a');
-      downloadLink.style.display = 'none';
-      downloadLink.href = blobUrl;
-      downloadLink.download = fileName;
-      downloadLink.target = '_blank';
-      downloadLink.rel = 'noopener noreferrer';
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-
-      setTimeout(() => {
-        if (document.body.contains(downloadLink)) {
-          document.body.removeChild(downloadLink);
-        }
-        window.URL.revokeObjectURL(blobUrl);
-      }, 2000);
-      downloaded = true;
-    } catch {
-      pdf.save(fileName);
-      downloaded = true;
-    }
-
-    return downloaded;
   } catch (error) {
     console.error('PDF Generation error:', error);
 
@@ -478,9 +352,5 @@ export const downloadNoticePdf = async (
     // Direct fallback 2: Open print dialog
     printNotice(notice, siteSettings);
     return true;
-  } finally {
-    if (createdTempContainer && document.body.contains(createdTempContainer)) {
-      document.body.removeChild(createdTempContainer);
-    }
   }
 };

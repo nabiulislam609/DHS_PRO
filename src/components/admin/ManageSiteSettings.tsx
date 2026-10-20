@@ -159,7 +159,29 @@ export const ManageSiteSettings: React.FC = () => {
             </div>
 
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">ট্যাগলাইন</label>
+              <label className="block font-semibold text-gray-700 mb-1">EIIN নম্বর (EIIN Number)</label>
+              <input
+                type="text"
+                placeholder="যেমন: 121820"
+                value={form.eiin || ''}
+                onChange={(e) => setForm({ ...form, eiin: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">স্থাপিত সন (Established Year)</label>
+              <input
+                type="text"
+                placeholder="যেমন: ১৯৮২ বা 1982"
+                value={form.establishedYear || ''}
+                onChange={(e) => setForm({ ...form, establishedYear: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-medium"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block font-semibold text-gray-700 mb-1">ট্যাগলাইন / মূলমন্ত্র (Tagline / Motto)</label>
               <input
                 type="text"
                 placeholder="যেমন: শিক্ষা, নীতি, আদর্শ — গড়ব আগামী দিন"
@@ -167,6 +189,9 @@ export const ManageSiteSettings: React.FC = () => {
                 onChange={(e) => setForm({ ...form, tagline: e.target.value, motto: e.target.value })}
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600"
               />
+              <p className="text-[11px] text-gray-500 mt-1">
+                * এটি হোমপেজ ও ফুটারের ব্র্যান্ডিং সেকশনে প্রদর্শিত হয়।
+              </p>
             </div>
 
             {/* Logo Upload */}
@@ -538,13 +563,54 @@ export const ManageSiteSettings: React.FC = () => {
             </div>
 
             <div>
-              <label className="block font-semibold text-gray-700 mb-1">কপিরাইট টেক্সট</label>
+              <label className="block font-semibold text-gray-700 mb-1">কপিরাইট টেক্সট (Copyright Text)</label>
               <input
                 type="text"
+                placeholder="যেমন: © 2026 দাদরা উচ্চ বিদ্যালয় | Dadra High School. সর্বস্বত্ব সংরক্ষিত।"
                 value={form.copyrightText || ''}
                 onChange={(e) => setForm({ ...form, copyrightText: e.target.value })}
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600"
               />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">অনুমোদিত শিক্ষা বোর্ড টেক্সট (Board Affiliation)</label>
+              <input
+                type="text"
+                placeholder="যেমন: মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড, রাজশাহী অনুমোদিত"
+                value={form.boardAffiliation || ''}
+                onChange={(e) => setForm({ ...form, boardAffiliation: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-medium"
+              />
+              <p className="text-[11px] text-gray-500 mt-1">
+                * এটি ফুটারের নিচে ডানপাশে সবুজ ব্যাজে প্রদর্শিত হয়।
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">ফুটার ক্রেডিট প্রিফিক্স</label>
+                <input
+                  type="text"
+                  placeholder="যেমন: সাথে"
+                  value={form.footerCreditPrefix || ''}
+                  onChange={(e) => setForm({ ...form, footerCreditPrefix: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-medium"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block font-semibold text-gray-700 mb-1">ফুটার ঐক্য / ডেডিকেশন টেক্সট (Heart Credit)</label>
+                <input
+                  type="text"
+                  placeholder="যেমন: ছাত্র-শিক্ষক ঐক্য"
+                  value={form.footerCreditText || ''}
+                  onChange={(e) => setForm({ ...form, footerCreditText: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-medium"
+                />
+                <p className="text-[11px] text-gray-500 mt-1">
+                  * ফুটারের নিচে লাল হার্ট চিহ্নের সাথে প্রদর্শিত হয় (যেমন: সাথে ❤️ ছাত্র-শিক্ষক ঐক্য)।
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -625,6 +691,380 @@ export const ManageSiteSettings: React.FC = () => {
                 onChange={(e) => setForm({ ...form, facilities: e.target.value })}
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 leading-relaxed"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 6: হোমপেজ সেকশন সমূহের টাইটেল, ব্যাজ ও বিবরণ (মার্ক করা এরিয়া) */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-100 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 bg-amber-100 text-amber-800 rounded-lg">
+                <Sliders className="w-4 h-4" />
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-gray-900">
+                  হোমপেজ সেকশন সমূহের টাইটেল, ব্যাজ ও বিবরণ (মার্ক করা ৫টি প্রধান সেকশনসহ)
+                </h3>
+                <p className="text-[11px] text-gray-500">
+                  ওয়েবসাইটের প্রধান সেকশনগুলোর শিরোনাম, ছোট ব্যাজ টেক্সট ও সাবটাইটেল এখান থেকে পরিবর্তন করুন।
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAdminTab('sections')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-bold transition cursor-pointer"
+            >
+              <span>সেকশন নিয়ন্ত্রণ পেজ দেখুন</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="space-y-6 text-xs">
+            {/* 1. Results Trend (Marked) */}
+            <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200/80 space-y-3">
+              <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>১. এসএসসি ফলাফলের ধারা (একাডেমিক পারফরম্যান্স) — মার্ক করা সেকশন</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">ব্যাজ টেক্সট</label>
+                  <input
+                    type="text"
+                    value={form.resultsTrendBadge || ''}
+                    placeholder="একাডেমিক পারফরম্যান্স"
+                    onChange={(e) => setForm({ ...form, resultsTrendBadge: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">প্রধান শিরোনাম</label>
+                  <input
+                    type="text"
+                    value={form.resultsTrendTitle || ''}
+                    placeholder="এসএসসি ফলাফলের ধারা"
+                    onChange={(e) => setForm({ ...form, resultsTrendTitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">সাবটাইটেল / বিবরণ</label>
+                  <input
+                    type="text"
+                    value={form.resultsTrendSubtitle || ''}
+                    placeholder="গত ৫ বছরের একাডেমিক পারফরম্যান্স এক নজরে"
+                    onChange={(e) => setForm({ ...form, resultsTrendSubtitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Gallery (Marked) */}
+            <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200/80 space-y-3">
+              <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>২. আলোকিত গ্যালারি (ফটোগ্যালারি) — মার্ক করা সেকশন</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">ব্যাজ টেক্সট</label>
+                  <input
+                    type="text"
+                    value={form.galleryBadge || ''}
+                    placeholder="ফটোগ্যালারি"
+                    onChange={(e) => setForm({ ...form, galleryBadge: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">প্রধান শিরোনাম</label>
+                  <input
+                    type="text"
+                    value={form.galleryTitle || ''}
+                    placeholder="আলোকিত গ্যালারি"
+                    onChange={(e) => setForm({ ...form, galleryTitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">সাবটাইটেল / বিবরণ</label>
+                  <input
+                    type="text"
+                    value={form.gallerySubtitle || ''}
+                    placeholder="ক্যাম্পাস, অনুষ্ঠান ও শিক্ষার্থী জীবনের কিছু মুহূর্ত"
+                    onChange={(e) => setForm({ ...form, gallerySubtitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Achievements (Marked) */}
+            <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200/80 space-y-3">
+              <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>৩. আমাদের গর্ব (অর্জনসমূহ) — মার্ক করা সেকশন</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">ব্যাজ টেক্সট</label>
+                  <input
+                    type="text"
+                    value={form.achievementsBadge || ''}
+                    placeholder="অর্জন"
+                    onChange={(e) => setForm({ ...form, achievementsBadge: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">প্রধান শিরোনাম</label>
+                  <input
+                    type="text"
+                    value={form.achievementsTitle || ''}
+                    placeholder="আমাদের গর্ব"
+                    onChange={(e) => setForm({ ...form, achievementsTitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">সাবটাইটেল / বিবরণ</label>
+                  <input
+                    type="text"
+                    value={form.achievementsSubtitle || ''}
+                    placeholder="মেধা ও ঐতিহ্যে বিদ্যালয়ের অর্জনের কিছু দৃষ্টান্ত"
+                    onChange={(e) => setForm({ ...form, achievementsSubtitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Events (Marked) */}
+            <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200/80 space-y-3">
+              <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>৪. আসন্ন ইভেন্ট — মার্ক করা সেকশন</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">ব্যাজ টেক্সট</label>
+                  <input
+                    type="text"
+                    value={form.eventsBadge || ''}
+                    placeholder="ইভেন্ট"
+                    onChange={(e) => setForm({ ...form, eventsBadge: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">প্রধান শিরোনাম</label>
+                  <input
+                    type="text"
+                    value={form.eventsTitle || ''}
+                    placeholder="আসন্ন ইভেন্ট"
+                    onChange={(e) => setForm({ ...form, eventsTitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">সাবটাইটেল / বিবরণ</label>
+                  <input
+                    type="text"
+                    value={form.eventsSubtitle || ''}
+                    placeholder="বিদ্যালয়ের আসন্ন কার্যক্রম ও অনুষ্ঠান"
+                    onChange={(e) => setForm({ ...form, eventsSubtitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 5. News (Marked) */}
+            <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200/80 space-y-3">
+              <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>৫. সর্বশেষ সংবাদ — মার্ক করা সেকশন</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">ব্যাজ টেক্সট</label>
+                  <input
+                    type="text"
+                    value={form.newsBadge || ''}
+                    placeholder="সংবাদ"
+                    onChange={(e) => setForm({ ...form, newsBadge: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">প্রধান শিরোনাম</label>
+                  <input
+                    type="text"
+                    value={form.newsTitle || ''}
+                    placeholder="সর্বশেষ সংবাদ"
+                    onChange={(e) => setForm({ ...form, newsTitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">সাবটাইটেল / বিবরণ</label>
+                  <input
+                    type="text"
+                    value={form.newsSubtitle || ''}
+                    placeholder="বিদ্যালয়ের সাম্প্রতিক ঘটনাবলি ও সংবাদ"
+                    onChange={(e) => setForm({ ...form, newsSubtitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 6. Teachers, Staff, Notices & Programs */}
+            <div className="bg-gray-50/80 p-4 rounded-xl border border-gray-200 space-y-4">
+              <h4 className="font-bold text-gray-800 text-xs">অন্যান্য সেকশনসমূহের শিরোনাম:</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">শিক্ষক মণ্ডলী সেকশন টাইটেল</label>
+                  <input
+                    type="text"
+                    value={form.teachersTitle || ''}
+                    placeholder="আমাদের শিক্ষক মণ্ডলী"
+                    onChange={(e) => setForm({ ...form, teachersTitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">কর্মকর্তা ও কর্মচারী সেকশন টাইটেল</label>
+                  <input
+                    type="text"
+                    value={form.staffTitle || ''}
+                    placeholder="আমাদের কর্মকর্তা ও কর্মচারী"
+                    onChange={(e) => setForm({ ...form, staffTitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">নোটিশ বোর্ড সেকশন টাইটেল</label>
+                  <input
+                    type="text"
+                    value={form.noticesTitle || ''}
+                    placeholder="সাম্প্রতিক নোটিশ ও সার্কুলার"
+                    onChange={(e) => setForm({ ...form, noticesTitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">একাডেমিক প্রোগ্রাম সেকশন টাইটেল</label>
+                  <input
+                    type="text"
+                    value={form.programsTitle || ''}
+                    placeholder="একাডেমিক প্রোগ্রাম"
+                    onChange={(e) => setForm({ ...form, programsTitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg font-medium"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Admission Portal Settings (Backend Editable) */}
+            <div className="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-emerald-950 font-bold text-xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                  <span>অনলাইন ভর্তি পোর্টাল সেটিংস (Admission Portal Settings)</span>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-emerald-900">
+                  <input
+                    type="checkbox"
+                    checked={form.admissionOpen !== false}
+                    onChange={(e) => setForm({ ...form, admissionOpen: e.target.checked })}
+                    className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer"
+                  />
+                  <span>অনলাইন ভর্তি কার্যক্রম চালু রাখুন</span>
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">ভর্তি ফর্ম টাইটেল</label>
+                  <input
+                    type="text"
+                    value={form.admissionTitle || ''}
+                    placeholder="অনলাইন ভর্তি আবেদন ফর্ম"
+                    onChange={(e) => setForm({ ...form, admissionTitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">ভর্তির সেশন / শিক্ষাবর্ষ</label>
+                  <input
+                    type="text"
+                    value={form.admissionSession || ''}
+                    placeholder="যেমন: ২০২৬ শিক্ষাবর্ষ"
+                    onChange={(e) => setForm({ ...form, admissionSession: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">ভর্তি হেল্পলাইন নম্বর</label>
+                  <input
+                    type="text"
+                    value={form.admissionHelpline || ''}
+                    placeholder="+880 1711-123456"
+                    onChange={(e) => setForm({ ...form, admissionHelpline: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">আবেদনের শেষ তারিখ</label>
+                  <input
+                    type="text"
+                    value={form.admissionEndDate || ''}
+                    placeholder="যেমন: ৩১ ডিসেম্বর ২০২৬"
+                    onChange={(e) => setForm({ ...form, admissionEndDate: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">আবেদন ফি</label>
+                  <input
+                    type="text"
+                    value={form.admissionFee || ''}
+                    placeholder="যেমন: বিনামূল্যে বা ১০০ টাকা"
+                    onChange={(e) => setForm({ ...form, admissionFee: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">ভর্তি ফর্ম সাবটাইটেল</label>
+                  <input
+                    type="text"
+                    value={form.admissionSubtitle || ''}
+                    placeholder="নতুন শিক্ষাবর্ষে ভর্তির জন্য আবেদন করুন"
+                    onChange={(e) => setForm({ ...form, admissionSubtitle: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg font-medium"
+                  />
+                </div>
+
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <label className="block font-semibold text-gray-700 mb-1">ভর্তি বিজ্ঞপ্তি ও নির্দেশনা (ব্যানার টেক্সট)</label>
+                  <textarea
+                    rows={2}
+                    value={form.admissionNotice || ''}
+                    placeholder="ভর্তি সংক্রান্ত জরুরি নির্দেশনা যা ফর্মের শুরুতে প্রদর্শিত হবে..."
+                    onChange={(e) => setForm({ ...form, admissionNotice: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg font-medium"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

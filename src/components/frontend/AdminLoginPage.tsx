@@ -2,23 +2,21 @@ import React, { useState } from 'react';
 import { useSchool } from '../../context/SchoolContext';
 import {
   GraduationCap,
-  User,
   Eye,
   EyeOff,
   ArrowLeft,
   AlertCircle,
   ShieldCheck,
   Mail,
-  Lock,
 } from 'lucide-react';
 
 export const AdminLoginPage: React.FC = () => {
   const {
     siteSettings,
-    adminSecuritySettings,
     loginAdmin,
-    loginWithGoogle,
     setCurrentFrontendPage,
+    adminLoginError,
+    setAdminLoginError,
   } = useSchool();
 
   const [email, setEmail] = useState('');
@@ -26,11 +24,11 @@ export const AdminLoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setAdminLoginError(null);
 
     if (!email.trim()) {
       setErrorMessage('অনুগ্রহ করে আপনার Firebase অ্যাডমিন ইমেইল প্রদান করুন।');
@@ -51,22 +49,6 @@ export const AdminLoginPage: React.FC = () => {
       setErrorMessage(err?.message || 'লগইন করার সময় একটি সমস্যা দেখা দিয়েছে।');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setErrorMessage(null);
-    setGoogleLoading(true);
-    try {
-      const targetEmail = adminSecuritySettings.allowedGoogleEmail || 'aicourse.nabin@gmail.com';
-      const res = await loginWithGoogle(targetEmail);
-      if (!res.success) {
-        setErrorMessage(res.message || 'গুগল দিয়ে লগইন ব্যর্থ হয়েছে।');
-      }
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'গুগল লগইনে সমস্যা হয়েছে।');
-    } finally {
-      setGoogleLoading(false);
     }
   };
 
@@ -188,15 +170,15 @@ export const AdminLoginPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Error Alert */}
-          {errorMessage && (
-            <div className="bg-rose-950/50 border border-rose-800/80 text-rose-200 text-xs px-4 py-3 rounded-xl flex items-start gap-2.5 animate-fadeIn">
+          {/* Error Alert (Displays both login and authorization errors in Bengali) */}
+          {(errorMessage || adminLoginError) && (
+            <div className="bg-rose-950/70 border border-rose-700 text-rose-200 text-xs sm:text-sm px-4 py-3 rounded-xl flex items-start gap-2.5 animate-fadeIn shadow-lg">
               <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              <span>{errorMessage}</span>
+              <span className="font-medium leading-relaxed">{errorMessage || adminLoginError}</span>
             </div>
           )}
 
-          {/* Auth Form */}
+          {/* Auth Form - Strictly Email & Password with Firebase Auth */}
           <form onSubmit={handleLogin} className="space-y-4">
             {/* Email Field */}
             <div className="space-y-1.5">
@@ -206,11 +188,12 @@ export const AdminLoginPage: React.FC = () => {
               <div className="relative">
                 <input
                   type="email"
-                  placeholder="যেমন: admin@dhsedu.edu.bd"
+                  placeholder="যেমন: nabiulislam609@gmail.com"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
                     if (errorMessage) setErrorMessage(null);
+                    if (adminLoginError) setAdminLoginError(null);
                   }}
                   className="w-full px-4 py-3 bg-[#131317] border border-gray-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-xl text-sm text-white placeholder-gray-500 transition outline-hidden font-mono"
                   autoFocus
@@ -233,6 +216,7 @@ export const AdminLoginPage: React.FC = () => {
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (errorMessage) setErrorMessage(null);
+                    if (adminLoginError) setAdminLoginError(null);
                   }}
                   className="w-full px-4 py-3 bg-[#131317] border border-gray-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-xl text-sm text-white placeholder-gray-500 transition outline-hidden font-mono"
                   required
@@ -251,7 +235,7 @@ export const AdminLoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 py-3.5 px-4 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white font-bold rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full mt-3 py-3.5 px-4 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white font-bold rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -263,49 +247,6 @@ export const AdminLoginPage: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* Divider */}
-          <div className="relative flex items-center justify-center my-4">
-            <div className="border-t border-gray-800 w-full" />
-            <span className="bg-[#0a0a0c] px-3 text-[11px] text-gray-500 uppercase tracking-wider font-medium shrink-0">
-              or continue with
-            </span>
-            <div className="border-t border-gray-800 w-full" />
-          </div>
-
-          {/* Google Account Login Button (Matching Image 3) */}
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={googleLoading}
-            className="w-full bg-white hover:bg-gray-100 text-gray-800 font-bold py-3 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-3 transition shadow-md cursor-pointer disabled:opacity-60"
-          >
-            {googleLoading ? (
-              <span className="w-4 h-4 border-2 border-gray-400 border-t-gray-800 rounded-full animate-spin" />
-            ) : (
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
-              </svg>
-            )}
-            <span>
-              Sign in with Google
-            </span>
-          </button>
         </div>
       </div>
     </div>

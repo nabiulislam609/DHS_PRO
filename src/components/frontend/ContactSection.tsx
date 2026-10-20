@@ -82,13 +82,13 @@ export const ContactSection: React.FC = () => {
       {/* Header */}
       <div className="text-center mb-12">
         <span className="text-xs font-bold text-emerald-700 tracking-wider uppercase bg-emerald-50 px-3 py-1 rounded-full">
-          যোগাযোগ
+          {siteSettings.contactBadge || 'যোগাযোগ'}
         </span>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
-          আমাদের সাথে যোগাযোগ
+          {siteSettings.contactTitle || 'আমাদের সাথে যোগাযোগ'}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          প্রশ্ন, পরামর্শ বা তথ্যের জন্য সরাসরি যোগাযোগ করুন
+          {siteSettings.contactSubtitle || 'প্রশ্ন, পরামর্শ বা তথ্যের জন্য সরাসরি যোগাযোগ করুন'}
         </p>
       </div>
 

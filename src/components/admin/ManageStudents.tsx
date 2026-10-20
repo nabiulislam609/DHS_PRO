@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { generatePdfFromElement } from '../../utils/universalPdfGenerator';
 import { Student } from '../../types';
 import { compressImageFile } from '../../utils/imageUpload';
 import { getStudentPhoto } from '../../utils/studentPhoto';
@@ -370,7 +371,7 @@ export const ManageStudents: React.FC = () => {
     }
   };
 
-  // Real PDF Generator using jsPDF and html2canvas
+  // Real PDF Generator using universalPdfGenerator (Landscape for Wide Student Sheet)
   const handleSavePdf = async () => {
     const sheetElement = document.getElementById('printable-student-sheet');
     if (!sheetElement) {
@@ -382,35 +383,18 @@ export const ManageStudents: React.FC = () => {
     showToast('info', 'পিডিএফ তৈরি হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...');
 
     try {
-      const canvas = await html2canvas(sheetElement, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
+      const fileName = `student_list_${filterClass !== 'ALL' ? filterClass : 'all'}_${Date.now()}.pdf`;
+      const ok = await generatePdfFromElement(sheetElement, {
+        orientation: 'landscape',
+        docKind: 'attendance_sheet',
+        fileName,
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfPageHeight = pdf.internal.pageSize.getHeight();
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-      heightLeft -= pdfPageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfPageHeight;
+      if (ok) {
+        showToast('success', '✓ PDF ফাইল সফলভাবে ডাউনলোড হয়েছে!');
+      } else {
+        handleDownloadHtmlRoster();
       }
-
-      const fileName = `student_list_${filterClass !== 'ALL' ? filterClass : 'all'}_${Date.now()}.pdf`;
-      pdf.save(fileName);
-      showToast('success', '✓ PDF ফাইল সফলভাবে ডাউনলোড হয়েছে!');
     } catch (error) {
       console.error('PDF error:', error);
       showToast('warning', 'সরাসরি PDF তৈরিতে সমস্যা হয়েছে। অফলাইন ফাইল ডাউনলোড করা হচ্ছে...');
@@ -733,34 +717,18 @@ export const ManageStudents: React.FC = () => {
           return;
         }
 
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
+        const cleanName = stu.name.replace(/[\s/\\?%*:|"<>]/g, '_').slice(0, 30);
+        const fileName = `${cleanName}_তথ্যবিবরণী_${stu.roll}.pdf`;
+
+        const ok = await generatePdfFromElement(element, {
+          orientation: 'portrait',
+          docKind: 'testimonial',
+          fileName,
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfPageHeight = pdf.internal.pageSize.getHeight();
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfPageHeight;
-
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-          heightLeft -= pdfPageHeight;
+        if (!ok) {
+          handleDownloadSingleStudentHtml(stu);
         }
-
-        const cleanName = stu.name.replace(/\s+/g, '_');
-        pdf.save(`${cleanName}_তথ্যবিবরণী_${stu.roll}.pdf`);
       } catch (err) {
         console.error('Single student PDF generation error:', err);
         handleDownloadSingleStudentHtml(stu);

@@ -34,9 +34,12 @@ import {
   Check,
   CheckCircle2,
   Copy,
+  Settings,
+  Save,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { generatePdfFromElement } from '../../utils/universalPdfGenerator';
 import { AdmissionApplication } from '../../types';
 import { getStudentPhoto } from '../../utils/studentPhoto';
 import { getSubjectsForClassAndGroup } from '../../data/curriculumSubjects';
@@ -57,7 +60,15 @@ interface ApprovedStudentPopupData {
 }
 
 export const ManageAdmissions: React.FC = () => {
-  const { admissions, updateAdmissionStatus, deleteAdmission, addStudent, students, siteSettings } = useSchool();
+  const {
+    admissions,
+    updateAdmissionStatus,
+    deleteAdmission,
+    addStudent,
+    students,
+    siteSettings,
+    updateSiteSettings,
+  } = useSchool();
   const [selectedApp, setSelectedApp] = useState<AdmissionApplication | null>(null);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -91,6 +102,49 @@ export const ManageAdmissions: React.FC = () => {
   // Approved Student Success Popup Modal state
   const [approvedPopupData, setApprovedPopupData] = useState<ApprovedStudentPopupData | null>(null);
   const [copiedStudentId, setCopiedStudentId] = useState(false);
+
+  // Admission Portal Settings Modal State (Backend Editable)
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [admForm, setAdmForm] = useState({
+    admissionOpen: siteSettings.admissionOpen !== false,
+    admissionTitle: siteSettings.admissionTitle || '',
+    admissionSubtitle: siteSettings.admissionSubtitle || '',
+    admissionSession: siteSettings.admissionSession || '',
+    admissionNotice: siteSettings.admissionNotice || '',
+    admissionHelpline: siteSettings.admissionHelpline || '',
+    admissionEndDate: siteSettings.admissionEndDate || '',
+    admissionFee: siteSettings.admissionFee || '',
+  });
+
+  const openSettingsModal = () => {
+    setAdmForm({
+      admissionOpen: siteSettings.admissionOpen !== false,
+      admissionTitle: siteSettings.admissionTitle || '',
+      admissionSubtitle: siteSettings.admissionSubtitle || '',
+      admissionSession: siteSettings.admissionSession || '',
+      admissionNotice: siteSettings.admissionNotice || '',
+      admissionHelpline: siteSettings.admissionHelpline || '',
+      admissionEndDate: siteSettings.admissionEndDate || '',
+      admissionFee: siteSettings.admissionFee || '',
+    });
+    setShowSettingsModal(true);
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await updateSiteSettings({
+      admissionOpen: admForm.admissionOpen,
+      admissionTitle: admForm.admissionTitle.trim(),
+      admissionSubtitle: admForm.admissionSubtitle.trim(),
+      admissionSession: admForm.admissionSession.trim(),
+      admissionNotice: admForm.admissionNotice.trim(),
+      admissionHelpline: admForm.admissionHelpline.trim(),
+      admissionEndDate: admForm.admissionEndDate.trim(),
+      admissionFee: admForm.admissionFee.trim(),
+    });
+    showToast('success', 'ভর্তি সেটিংস ও নির্দেশনা সফলভাবে সংরক্ষণ করা হয়েছে!');
+    setShowSettingsModal(false);
+  };
 
   // Notification Toast state
   const [toastMessage, setToastMessage] = useState<{
@@ -406,34 +460,18 @@ export const ManageAdmissions: React.FC = () => {
           return;
         }
 
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
+        const cleanName = app.applicantName.replace(/[\s/\\?%*:|"<>]/g, '_').slice(0, 30);
+        const fileName = `${cleanName}_ভর্তি_আবেদন_${app.id}.pdf`;
+
+        const ok = await generatePdfFromElement(element, {
+          orientation: 'portrait',
+          docKind: 'admission',
+          fileName,
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfPageHeight = pdf.internal.pageSize.getHeight();
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfPageHeight;
-
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-          heightLeft -= pdfPageHeight;
+        if (!ok) {
+          handleDownloadAdmissionHtml(app);
         }
-
-        const cleanName = app.applicantName.replace(/\s+/g, '_');
-        pdf.save(`${cleanName}_ভর্তি_আবেদন_${app.id}.pdf`);
       } catch (err) {
         console.error('PDF generation error:', err);
         handleDownloadAdmissionHtml(app);
@@ -643,6 +681,15 @@ export const ManageAdmissions: React.FC = () => {
           <div className="text-xs font-semibold bg-blue-50 text-blue-800 px-3 py-1.5 rounded-lg border border-blue-100">
             তালিকাভুক্ত শিক্ষার্থী: {students.length} জন
           </div>
+          <button
+            type="button"
+            onClick={openSettingsModal}
+            className="text-xs font-bold bg-[#15803d] hover:bg-[#166534] text-white px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+            title="ভর্তি ফর্মের শিরোনাম, সেশন, বিজ্ঞপ্তি ব্যানার ও সেটিংস পরিবর্তন করুন"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span>ভর্তি পোর্টাল সেটিংস</span>
+          </button>
           {trashAdmissions.length > 0 && (
             <button
               type="button"
@@ -1991,6 +2038,146 @@ export const ManageAdmissions: React.FC = () => {
                 ঠিক আছে (সম্পন্ন)
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Admission Portal Settings Modal (Backend Editable) */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 my-8 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-emerald-50 text-emerald-700 rounded-xl">
+                  <Settings className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-gray-900">ভর্তি পোর্টাল সেটিংস ও নির্দেশনা</h3>
+                  <p className="text-xs text-gray-500">অনলাইন ভর্তি ফর্মের শিরোনাম, সেশন, ব্যানার ও হেল্পলাইন পরিবর্তন করুন</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSettingsModal(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSettings} className="space-y-4 text-xs">
+              {/* Active Toggle */}
+              <div className="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-emerald-950 block text-xs">অনলাইন ভর্তি কার্যক্রমের স্ট্যাটাস:</span>
+                  <p className="text-[11px] text-emerald-800">বন্ধ রাখলে ওয়েবসাইটে ভর্তি আবেদন নেওয়া সাময়িকভাবে স্থগিত থাকবে</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={admForm.admissionOpen}
+                    onChange={(e) => setAdmForm({ ...admForm, admissionOpen: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">ভর্তি ফর্মের প্রধান শিরোনাম</label>
+                  <input
+                    type="text"
+                    value={admForm.admissionTitle}
+                    onChange={(e) => setAdmForm({ ...admForm, admissionTitle: e.target.value })}
+                    placeholder="অনলাইন ভর্তি আবেদন ফর্ম"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:bg-white focus:outline-hidden focus:border-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">ভর্তির সেশন / শিক্ষাবর্ষ</label>
+                  <input
+                    type="text"
+                    value={admForm.admissionSession}
+                    onChange={(e) => setAdmForm({ ...admForm, admissionSession: e.target.value })}
+                    placeholder="২০২৬ শিক্ষাবর্ষ"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:bg-white focus:outline-hidden focus:border-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">ভর্তি হেল্পলাইন নম্বর</label>
+                  <input
+                    type="text"
+                    value={admForm.admissionHelpline}
+                    onChange={(e) => setAdmForm({ ...admForm, admissionHelpline: e.target.value })}
+                    placeholder="+880 1711-123456"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:bg-white focus:outline-hidden focus:border-emerald-600 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">আবেদনের শেষ তারিখ</label>
+                  <input
+                    type="text"
+                    value={admForm.admissionEndDate}
+                    onChange={(e) => setAdmForm({ ...admForm, admissionEndDate: e.target.value })}
+                    placeholder="৩১ ডিসেম্বর ২০২৬"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:bg-white focus:outline-hidden focus:border-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">আবেদন ফি</label>
+                  <input
+                    type="text"
+                    value={admForm.admissionFee}
+                    onChange={(e) => setAdmForm({ ...admForm, admissionFee: e.target.value })}
+                    placeholder="বিনামূল্যে"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:bg-white focus:outline-hidden focus:border-emerald-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">উপশিরোনাম / বিবরণ</label>
+                  <input
+                    type="text"
+                    value={admForm.admissionSubtitle}
+                    onChange={(e) => setAdmForm({ ...admForm, admissionSubtitle: e.target.value })}
+                    placeholder="নতুন শিক্ষাবর্ষে ভর্তির জন্য আবেদন করুন"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:bg-white focus:outline-hidden focus:border-emerald-600"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block font-bold text-gray-700 mb-1">ভর্তি বিজ্ঞপ্তি ও জরুরি নির্দেশনা ব্যানার</label>
+                  <textarea
+                    rows={2}
+                    value={admForm.admissionNotice}
+                    onChange={(e) => setAdmForm({ ...admForm, admissionNotice: e.target.value })}
+                    placeholder="ভর্তি সংক্রান্ত জরুরি নির্দেশনা যা ফর্মের শুরুতে হাইলাইট আকারে প্রদর্শিত হবে..."
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:bg-white focus:outline-hidden focus:border-emerald-600 leading-relaxed"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowSettingsModal(false)}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition cursor-pointer"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1.5 bg-[#15803d] hover:bg-[#166534] text-white px-5 py-2 rounded-xl font-bold transition shadow-xs cursor-pointer"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>সংরক্ষণ করুন</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -4,7 +4,7 @@ import { Award, Trophy, Medal, Star, Cpu, Layers, X, Eye } from 'lucide-react';
 import { AchievementItem } from '../../types';
 
 export const AchievementsSection: React.FC = () => {
-  const { achievements } = useSchool();
+  const { achievements, siteSettings } = useSchool();
   const [selectedAchievement, setSelectedAchievement] = useState<AchievementItem | null>(null);
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
 
@@ -23,18 +23,22 @@ export const AchievementsSection: React.FC = () => {
     }
   };
 
+  const badgeText = siteSettings.achievementsBadge || 'অর্জন';
+  const titleText = siteSettings.achievementsTitle || 'আমাদের গর্ব';
+  const subtitleText = siteSettings.achievementsSubtitle || 'মেধা ও ঐতিহ্যে বিদ্যালয়ের অর্জনের কিছু দৃষ্টান্ত';
+
   return (
     <section id="achievements" className="py-16 px-4 sm:px-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="text-center mb-10">
         <span className="text-xs font-bold text-emerald-700 tracking-wider uppercase bg-emerald-50 px-3 py-1 rounded-full">
-          অর্জন
+          {badgeText}
         </span>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
-          আমাদের গর্ব
+          {titleText}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          মেধা ও ঐতিহ্যে বিদ্যালয়ের অর্জনের কিছু দৃষ্টান্ত
+          {subtitleText}
         </p>
       </div>
 

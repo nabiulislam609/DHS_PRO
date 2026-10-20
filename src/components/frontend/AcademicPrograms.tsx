@@ -4,7 +4,7 @@ import { BookOpen, GraduationCap, Atom, Compass, TrendingUp, ArrowRight, X } fro
 import { AcademicProgram } from '../../types';
 
 export const AcademicPrograms: React.FC = () => {
-  const { academicPrograms, setIsAdmissionModalOpen } = useSchool();
+  const { academicPrograms, setIsAdmissionModalOpen, siteSettings } = useSchool();
   const [selectedProgram, setSelectedProgram] = useState<AcademicProgram | null>(null);
 
   const getProgramIcon = (title: string) => {
@@ -15,18 +15,22 @@ export const AcademicPrograms: React.FC = () => {
     return BookOpen;
   };
 
+  const badgeText = siteSettings.programsBadge || 'একাডেমিক';
+  const titleText = siteSettings.programsTitle || 'একাডেমিক প্রোগ্রাম';
+  const subtitleText = siteSettings.programsSubtitle || 'শ্রেণিভিত্তিক ও বিষয়ভিত্তিক মানসম্মত পাঠ্য-পাঠন';
+
   return (
     <section id="programs" className="py-16 px-4 sm:px-8 max-w-7xl mx-auto bg-gray-50/50 rounded-3xl">
       {/* Section Header */}
       <div className="text-center mb-10">
         <span className="text-xs font-bold text-emerald-700 tracking-wider uppercase bg-emerald-50 px-3 py-1 rounded-full">
-          একাডেমিক
+          {badgeText}
         </span>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
-          একাডেমিক প্রোগ্রাম
+          {titleText}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          শ্রেণিভিত্তিক ও বিষয়ভিত্তিক মানসম্মত পাঠ্য-পাঠন
+          {subtitleText}
         </p>
       </div>
 

@@ -3,6 +3,7 @@ import { triggerFileDownload } from './fileDownloader';
 import jsPDF from 'jspdf';
 import { toPng } from 'html-to-image';
 import html2canvas from 'html2canvas';
+import { generatePdfFromHtml } from './universalPdfGenerator';
 
 type FormKind =
   | 'admission'
@@ -164,6 +165,7 @@ export const buildFormHtml = (
   const phone = siteSettings?.phone1 || siteSettings?.emergencyPhone || '০১৭১২-৩৪৫৬৭৮';
   const email = siteSettings?.email || 'info@dadrahs.edu.bd';
   const estd = siteSettings?.establishedYear || '১৯৮২';
+  const eiin = siteSettings?.eiin || '121820';
   const logo = siteSettings?.logoUrl || '';
 
   // Common Header Template
@@ -181,7 +183,7 @@ export const buildFormHtml = (
         </div>
       </div>
       <p style="font-size: 10.5px; color: #64748b; margin: 2px 0 0 0;">
-        ${address} • স্থাপিত: ${estd} • EIIN: ১২৩৪৫৬ • ফোন: ${phone} • ইমেইল: ${email}
+        ${address} • স্থাপিত: ${estd} • EIIN: ${eiin} • ফোন: ${phone} • ইমেইল: ${email}
       </p>
     </div>
   `;
@@ -857,6 +859,7 @@ export const downloadEditableForm = (
   const phone = siteSettings?.phone1 || '০১৭১২-৩৪৫৬৭৮';
   const email = siteSettings?.email || 'info@dadrahs.edu.bd';
   const estd = siteSettings?.establishedYear || '১৯৮২';
+  const eiin = siteSettings?.eiin || '121820';
   const kind = getFormKind(form.title, form.category);
   const theme = getFormTheme(kind);
 
@@ -907,7 +910,7 @@ export const downloadEditableForm = (
     <body>
       <h1>${schoolNameBn}</h1>
       <h2>${schoolNameEn}</h2>
-      <p class="meta-p">${address} • স্থাপিত: ${estd} • EIIN: ১২৩৪৫৬ • ফোন: ${phone} • ইমেইল: ${email}</p>
+      <p class="meta-p">${address} • স্থাপিত: ${estd} • EIIN: ${eiin} • ফোন: ${phone} • ইমেইল: ${email}</p>
       <hr style="border: 1.5px solid ${theme.primaryColor};" />
 
       <div class="title-box">${form.title}</div>
@@ -1123,103 +1126,23 @@ export const downloadFormPdf = async (
     return true;
   }
 
-  let createdTempContainer: HTMLElement | null = null;
   try {
     const cleanTitle = (form.title || 'Form').replace(/[/\\?%*:|"<>]/g, '-').replace(/\s+/g, '_');
     const fileName = `${cleanTitle}.pdf`;
 
-    createdTempContainer = document.createElement('div');
-    createdTempContainer.style.position = 'fixed';
-    createdTempContainer.style.left = '0';
-    createdTempContainer.style.top = '0';
-    createdTempContainer.style.width = '794px';
-    createdTempContainer.style.minHeight = '1123px';
-    createdTempContainer.style.zIndex = '-99999';
-    createdTempContainer.style.background = '#ffffff';
-    createdTempContainer.style.opacity = '1';
-    createdTempContainer.style.pointerEvents = 'none';
+    const formHtml = buildFormHtml(form, siteSettings);
 
-    createdTempContainer.innerHTML = buildFormHtml(form, siteSettings);
-    document.body.appendChild(createdTempContainer);
-
-    // Ensure Unicode Bengali fonts are loaded
-    try {
-      if (document.fonts) await document.fonts.ready;
-    } catch {}
-    await new Promise((r) => setTimeout(r, 200));
-
-    const captureWidth = 794;
-    const captureHeight = Math.max(createdTempContainer.scrollHeight || 0, 1123);
-
-    let canvas: HTMLCanvasElement;
-    try {
-      canvas = await html2canvas(createdTempContainer, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: '#ffffff',
-        width: captureWidth,
-        height: captureHeight,
-      });
-    } catch {
-      const dataUrl = await toPng(createdTempContainer, {
-        width: captureWidth,
-        height: captureHeight,
-        canvasWidth: captureWidth * 2,
-        canvasHeight: captureHeight * 2,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        skipFonts: false,
-      });
-      const img = new Image();
-      img.src = dataUrl;
-      await new Promise<void>((res) => {
-        img.onload = () => res();
-      });
-      canvas = document.createElement('canvas');
-      canvas.width = captureWidth * 2;
-      canvas.height = captureHeight * 2;
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0);
-    }
-
-    const imgData = canvas.toDataURL('image/png', 1.0);
-    const pdf = new jsPDF({
+    const ok = await generatePdfFromHtml(formHtml, {
       orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-      compress: true,
+      docKind: 'application_form',
+      fileName,
     });
 
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-
-    try {
-      const blob = pdf.output('blob');
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = fileName;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        if (document.body.contains(a)) document.body.removeChild(a);
-        window.URL.revokeObjectURL(blobUrl);
-      }, 2000);
-    } catch {
-      pdf.save(fileName);
-    }
-    return true;
+    if (ok) return true;
+    throw new Error('generatePdfFromHtml returned false');
   } catch (err) {
     console.error('downloadFormPdf error:', err);
     printForm(form, siteSettings);
     return false;
-  } finally {
-    if (createdTempContainer && document.body.contains(createdTempContainer)) {
-      document.body.removeChild(createdTempContainer);
-    }
   }
 };

@@ -39,13 +39,13 @@ export const AboutSection: React.FC = () => {
       {/* Section Header */}
       <div className="text-center mb-12">
         <span className="text-xs font-bold text-emerald-700 tracking-wider uppercase bg-emerald-50 px-3 py-1 rounded-full">
-          পরিচিতি
+          {siteSettings.aboutBadge || 'পরিচিতি'}
         </span>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
-          বিদ্যালয় পরিচিতি
+          {siteSettings.aboutTitle || 'বিদ্যালয় পরিচিতি'}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          {siteSettings.tagline || 'ঐতিহ্য, মানসম্মত শিক্ষা ও আধুনিক সুযোগ-সুবিধা'}
+          {siteSettings.aboutSubtitle || siteSettings.tagline || 'ঐতিহ্য, মানসম্মত শিক্ষা ও আধুনিক সুযোগ-সুবিধা'}
         </p>
       </div>
 

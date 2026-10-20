@@ -26,11 +26,12 @@ import {
 export const initialSiteSettings: SiteSettings = {
   schoolNameBangla: 'দাদরা উচ্চ বিদ্যালয়',
   schoolNameEnglish: 'Dadra High School',
+  eiin: '121820',
   shortName: 'DHS',
   tagline: 'শিক্ষা, নীতি, আদর্শ — গড়ব আগামী দিন',
   logoUrl: '',
   faviconUrl: '',
-  motto: 'শিক্ষার আলো ছড়ানো — উন্নত আগামী দিন',
+  motto: 'শিক্ষা, নীতি, আদর্শ — গড়ব আগামী দিন',
   establishedYear: '১৯৮২',
   phone1: '+880 1711-123456',
   phone2: '+880 1711-654321',
@@ -47,7 +48,10 @@ export const initialSiteSettings: SiteSettings = {
   metaTitle: 'Dadra High School | দাদরা উচ্চ বিদ্যালয় — জয়পুরহাট',
   metaDescription: '১৯৮২ সালে প্রতিষ্ঠিত দাদরা উচ্চ বিদ্যালয়, জয়পুরহাট। মানসম্মত শিক্ষা, সুশিক্ষক, আধুনিক ল্যাব ও সুবিশাল ক্যাম্পাস।',
   ogImageUrl: '',
-  copyrightText: '© 2025 দাদরা উচ্চ বিদ্যালয় | Dadra High School. সর্বস্বত্ব সংরক্ষিত।',
+  copyrightText: '© 2026 দাদরা উচ্চ বিদ্যালয় | Dadra High School. সর্বস্বত্ব সংরক্ষিত।',
+  boardAffiliation: 'মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড, রাজশাহী অনুমোদিত',
+  footerCreditPrefix: 'সাথে',
+  footerCreditText: 'ছাত্র-শিক্ষক ঐক্য',
   aboutIntro: '১৯৮২ সালে প্রতিষ্ঠিত দাদরা উচ্চ বিদ্যালয় জয়পুরহাট জেলার অন্যতম প্রাচীন ও স্বনামধন্য শিক্ষা প্রতিষ্ঠান। গত ছয় দশকে এই প্রতিষ্ঠান শত শত কৃতি শিক্ষার্থী তৈরি করেছে যারা দেশে-বিদেশে নিজ নিজ ক্ষেত্রে সুনাম অর্জন করেছেন। আমাদের লক্ষ্য শুধু পাস করানো নয় — আমরা গড়ি সৎ, সুশিক্ষিত, দায়িত্বশীল নাগরিক।',
   mission: 'মানসম্মত, নৈতিক ও আধুনিক শিক্ষার মাধ্যমে শিক্ষার্থীদের দক্ষ, মূল্যবোধসম্পন্ন ও দেশপ্রেমিক নাগরিক হিসেবে গড়ে তোলা। বিজ্ঞান ও প্রযুক্তিতে দক্ষ, সংস্কারে উন্নত এবং মানবিক মূল্যবোধে ঋদ্ধ একটি প্রজন্ম তৈরিতে নিরলসভাবে কাজ করা।',
   vision: 'একটি আধুনিক, প্রতিযোগিতামূলক ও মানবিক শিক্ষা ব্যবস্থা গড়ে তোলা, যেখানে শিক্ষার্থীরা নিজেদের সম্ভাবনার পূর্ণ বিকাশ ঘটাতে পারবে এবং দেশ ও জাতির জন্য দায়িত্বশীল নেতৃত্ব দিতে প্রস্তুত হবে।',
@@ -71,6 +75,76 @@ export const initialSiteSettings: SiteSettings = {
   noticeTickerLabel: 'সর্বশেষ নোটিশ:',
   noticeTickerHeight: 'normal',
   noticeTickerPaddingY: 8,
+
+  // Homepage Sections Custom Headings & Subtitles (Backend Editable)
+  resultsTrendBadge: 'একাডেমিক পারফরম্যান্স',
+  resultsTrendTitle: 'এসএসসি ফলাফলের ধারা',
+  resultsTrendSubtitle: 'গত ৫ বছরের একাডেমিক পারফরম্যান্স এক নজরে',
+  resultsTrendChart1Title: 'পাশের হার ও A+ হার',
+  resultsTrendChart1Subtitle: 'গত ৫ বছরে পাশের হার ও জিপিএ ৫',
+  resultsTrendChart2Title: 'গড় জিপিএ (GPA) ধারা',
+  resultsTrendChart2Subtitle: 'গত ৫ বছরে গড়ে প্রাপ্ত জিপিএ',
+
+  galleryBadge: 'ফটোগ্যালারি',
+  galleryTitle: 'আলোকিত গ্যালারি',
+  gallerySubtitle: 'ক্যাম্পাস, অনুষ্ঠান ও শিক্ষার্থী জীবনের কিছু মুহূর্ত',
+
+  achievementsBadge: 'অর্জন',
+  achievementsTitle: 'আমাদের গর্ব',
+  achievementsSubtitle: 'মেধা ও ঐতিহ্যে বিদ্যালয়ের অর্জনের কিছু দৃষ্টান্ত',
+
+  eventsBadge: 'ইভেন্ট',
+  eventsTitle: 'আসন্ন ইভেন্ট',
+  eventsSubtitle: 'বিদ্যালয়ের আসন্ন কার্যক্রম ও অনুষ্ঠান',
+
+  newsBadge: 'সংবাদ',
+  newsTitle: 'সর্বশেষ সংবাদ',
+  newsSubtitle: 'বিদ্যালয়ের সাম্প্রতিক ঘটনাবলি ও সংবাদ',
+
+  teachersBadge: 'শিক্ষক মণ্ডলী',
+  teachersTitle: 'আমাদের শিক্ষক মণ্ডলী',
+  teachersSubtitle: 'অভিজ্ঞ ও দক্ষ শিক্ষক দ্বারা শিক্ষার্থীদের সুশিক্ষা ও নীতিবান মানুষ হিসেবে গড়ে তোলা',
+
+  staffBadge: 'কর্মকর্তা ও কর্মচারী',
+  staffTitle: 'আমাদের কর্মকর্তা ও কর্মচারী',
+  staffSubtitle: 'বিদ্যালয়ের প্রশাসনিক, হিসাব, গ্রন্থাগার ও সার্বিক দাপ্তরিক সেবায় নিয়োজিত দায়িত্বশীল কর্মী ও কর্মকর্তাবৃন্দ',
+
+  noticesBadge: 'নোটিশ বোর্ড',
+  noticesTitle: 'সাম্প্রতিক নোটিশ ও সার্কুলার',
+  noticesSubtitle: 'বিদ্যালয়ের সকল গুরুত্বপূর্ণ বিজ্ঞপ্তি ও তথ্যাবলি',
+
+  aboutBadge: 'পরিচিতি',
+  aboutTitle: 'বিদ্যালয় পরিচিতি',
+  aboutSubtitle: 'ঐতিহ্য, মানসম্মত শিক্ষা ও আধুনিক সুযোগ-সুবিধা',
+
+  programsBadge: 'একাডেমিক',
+  programsTitle: 'একাডেমিক প্রোগ্রাম',
+  programsSubtitle: 'শ্রেণিভিত্তিক ও বিষয়ভিত্তিক মানসম্মত পাঠ্য-পাঠন',
+
+  statsBadge: 'পরিসংখ্যান',
+  statsTitle: 'বিদ্যালয় এক নজরে',
+  statsSubtitle: 'একটি সফল যাত্রায় ঐতিহ্য ও সাফল্যের কথা',
+
+  leadershipBadge: 'নেতৃত্ব',
+  leadershipTitle: 'নেতৃত্বের বার্তা',
+  leadershipSubtitle: 'বিদ্যালয়ের প্রধান ও পরিচালনা পরিষদের বার্তা',
+
+  contactBadge: 'যোগাযোগ',
+  contactTitle: 'আমাদের সাথে যোগাযোগ',
+  contactSubtitle: 'প্রশ্ন, পরামর্শ বা তথ্যের জন্য সরাসরি যোগাযোগ করুন',
+
+  quickActionsTitle: 'দ্রুত সেবা বাটনসমূহ',
+  quickActionsSubtitle: 'অনলাইন ফলাফল, নোটিশ, রুটিন ও ফি পরিশোধের শর্টকাট',
+
+  // Admission Portal Settings
+  admissionOpen: true,
+  admissionTitle: 'অনলাইন ভর্তি আবেদন',
+  admissionSubtitle: 'দাদরা উচ্চ বিদ্যালয়ে নতুন শিক্ষাবর্ষে ভর্তির জন্য অনলাইনে আবেদন করুন',
+  admissionSession: '২০২৬ শিক্ষাবর্ষ',
+  admissionNotice: '৬ষ্ঠ থেকে ১০ম শ্রেণিতে নতুন ভর্তি চলছে। নির্ধারিত সময়ের মধ্যে ফরম পূরণ করে জমা দিন।',
+  admissionHelpline: '+880 1711-123456',
+  admissionEndDate: '৩১ ডিসেম্বর ২০২৬',
+  admissionFee: 'বিনামূল্যে',
 };
 
 export const initialHeroSlides: HeroSlide[] = [
@@ -163,6 +237,7 @@ export const initialTeachers: Teacher[] = [
     email: 'principal@dadrahs.edu.bd',
     phone: '+8801711000001',
     initial: 'ম',
+    image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80',
     order: 1,
   },
   {
@@ -173,6 +248,7 @@ export const initialTeachers: Teacher[] = [
     email: 'shahana@dadrahs.edu.bd',
     phone: '+8801711000002',
     initial: 'শ',
+    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&auto=format&fit=crop&q=80',
     order: 2,
   },
   {
@@ -183,6 +259,7 @@ export const initialTeachers: Teacher[] = [
     email: 'rafiqul@dadrahs.edu.bd',
     phone: '+8801711000003',
     initial: 'র',
+    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&auto=format&fit=crop&q=80',
     order: 3,
   },
   {
@@ -193,6 +270,7 @@ export const initialTeachers: Teacher[] = [
     email: 'afrin@dadrahs.edu.bd',
     phone: '+8801711000004',
     initial: 'ন',
+    image: 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=600&auto=format&fit=crop&q=80',
     order: 4,
   },
   {
@@ -203,6 +281,7 @@ export const initialTeachers: Teacher[] = [
     email: 'arun@dadrahs.edu.bd',
     phone: '+8801711000005',
     initial: 'অ',
+    image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&auto=format&fit=crop&q=80',
     order: 5,
   },
   {
@@ -213,6 +292,7 @@ export const initialTeachers: Teacher[] = [
     email: 'farhana@dadrahs.edu.bd',
     phone: '+8801711000006',
     initial: 'ফ',
+    image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&auto=format&fit=crop&q=80',
     order: 6,
   },
   {
@@ -223,6 +303,7 @@ export const initialTeachers: Teacher[] = [
     email: 'saiful@dadrahs.edu.bd',
     phone: '+8801711000007',
     initial: 'ম',
+    image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600&auto=format&fit=crop&q=80',
     order: 7,
   },
   {
@@ -233,6 +314,7 @@ export const initialTeachers: Teacher[] = [
     email: 'sumaiya@dadrahs.edu.bd',
     phone: '+8801711000008',
     initial: 'স',
+    image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
     order: 8,
   },
 ];
@@ -245,6 +327,7 @@ export const initialStaff: Staff[] = [
     department: 'হিসাব শাখা',
     phone: '+8801711200001',
     email: 'accounts@dadrahs.edu.bd',
+    image: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=600&auto=format&fit=crop&q=80',
   },
   {
     id: 's-2',
@@ -253,6 +336,7 @@ export const initialStaff: Staff[] = [
     department: 'লাইব্রেরি',
     phone: '+8801711200002',
     email: 'library@dadrahs.edu.bd',
+    image: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=600&auto=format&fit=crop&q=80',
   },
   {
     id: 's-3',
@@ -261,6 +345,7 @@ export const initialStaff: Staff[] = [
     department: 'আইটি শাখা',
     phone: '+8801711200003',
     email: 'it@dadrahs.edu.bd',
+    image: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=600&auto=format&fit=crop&q=80',
   },
   {
     id: 's-4',
@@ -268,6 +353,7 @@ export const initialStaff: Staff[] = [
     designation: 'অফিস সহকারী ও নিরাপত্তা তত্ত্বাবধায়ক',
     department: 'প্রশাসন',
     phone: '+8801711200004',
+    image: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=600&auto=format&fit=crop&q=80',
   },
 ];
 
@@ -424,6 +510,7 @@ export const initialLeadership: LeadershipMessage[] = [
     message:
       'শিক্ষা শুধু বইয়ের পাতা নয় — জীবনে গড়ে তোলার প্রক্রিয়া। আমরা চেষ্টা করছি শিক্ষার্থীদের কেবল ভালো শিক্ষার্থী নয়, আলোকিত মানুষ হিসেবে গড়ে তুলতে। আধুনিক বিজ্ঞান ও প্রযুক্তির সমন্বয়ে তাদের আগামীর উপযোগী করে তোলার জন্য আমাদের শিক্ষকমণ্ডলী নিরলস পরিশ্রম করছেন।',
     initial: 'ম',
+    image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80',
     type: 'principal',
   },
   {
@@ -434,6 +521,7 @@ export const initialLeadership: LeadershipMessage[] = [
     message:
       'আধুনিক টেকসই সমাজ গঠনে মানসম্মত আধুনিক শিক্ষার কোনো বিকল্প নেই। দাদরা উচ্চ বিদ্যালয় দীর্ঘদিন ধরে মেধা ও মনন বিকাশে আলোকবর্তিকা হিসেবে ভূমিকা পালন করছে। পরিচালনা পরিষদ শিক্ষার্থীদের সার্বিক উন্নয়নে প্রতিশ্রুতিবদ্ধ।',
     initial: 'অ',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
     type: 'president',
   },
 ];

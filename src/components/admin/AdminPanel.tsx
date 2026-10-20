@@ -25,6 +25,7 @@ import { ManageStatistics } from './ManageStatistics';
 import { ManageDownloads } from './ManageDownloads';
 import { ManageAdminSecurity } from './ManageAdminSecurity';
 import { GenericSectionManager } from './GenericSectionManager';
+import { AdminLoginPage } from '../frontend/AdminLoginPage';
 import { Eye, Bell, ShieldCheck, LogOut, AlertTriangle, X } from 'lucide-react';
 
 export const AdminPanel: React.FC = () => {
@@ -35,10 +36,17 @@ export const AdminPanel: React.FC = () => {
     admissions,
     adminSecuritySettings,
     adminUser,
+    isAdminAuthenticated,
+    ADMIN_EMAILS,
     logoutAdmin,
     firestoreError,
     clearFirestoreError,
   } = useSchool();
+
+  const userEmail = (adminUser?.email || '').trim().toLowerCase();
+  if (!isAdminAuthenticated || !adminUser || !ADMIN_EMAILS.includes(userEmail)) {
+    return <AdminLoginPage />;
+  }
 
   const renderActiveTab = () => {
     switch (adminTab) {

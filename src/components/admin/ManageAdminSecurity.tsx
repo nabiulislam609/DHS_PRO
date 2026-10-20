@@ -26,6 +26,7 @@ export const ManageAdminSecurity: React.FC = () => {
     updateAdminSecuritySettings,
     logoutAdmin,
     setCurrentFrontendPage,
+    ADMIN_EMAILS,
   } = useSchool();
 
   // Custom Link State
@@ -414,46 +415,46 @@ export const ManageAdminSecurity: React.FC = () => {
         </form>
       </div>
 
-      {/* Section 3: Google Login Settings */}
+      {/* Section 3: Authorized Firebase Admin Email Access Control */}
       <div className="bg-white rounded-3xl border border-gray-200 shadow-xs p-6 sm:p-8 space-y-5">
         <div className="flex items-center gap-2.5 border-b border-gray-100 pb-4">
           <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 flex items-center justify-center">
-            <Mail className="w-4 h-4" />
+            <ShieldCheck className="w-4 h-4" />
           </div>
           <div>
             <h2 className="text-base font-bold text-gray-900">
-              অনুমোদিত গুগল অ্যাকাউন্ট (Google Sign-In)
+              অনুমোদিত Firebase অ্যাডমিন ইমেইলসমূহ (Access Control List)
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              যে গুগল ইমেইল দিয়ে লগইন পেজ থেকে এক ক্লিকে অ্যাডমিন প্যানেলে প্রবেশ করা যাবে
+              শুধুমাত্র নিচের অনুমোদিত Firebase Authentication ইমেইল ও পাসওয়ার্ড দিয়ে অ্যাডমিন ড্যাশবোর্ডে প্রবেশ করা যাবে
             </p>
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="block text-xs font-bold text-gray-700">
-            অনুমোদিত অ্যাডমিন গুগল ইমেইল:
-          </label>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <input
-              type="email"
-              value={googleEmail}
-              onChange={(e) => setGoogleEmail(e.target.value)}
-              placeholder="aicourse.nabin@gmail.com"
-              className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-xs sm:text-sm font-mono text-gray-900 bg-gray-50/50 focus:bg-white focus:outline-hidden focus:border-emerald-600 transition"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                updateAdminSecuritySettings({ allowedGoogleEmail: googleEmail.trim() });
-                setSuccessMessage('অনুমোদিত গুগল ইমেইল সংরক্ষণ করা হয়েছে!');
-                setTimeout(() => setSuccessMessage(null), 3000);
-              }}
-              className="px-5 py-2.5 bg-gray-800 hover:bg-gray-900 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <Save className="w-4 h-4" />
-              <span>ইমেইল সংরক্ষণ</span>
-            </button>
+        <div className="space-y-3">
+          <p className="text-xs text-gray-600 leading-relaxed">
+            সর্বোচ্চ নিরাপত্তা নিশ্চিত করতে Google বা কোনো সোশ্যাল সাইন-ইন বাটন সম্পূর্ণ নিষ্ক্রিয় করা হয়েছে। অননুমোদিত কোনো ইমেইল দিয়ে সাইন-ইন করার চেষ্টা করলে সাথে সাথে সাইন-আউট করে "আপনার অ্যাডমিন অ্যাক্সেস নেই" বার্তা প্রদর্শিত হয়।
+          </p>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-gray-700">
+              সক্রিয় অনুমোদিত অ্যাডমিন তালিকা:
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {ADMIN_EMAILS.map((adminEmail, idx) => (
+                <div
+                  key={adminEmail}
+                  className="flex items-center gap-2.5 px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl"
+                >
+                  <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">
+                    {idx + 1}
+                  </span>
+                  <span className="font-mono text-xs sm:text-sm font-semibold text-gray-800 break-all">
+                    {adminEmail}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

@@ -713,7 +713,7 @@ export const ManageNotices: React.FC = () => {
                   </div>
                 </div>
                 <p className="text-[11px] text-gray-500 font-medium">
-                  {siteSettings.address} • স্থাপিত: {siteSettings.establishedYear || '১৯৮২'} • EIIN: ১২৩৪৫৬
+                  {siteSettings.address} • স্থাপিত: {siteSettings.establishedYear || '১৯৮২'} • EIIN: {siteSettings.eiin || '121820'}
                 </p>
                 <div className="inline-block bg-emerald-800 text-white font-bold text-[11px] px-3.5 py-0.5 rounded-full mt-1.5">
                   অফিসিয়াল বিজ্ঞপ্তি / নোটিশ

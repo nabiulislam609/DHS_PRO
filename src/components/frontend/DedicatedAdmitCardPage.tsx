@@ -2,7 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { generatePdfFromElement } from '../../utils/universalPdfGenerator';
 import { useSchool } from '../../context/SchoolContext';
+import { DedicatedHeader } from './DedicatedHeader';
 import { Student, ActiveExam } from '../../types';
 import {
   CreditCard,
@@ -356,100 +358,23 @@ export const DedicatedAdmitCardPage: React.FC = () => {
       return;
     }
     setIsDownloadingPdf(true);
-    let container: HTMLElement | null = null;
     try {
-      container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.left = '-9999px';
-      container.style.top = '0';
-      container.style.width = '820px';
-      container.style.zIndex = '-99999';
-      container.style.pointerEvents = 'none';
-      container.style.opacity = '1';
-      container.style.background = '#ffffff';
-
-      const clone = el.cloneNode(true) as HTMLElement;
-      clone.style.width = '820px';
-      clone.style.margin = '0';
-      clone.style.boxSizing = 'border-box';
-      container.appendChild(clone);
-      document.body.appendChild(container);
-
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const captureWidth = 820;
-      const captureHeight = clone.scrollHeight || clone.offsetHeight || 1100;
-
-      let dataUrl = '';
-      try {
-        dataUrl = await toPng(clone, {
-          width: captureWidth,
-          height: captureHeight,
-          canvasWidth: captureWidth * 2,
-          canvasHeight: captureHeight * 2,
-          pixelRatio: 2,
-          backgroundColor: '#ffffff',
-          skipFonts: true,
-          cacheBust: true,
-        });
-      } catch (err) {
-        console.warn('toPng failed for admit card, trying html2canvas:', err);
-        const canvas = await html2canvas(clone, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: false,
-          logging: false,
-          backgroundColor: '#ffffff',
-          width: captureWidth,
-        });
-        dataUrl = canvas.toDataURL('image/png', 0.95);
-      }
-
-      const img = new Image();
-      img.src = dataUrl;
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Image failed to load'));
-      });
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true,
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (img.height * pdfWidth) / img.width;
-      pdf.addImage(dataUrl, 'PNG', 0, 5, pdfWidth, pdfHeight, undefined, 'FAST');
-
-      const studentName = (foundStudent?.name || 'Student').replace(/\s+/g, '_');
+      const studentName = (foundStudent?.name || 'Student').replace(/[\s/\\?%*:|"<>]/g, '_').slice(0, 30);
       const fileName = `Admit_Card_${studentName}_Roll_${rollInput || 'Admit'}.pdf`;
 
-      try {
-        const blob = pdf.output('blob');
-        const blobUrl = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = fileName;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          if (document.body.contains(a)) document.body.removeChild(a);
-          window.URL.revokeObjectURL(blobUrl);
-        }, 2000);
-      } catch {
-        pdf.save(fileName);
+      const ok = await generatePdfFromElement(el, {
+        orientation: 'portrait',
+        docKind: 'certificate',
+        fileName,
+      });
+
+      if (!ok) {
+        window.print();
       }
     } catch (err) {
       console.error('Admit card PDF error:', err);
       window.print();
     } finally {
-      if (container && document.body.contains(container)) {
-        document.body.removeChild(container);
-      }
       setIsDownloadingPdf(false);
     }
   };
@@ -536,49 +461,8 @@ export const DedicatedAdmitCardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-gray-800 flex flex-col font-sans">
-      {/* Top Institutional Notification Bar (Result Page-style Header) */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xs print:hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
-          {/* Logo & School Branding */}
-          <div className="flex items-center gap-3.5 cursor-pointer" onClick={() => setCurrentFrontendPage('home')}>
-            {siteSettings.logoUrl ? (
-              <img
-                src={siteSettings.logoUrl}
-                alt={siteSettings.schoolNameBangla}
-                className="w-11 h-11 rounded-2xl object-cover border border-emerald-600/30 shadow-xs"
-              />
-            ) : (
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-800 to-emerald-950 flex items-center justify-center text-amber-300 font-extrabold text-xl shadow-md border border-emerald-600/30">
-                {siteSettings.schoolNameBangla?.charAt(0) || 'দ'}
-              </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-black text-gray-900 leading-tight">
-                  {siteSettings.schoolNameBangla}
-                </h1>
-                <span className="hidden sm:inline-block bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300">
-                  EIIN: {siteSettings.eiin || '১২৩৪৫৬'}
-                </span>
-              </div>
-              <p className="text-[11px] text-gray-500 font-medium">
-                {siteSettings.schoolNameEnglish} • অনলাইন অ্যাডমিট কার্ড (প্রবেশপত্র) ও রুটিন পোর্টাল
-              </p>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setCurrentFrontendPage('home')}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold shadow-xs transition cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>মূল ওয়েবসাইটে ফিরুন</span>
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* Top Institutional Header matching Home Page logo & unified EIIN */}
+      <DedicatedHeader portalTitle="অনলাইন অ্যাডমিট কার্ড (প্রবেশপত্র) ও রুটিন পোর্টাল" />
 
       {/* Main Content Area - Matching Result Page Layout */}
       <main className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 py-8 flex-1 w-full">
@@ -902,7 +786,7 @@ export const DedicatedAdmitCardPage: React.FC = () => {
                       {siteSettings.schoolNameEnglish || 'Dadra High School'}
                     </p>
                     <p className="text-[10.5px] text-gray-500">
-                      {siteSettings.address || 'দাদরা, জয়পুরহাট সদর, জয়পুরহাট'} • স্থাপিত: ১৯৬২ • EIIN: 121980
+                      {siteSettings.address || 'দাদরা, জয়পুরহাট সদর, জয়পুরহাট'} • স্থাপিত: {siteSettings.establishedYear || '১৯৮২'} • EIIN: {siteSettings.eiin || '121820'}
                     </p>
                   </div>
                 </div>

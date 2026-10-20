@@ -51,13 +51,13 @@ export const SchoolStats: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-10">
           <span className="text-xs font-bold text-amber-300 tracking-wider uppercase bg-white/10 px-3 py-1 rounded-full">
-            পরিসংখ্যান
+            {siteSettings.statsBadge || 'পরিসংখ্যান'}
           </span>
           <h2 className="text-2xl sm:text-3xl font-bold text-white mt-2">
-            বিদ্যালয় এক নজরে
+            {siteSettings.statsTitle || 'বিদ্যালয় এক নজরে'}
           </h2>
           <p className="text-xs sm:text-sm text-emerald-100 mt-1">
-            একটি সফল যাত্রায় ঐতিহ্য ও সাফল্যের কথা
+            {siteSettings.statsSubtitle || 'একটি সফল যাত্রায় ঐতিহ্য ও সাফল্যের কথা'}
           </p>
         </div>
 

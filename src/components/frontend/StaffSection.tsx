@@ -20,19 +20,23 @@ export const StaffSection: React.FC = () => {
   const [viewingStaff, setViewingStaff] = useState<Staff | null>(null);
   const [bigPhotoUrl, setBigPhotoUrl] = useState<{ url: string; name: string } | null>(null);
 
+  const badgeText = siteSettings.staffBadge || 'কর্মকর্তা ও কর্মচারী';
+  const titleText = siteSettings.staffTitle || 'আমাদের কর্মকর্তা ও কর্মচারী';
+  const subtitleText = siteSettings.staffSubtitle || 'বিদ্যালয়ের প্রশাসনিক, হিসাব, গ্রন্থাগার ও সার্বিক দাপ্তরিক সেবায় নিয়োজিত দায়িত্বশীল কর্মী ও কর্মকর্তাবৃন্দ';
+
   return (
     <section id="staff" className="py-16 px-4 sm:px-8 max-w-7xl mx-auto scroll-mt-20">
       {/* Section Header */}
       <div className="text-center mb-10">
         <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 tracking-wider uppercase bg-emerald-50 border border-emerald-200/80 px-3.5 py-1 rounded-full">
           <UserCheck className="w-3.5 h-3.5" />
-          <span>কর্মকর্তা ও কর্মচারী</span>
+          <span>{badgeText}</span>
         </span>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
-          আমাদের কর্মকর্তা ও কর্মচারী
+          {titleText}
         </h2>
         <p className="text-sm text-gray-500 mt-1 max-w-2xl mx-auto">
-          বিদ্যালয়ের প্রশাসনিক, হিসাব, গ্রন্থাগার ও সার্বিক দাপ্তরিক সেবায় নিয়োজিত দায়িত্বশীল কর্মী ও কর্মকর্তাবৃন্দ
+          {subtitleText}
         </p>
       </div>
 
@@ -57,17 +61,17 @@ export const StaffSection: React.FC = () => {
             title={`${member.name}-এর বিস্তারিত প্রোফাইল ও বড় ছবি দেখুন`}
           >
             <div className="flex flex-col items-center w-full">
-              {/* Avatar / Photo Circle */}
+              {/* Avatar / Photo Circle (144px Desktop, 120px Mobile) */}
               {member.image ? (
-                <div className="w-18 h-18 rounded-full overflow-hidden border-2 border-emerald-500 shadow-2xs mb-4 shrink-0 group-hover:scale-105 group-hover:border-emerald-600 transition duration-300">
+                <div className="w-[120px] h-[120px] sm:w-[144px] sm:h-[144px] aspect-square rounded-full overflow-hidden border-4 border-emerald-500 shadow-md mb-4 shrink-0 group-hover:scale-105 group-hover:border-emerald-600 transition duration-300 relative">
                   <img
                     src={member.image}
                     alt={member.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-[center_top] aspect-square"
                   />
                 </div>
               ) : (
-                <div className="w-18 h-18 rounded-full bg-emerald-50 border-2 border-emerald-200 text-emerald-800 font-bold text-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition duration-300 shrink-0 shadow-2xs">
+                <div className="w-[120px] h-[120px] sm:w-[144px] sm:h-[144px] aspect-square rounded-full bg-emerald-50 border-4 border-emerald-200 text-emerald-800 font-bold text-4xl sm:text-5xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition duration-300 shrink-0 shadow-md">
                   {member.initial || member.name.charAt(0)}
                 </div>
               )}

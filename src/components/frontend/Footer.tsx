@@ -233,18 +233,18 @@ export const Footer: React.FC = () => {
               {siteSettings.copyrightText || `© 2026 ${siteSettings.schoolNameBangla} (${siteSettings.schoolNameEnglish})। সর্বস্বত্ব সংরক্ষিত।`}
             </p>
             <p className="text-[11px] text-emerald-400/80 mt-0.5">
-              EIIN: {siteSettings.eiin || '121980'} • স্থাপিত: {siteSettings.establishedYear || '১৯৬২'}
+              EIIN: {siteSettings.eiin || '121820'} • স্থাপিত: {siteSettings.establishedYear || '১৯৮২'}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 text-xs">
             <span className="text-emerald-300 bg-emerald-950/80 px-2.5 py-1 rounded-md border border-emerald-800/60 font-medium">
-              মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড, রাজশাহী অনুমোদিত
+              {siteSettings.boardAffiliation || 'মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড, রাজশাহী অনুমোদিত'}
             </span>
             <div className="flex items-center gap-1 text-emerald-400">
-              <span>সাথে</span>
+              <span>{siteSettings.footerCreditPrefix || 'সাথে'}</span>
               <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-              <span>ছাত্র-শিক্ষক ঐক্য</span>
+              <span>{siteSettings.footerCreditText || 'ছাত্র-শিক্ষক ঐক্য'}</span>
             </div>
           </div>
         </div>

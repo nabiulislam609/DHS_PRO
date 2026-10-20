@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useSchool } from '../../context/SchoolContext';
 import { Notice } from '../../types';
+import { DedicatedHeader } from './DedicatedHeader';
 import {
   ArrowLeft,
   Search,
@@ -130,107 +131,69 @@ export const DedicatedNoticesPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#fafaf9] flex flex-col font-sans">
-      {/* Top Institutional Notification Bar */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xs print:hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
-          {/* Logo & School Branding */}
-          <div className="flex items-center gap-3.5 cursor-pointer" onClick={handleGoHome}>
-            {siteSettings.logoUrl ? (
-              <img
-                src={siteSettings.logoUrl}
-                alt="Logo"
-                className="w-11 h-11 rounded-2xl object-cover border-2 border-emerald-700 shadow-md bg-white p-0.5"
-              />
-            ) : (
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-800 to-emerald-950 flex items-center justify-center text-amber-300 font-extrabold text-xl shadow-md border border-emerald-600/30">
-                দ
-              </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-black text-gray-900 leading-tight">
-                  {siteSettings.schoolNameBangla}
-                </h1>
-                <span className="hidden sm:inline-block bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300">
-                  EIIN: ১২৩৪৫৬
-                </span>
-              </div>
-              <p className="text-[11px] text-gray-500 font-medium">
-                {siteSettings.schoolNameEnglish} • সকল নোটিশ ও অফিসিয়াল বিজ্ঞপ্তি আর্কাইভ
-              </p>
-            </div>
-          </div>
+      {/* Top Institutional Header matching Home Page logo & unified EIIN */}
+      <DedicatedHeader portalTitle="সকল নোটিশ ও অফিসিয়াল বিজ্ঞপ্তি আর্কাইভ" />
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleGoHome}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#15803d] hover:bg-[#166534] text-white rounded-xl text-xs sm:text-sm font-bold shadow-xs transition cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>মূল ওয়েবসাইটে ফিরুন</span>
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* Modern Top Dark Emerald Header Banner */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-6 sm:pt-8 w-full print:hidden">
+        <div className="bg-gradient-to-br from-[#063326] via-[#094132] to-[#042018] rounded-3xl p-6 sm:p-10 shadow-xl border border-emerald-900/40 relative overflow-hidden text-center sm:text-left">
+          {/* Subtle decorative glowing background */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
-      {/* Hero Section with Breadcrumb */}
-      <section className="bg-gradient-to-b from-white to-[#f4f7f5] border-b border-gray-200/80 py-8 px-4 sm:px-8 print:hidden">
-        <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-xs text-gray-500 mb-4 font-medium">
+          <nav className="flex items-center gap-2 text-xs text-emerald-200/70 mb-4 font-medium justify-center sm:justify-start">
             <button
               onClick={handleGoHome}
-              className="hover:text-emerald-700 transition cursor-pointer"
+              className="hover:text-emerald-300 transition cursor-pointer"
             >
               হোম
             </button>
             <span>/</span>
             <span>নোটিশ বোর্ড</span>
             <span>/</span>
-            <span className="text-emerald-800 font-bold">সকল নোটিশ</span>
+            <span className="text-white font-bold">সকল নোটিশ</span>
           </nav>
 
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-              <div className="inline-flex items-center gap-1.5 bg-emerald-100/80 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full mb-2.5 border border-emerald-200">
-                <FileText className="w-3.5 h-3.5" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-2.5">
+              <div className="inline-flex items-center gap-1.5 bg-[#0f4d3a]/80 text-[#34d399] border border-[#16654a] px-3.5 py-1 rounded-full text-xs font-semibold">
+                <FileText className="w-3.5 h-3.5 text-emerald-300" />
                 <span>নোটিশ ও বিজ্ঞপ্তি আর্কাইভ</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900 tracking-tight">
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
                 বিদ্যালয়ের সকল নোটিশ ও বিজ্ঞপ্তি
               </h2>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1 max-w-2xl">
+              <p className="text-emerald-100/80 text-xs sm:text-sm max-w-2xl leading-relaxed">
                 দাদরা উচ্চ বিদ্যালয়ের সাম্প্রতিক ও পূর্ববর্তী সকল নোটিশ, সার্কুলার, পরীক্ষার সময়সূচী ও জরুরি বার্তা একনজরে দেখুন।
               </p>
             </div>
 
             {/* Quick Stat Badges */}
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="bg-white border border-gray-200/90 rounded-xl px-4 py-2.5 shadow-2xs text-center min-w-[90px]">
-                <span className="block text-xl font-black text-emerald-800">
+            <div className="flex items-center gap-3 shrink-0 justify-center sm:justify-start">
+              <div className="bg-emerald-900/70 border border-emerald-700/50 rounded-2xl px-4 py-2.5 shadow-2xs text-center min-w-[90px] backdrop-blur-xs">
+                <span className="block text-xl sm:text-2xl font-black text-white">
                   {notices.length}
                 </span>
-                <span className="text-[11px] font-semibold text-gray-500">মোট নোটিশ</span>
+                <span className="text-[11px] font-semibold text-emerald-200">মোট নোটিশ</span>
               </div>
 
-              <div className="bg-white border border-rose-200 rounded-xl px-4 py-2.5 shadow-2xs text-center min-w-[90px]">
-                <span className="block text-xl font-black text-rose-600">
+              <div className="bg-rose-950/60 border border-rose-600/40 rounded-2xl px-4 py-2.5 shadow-2xs text-center min-w-[90px] backdrop-blur-xs">
+                <span className="block text-xl sm:text-2xl font-black text-rose-300">
                   {urgentCount}
                 </span>
-                <span className="text-[11px] font-semibold text-rose-600">জরুরি নোটিশ</span>
+                <span className="text-[11px] font-semibold text-rose-200">জরুরি নোটিশ</span>
               </div>
 
-              <div className="bg-white border border-amber-200 rounded-xl px-4 py-2.5 shadow-2xs text-center min-w-[90px]">
-                <span className="block text-xl font-black text-amber-600">
+              <div className="bg-amber-950/60 border border-amber-600/40 rounded-2xl px-4 py-2.5 shadow-2xs text-center min-w-[90px] backdrop-blur-xs">
+                <span className="block text-xl sm:text-2xl font-black text-amber-300">
                   {pinnedCount}
                 </span>
-                <span className="text-[11px] font-semibold text-amber-700">পিন করা নোটিশ</span>
+                <span className="text-[11px] font-semibold text-amber-200">পিন করা</span>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-8 py-8 space-y-6">
@@ -724,7 +687,7 @@ export const DedicatedNoticesPage: React.FC = () => {
                 </h2>
               </div>
               <p className="text-xs text-gray-500 font-medium">
-                দাদরা, জয়পুরহাট সদর, জয়পুরহাট • স্থাপিত: ১৯৮২ • EIIN: ১২৩৪৫৬
+                {siteSettings?.address || 'দাদরা, জয়পুরহাট সদর, জয়পুরহাট'} • স্থাপিত: {siteSettings?.establishedYear || '১৯৮২'} • EIIN: {siteSettings?.eiin || '121820'}
               </p>
               <div className="inline-block bg-emerald-100 text-emerald-900 font-bold text-[11px] px-3 py-0.5 rounded-full mt-1">
                 বিজ্ঞপ্তি / নোটিশ

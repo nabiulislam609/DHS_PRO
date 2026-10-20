@@ -4,7 +4,7 @@ import { Calendar, Clock, ArrowRight, X, Layers } from 'lucide-react';
 import { NewsItem } from '../../types';
 
 export const NewsSection: React.FC = () => {
-  const { news } = useSchool();
+  const { news, siteSettings } = useSchool();
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
 
@@ -16,18 +16,22 @@ export const NewsSection: React.FC = () => {
     setActivePhoto(item.imageUrl || (item.images && item.images[0]) || null);
   };
 
+  const badgeText = siteSettings.newsBadge || 'সংবাদ';
+  const titleText = siteSettings.newsTitle || 'সর্বশেষ সংবাদ';
+  const subtitleText = siteSettings.newsSubtitle || 'বিদ্যালয়ের সাম্প্রতিক ঘটনাবলি ও সংবাদ';
+
   return (
     <section id="news" className="py-16 px-4 sm:px-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="text-center mb-10">
         <span className="text-xs font-bold text-emerald-700 tracking-wider uppercase bg-emerald-50 px-3 py-1 rounded-full">
-          সংবাদ
+          {badgeText}
         </span>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
-          সর্বশেষ সংবাদ
+          {titleText}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          বিদ্যালয়ের সাম্প্রতিক ঘটনাবলি ও সংবাদ
+          {subtitleText}
         </p>
       </div>
 

@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { generatePdfFromElement } from '../../utils/universalPdfGenerator';
 import { compressImageFile } from '../../utils/imageUpload';
 import { getStudentPhoto } from '../../utils/studentPhoto';
 import {
@@ -312,51 +313,35 @@ export const AdmissionModal: React.FC = () => {
     }, 150);
   };
 
-  // PDF Download of the Slip using html2canvas & jsPDF
+  // PDF Download of the Slip using universalPdfGenerator
   const handleDownloadSlipPdf = async () => {
     if (!submittedApp) return;
     setIsExportingPdf(true);
-    setTimeout(async () => {
-      try {
-        const element = document.getElementById('printable-admission-slip');
-        if (!element) {
-          handleDownloadSlipHtml();
-          return;
-        }
-
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-        });
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfPageHeight = pdf.internal.pageSize.getHeight();
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfPageHeight;
-
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-          heightLeft -= pdfPageHeight;
-        }
-
-        pdf.save(`${submittedApp.applicantName}_ভর্তি_আবেদন_স্লিপ_${submittedApp.id}.pdf`);
-      } catch (err) {
-        console.error('PDF export error:', err);
+    try {
+      const element = document.getElementById('printable-admission-slip');
+      if (!element) {
         handleDownloadSlipHtml();
-      } finally {
-        setIsExportingPdf(false);
+        return;
       }
-    }, 200);
+
+      const cleanName = submittedApp.applicantName.replace(/[\s/\\?%*:|"<>]/g, '_').slice(0, 30);
+      const fileName = `${cleanName}_ভর্তি_আবেদন_স্লিপ_${submittedApp.id}.pdf`;
+
+      const ok = await generatePdfFromElement(element, {
+        orientation: 'portrait',
+        docKind: 'admission',
+        fileName,
+      });
+
+      if (!ok) {
+        handleDownloadSlipHtml();
+      }
+    } catch (err) {
+      console.error('PDF export error:', err);
+      handleDownloadSlipHtml();
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   // Offline HTML Download
@@ -732,13 +717,37 @@ export const AdmissionModal: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-lg sm:text-xl font-bold text-gray-900">
-                  অনলাইন ভর্তি আবেদন ফর্ম
+                  {siteSettings?.admissionTitle || 'অনলাইন ভর্তি আবেদন ফর্ম'}
                 </h3>
                 <p className="text-xs text-gray-500">
-                  {siteSettings?.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'} – শিক্ষাবর্ষে ভর্তির আবেদন
+                  {siteSettings?.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'} – {siteSettings?.admissionSession || '২০২৬ শিক্ষাবর্ষে'} ভর্তির আবেদন
                 </p>
               </div>
             </div>
+
+            {/* Admission Closed State */}
+            {siteSettings?.admissionOpen === false && (
+              <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-2xl text-xs text-amber-900 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-sm text-amber-950">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>বর্তমানে অনলাইন ভর্তি আবেদন কার্যক্রম স্থগিত বা বন্ধ রয়েছে।</span>
+                </div>
+                <p className="text-amber-800">
+                  ভর্তি সংক্রান্ত যেকোনো তথ্য বা পরবর্তী নির্দেশনার জন্য বিদ্যালয়ের অফিসে যোগাযোগ করুন অথবা হেল্পলাইনে কল করুন: <strong>{siteSettings.admissionHelpline || siteSettings.phone1 || '+880 1711-123456'}</strong>।
+                </p>
+              </div>
+            )}
+
+            {/* Dynamic Admission Notice Banner from Backend */}
+            {siteSettings?.admissionNotice && (
+              <div className="mb-4 p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <span className="font-bold block">ভর্তি নির্দেশনা ও বিজ্ঞপ্তি:</span>
+                  <p className="text-[11px] text-emerald-800 leading-relaxed">{siteSettings.admissionNotice}</p>
+                </div>
+              </div>
+            )}
 
             {/* General Validation Notice if errors exist */}
             {Object.keys(formErrors).length > 0 && (

@@ -20,18 +20,22 @@ export const TeachersSection: React.FC = () => {
   const [viewingTeacher, setViewingTeacher] = useState<Teacher | null>(null);
   const [bigPhotoUrl, setBigPhotoUrl] = useState<{ url: string; name: string } | null>(null);
 
+  const badgeText = siteSettings.teachersBadge || 'শিক্ষক মণ্ডলী';
+  const titleText = siteSettings.teachersTitle || 'আমাদের শিক্ষক মণ্ডলী';
+  const subtitleText = siteSettings.teachersSubtitle || 'অভিজ্ঞ ও দক্ষ শিক্ষক দ্বারা শিক্ষার্থীদের সুশিক্ষা ও নীতিবান মানুষ হিসেবে গড়ে তোলা';
+
   return (
     <section id="teachers" className="py-16 px-4 sm:px-8 max-w-7xl mx-auto scroll-mt-20">
       {/* Section Header */}
       <div className="text-center mb-10">
         <span className="text-xs font-bold text-emerald-700 tracking-wider uppercase bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200/80">
-          শিক্ষক মণ্ডলী
+          {badgeText}
         </span>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
-          আমাদের শিক্ষক মণ্ডলী
+          {titleText}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          অভিজ্ঞ ও দক্ষ শিক্ষক দ্বারা শিক্ষার্থীদের সুশিক্ষা ও নীতিবান মানুষ হিসেবে গড়ে তোলা
+          {subtitleText}
         </p>
       </div>
 
@@ -56,17 +60,17 @@ export const TeachersSection: React.FC = () => {
             title={`${teacher.name}-এর বিস্তারিত প্রোফাইল ও বড় ছবি দেখুন`}
           >
             <div className="flex flex-col items-center w-full">
-              {/* Avatar / Photo Circle */}
+              {/* Avatar / Photo Circle (144px Desktop, 120px Mobile) */}
               {teacher.image ? (
-                <div className="w-18 h-18 rounded-full overflow-hidden border-2 border-emerald-500 shadow-2xs mb-4 shrink-0 group-hover:scale-105 group-hover:border-emerald-600 transition duration-300">
+                <div className="w-[120px] h-[120px] sm:w-[144px] sm:h-[144px] aspect-square rounded-full overflow-hidden border-4 border-emerald-500 shadow-md mb-4 shrink-0 group-hover:scale-105 group-hover:border-emerald-600 transition duration-300 relative">
                   <img
                     src={teacher.image}
                     alt={teacher.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-[center_top] aspect-square"
                   />
                 </div>
               ) : (
-                <div className="w-18 h-18 rounded-full bg-emerald-50 border-2 border-emerald-200 text-emerald-800 font-bold text-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition duration-300 shrink-0 shadow-2xs">
+                <div className="w-[120px] h-[120px] sm:w-[144px] sm:h-[144px] aspect-square rounded-full bg-emerald-50 border-4 border-emerald-200 text-emerald-800 font-bold text-4xl sm:text-5xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition duration-300 shrink-0 shadow-md">
                   {teacher.initial || teacher.name.charAt(0)}
                 </div>
               )}

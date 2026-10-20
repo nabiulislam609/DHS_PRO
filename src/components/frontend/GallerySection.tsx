@@ -4,7 +4,7 @@ import { ImageIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { GalleryAlbum } from '../../types';
 
 export const GallerySection: React.FC = () => {
-  const { galleryAlbums } = useSchool();
+  const { galleryAlbums, siteSettings } = useSchool();
   const [activeTab, setActiveTab] = useState<string>('all');
   const [activeAlbum, setActiveAlbum] = useState<GalleryAlbum | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
@@ -28,18 +28,22 @@ export const GallerySection: React.FC = () => {
     setLightboxIndex(0);
   };
 
+  const badgeText = siteSettings.galleryBadge || 'ফটোগ্যালারি';
+  const titleText = siteSettings.galleryTitle || 'আলোকিত গ্যালারি';
+  const subtitleText = siteSettings.gallerySubtitle || 'ক্যাম্পাস, অনুষ্ঠান ও শিক্ষার্থী জীবনের কিছু মুহূর্ত';
+
   return (
     <section id="gallery" className="py-16 px-4 sm:px-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="text-center mb-8">
         <span className="text-xs font-bold text-emerald-700 tracking-wider uppercase bg-emerald-50 px-3 py-1 rounded-full">
-          ফটোগ্যালারি
+          {badgeText}
         </span>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
-          আলোকিত গ্যালারি
+          {titleText}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          ক্যাম্পাস, অনুষ্ঠান ও শিক্ষার্থী জীবনের কিছু মুহূর্ত
+          {subtitleText}
         </p>
       </div>
 

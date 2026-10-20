@@ -2,6 +2,7 @@ import { ActiveExam, SiteSettings, Student } from '../types';
 import jsPDF from 'jspdf';
 import { toPng } from 'html-to-image';
 import html2canvas from 'html2canvas';
+import { generatePdfFromHtml, PdfOrientation } from './universalPdfGenerator';
 
 export interface ExamRoutineItem {
   sl: number;
@@ -162,7 +163,7 @@ export const buildExamNoticeHtml = (
   const publishDate = exam.createdDate || new Date().toISOString().split('T')[0];
 
   return `
-    <div style="width: 210mm; min-height: 297mm; padding: 14mm 16mm; background: #ffffff; color: #111827; font-family: 'Hind Siliguri', sans-serif; box-sizing: border-box; line-height: 1.45; font-size: 13px;">
+    <div style="width: 100%; max-width: 100%; min-height: 100%; padding: 2mm 4mm; background: #ffffff; color: #111827; font-family: 'Hind Siliguri', sans-serif; box-sizing: border-box; line-height: 1.45; font-size: 13px;">
       
       <!-- Top Header & Monogram -->
       <div style="border-bottom: 2.5px solid #047857; padding-bottom: 12px; margin-bottom: 14px;">
@@ -441,106 +442,29 @@ export const printExamSchedule = (
 export const downloadExamSchedulePdf = async (
   exam: ActiveExam,
   siteSettings: SiteSettings,
-  students: Student[]
+  students: Student[],
+  orientation: PdfOrientation = 'landscape' // wide routine table
 ): Promise<boolean> => {
-  let tempDiv: HTMLElement | null = null;
   try {
     const cleanTitle = (exam.examTerm || 'Exam_Routine')
       .replace(/[/\\?%*:|"<>]/g, '_')
       .replace(/\s+/g, '_');
     const fileName = `${cleanTitle}_Routine.pdf`;
 
-    tempDiv = document.createElement('div');
-    tempDiv.style.position = 'fixed';
-    tempDiv.style.left = '0';
-    tempDiv.style.top = '0';
-    tempDiv.style.width = '794px';
-    tempDiv.style.minHeight = '1123px';
-    tempDiv.style.zIndex = '-99999';
-    tempDiv.style.background = '#ffffff';
-    tempDiv.style.opacity = '1';
-    tempDiv.style.pointerEvents = 'none';
+    const htmlContent = buildExamNoticeHtml(exam, siteSettings, students);
 
-    tempDiv.innerHTML = buildExamNoticeHtml(exam, siteSettings, students);
-    document.body.appendChild(tempDiv);
-
-    try {
-      if (document.fonts) await document.fonts.ready;
-    } catch {}
-    await new Promise((r) => setTimeout(r, 250));
-
-    const captureWidth = 794;
-    const captureHeight = Math.max(tempDiv.scrollHeight || 0, 1123);
-
-    let canvas: HTMLCanvasElement;
-    try {
-      canvas = await html2canvas(tempDiv, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: '#ffffff',
-        width: captureWidth,
-        height: captureHeight,
-      });
-    } catch {
-      const dataUrl = await toPng(tempDiv, {
-        width: captureWidth,
-        height: captureHeight,
-        canvasWidth: captureWidth * 2,
-        canvasHeight: captureHeight * 2,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-      });
-      const img = new Image();
-      img.src = dataUrl;
-      await new Promise((resolve) => {
-        img.onload = resolve;
-      });
-      canvas = document.createElement('canvas');
-      canvas.width = captureWidth * 2;
-      canvas.height = captureHeight * 2;
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0);
-    }
-
-    const imgData = canvas.toDataURL('image/png', 1.0);
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-      compress: true,
+    const ok = await generatePdfFromHtml(htmlContent, {
+      orientation,
+      docKind: 'routine',
+      fileName,
     });
 
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-
-    try {
-      const blob = pdf.output('blob');
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = fileName;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        if (document.body.contains(a)) document.body.removeChild(a);
-        window.URL.revokeObjectURL(blobUrl);
-      }, 2000);
-    } catch {
-      pdf.save(fileName);
-    }
-    return true;
+    if (ok) return true;
+    throw new Error('generatePdfFromHtml returned false');
   } catch (err) {
     console.error('Download exam schedule PDF error:', err);
     printExamSchedule(exam, siteSettings, students);
     return false;
-  } finally {
-    if (tempDiv && document.body.contains(tempDiv)) {
-      document.body.removeChild(tempDiv);
-    }
   }
 };
 
