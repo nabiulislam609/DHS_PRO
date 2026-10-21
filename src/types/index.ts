@@ -8,6 +8,11 @@ export interface Teacher {
   initial: string;
   image?: string;
   order?: number;
+  qualification?: string;
+  joinDate?: string;
+  bloodGroup?: string;
+  address?: string;
+  bio?: string;
 }
 
 export interface Staff {
@@ -20,7 +25,14 @@ export interface Staff {
   initial?: string;
   image?: string;
   role?: string;
+  order?: number;
+  qualification?: string;
+  joinDate?: string;
+  bloodGroup?: string;
+  address?: string;
 }
+
+export type StaffMember = Staff;
 
 export interface Student {
   id: string;

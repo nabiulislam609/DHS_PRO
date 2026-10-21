@@ -1,5 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useSchool } from '../../context/SchoolContext';
+import { PageHero } from './PageHero';
 import {
   Search,
   Bookmark,
@@ -318,7 +319,7 @@ export const AcademicResultsSearch: React.FC = () => {
   };
 
   return (
-    <section id="results" className="py-12 sm:py-16 bg-[#fafaf9] relative scroll-mt-20">
+    <section id="results" className="relative scroll-mt-0">
       {/* Dedicated Print Isolation Styles: When window.print() is called, ONLY the marksheet prints */}
       <style>{`
         @media print {
@@ -360,30 +361,16 @@ export const AcademicResultsSearch: React.FC = () => {
           }
         }
       `}</style>
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6">
-        {/* Top Dark Emerald Header Banner - Completely in Bengali */}
-        <div className="bg-gradient-to-br from-[#063326] via-[#094132] to-[#042018] rounded-3xl p-8 sm:p-12 shadow-xl border border-emerald-900/40 relative overflow-hidden print:hidden">
-          {/* Subtle decorative circles */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+      {/* Unified PageHero Banner */}
+      <PageHero
+        title="অনলাইন ফলাফল ও মার্কশীট"
+        description="রোল নম্বর, শ্রেণি ও পরীক্ষা বেছে ফলাফল দেখুন এবং মার্কশীট ডাউনলোড বা প্রিন্ট করুন।"
+        breadcrumbs={[{ label: 'ফলাফল ও মার্কশীট' }]}
+      />
 
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-1.5 bg-[#0f4d3a]/80 text-[#34d399] border border-[#16654a] px-3.5 py-1 rounded-full text-xs font-semibold mb-4">
-              <Bookmark className="w-3.5 h-3.5 text-emerald-400" />
-              <span>রাজশাহী শিক্ষা বোর্ড কারিকুলাম মানদণ্ড</span>
-            </div>
-
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              অনলাইন একাডেমিক ফলাফল ও নম্বরপত্র (মার্কশীট)
-            </h2>
-
-            <p className="text-emerald-100/80 text-xs sm:text-sm mt-2.5 max-w-2xl leading-relaxed">
-              টার্ম পরীক্ষার ফলাফল, বিষয়ভিত্তিক নম্বর যাচাই করুন এবং প্রাতিষ্ঠানিক অফিশিয়াল গ্রেড শিট ডাউনলোড ও প্রিন্ট করুন।
-            </p>
-          </div>
-        </div>
-
-        {/* Search Student Examination Record Card - Completely in Bengali */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6 sm:p-8 space-y-6 print:hidden">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 -mt-16 relative z-20 pb-16">
+        {/* Search Student Examination Record Card */}
+        <div className="bg-white rounded-2xl border border-[#E2E8E4] shadow-md p-6 sm:p-8 space-y-6 print:hidden">
           <div className="flex items-center gap-2 text-gray-900 font-bold text-base sm:text-lg">
             <Search className="w-5 h-5 text-emerald-600" />
             <span>শিক্ষার্থীর পরীক্ষার ফলাফল অনুসন্ধান করুন</span>
@@ -581,17 +568,11 @@ export const AcademicResultsSearch: React.FC = () => {
                       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                         {/* Left Crest */}
                         <div className="flex items-center gap-3 text-left">
-                          {siteSettings.logoUrl ? (
-                            <img
-                              src={siteSettings.logoUrl}
-                              alt="Logo"
-                              className="w-14 h-14 rounded-full object-cover border-2 border-emerald-800 bg-white shadow-xs shrink-0"
-                            />
-                          ) : (
-                            <div className="w-14 h-14 rounded-full bg-amber-400 border-2 border-emerald-800 text-emerald-950 font-black flex items-center justify-center shadow-md shrink-0">
-                              <GraduationCap className="w-7 h-7 text-emerald-900" />
-                            </div>
-                          )}
+                          <img
+                            src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+                            alt="Logo"
+                            className="w-14 h-14 rounded-full object-cover border-[2.5px] border-[#F59E0B] bg-[#00A859] shadow-xs shrink-0"
+                          />
                           <div>
                             <h3 className="text-xl sm:text-2xl font-black text-gray-950 tracking-tight leading-tight">
                               {siteSettings.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}
@@ -600,7 +581,7 @@ export const AcademicResultsSearch: React.FC = () => {
                               {siteSettings.schoolNameEnglish || 'DADRA HIGH SCHOOL'} • স্থাপিত: {siteSettings.establishedYear || '১৯৮২'}
                             </p>
                             <p className="text-[10px] text-gray-600 font-medium">
-                              EIIN: {siteSettings.eiin || '121820'} • {siteSettings.boardAffiliation || 'রাজশাহী শিক্ষা বোর্ড'}
+                              {siteSettings.boardAffiliation || 'রাজশাহী শিক্ষা বোর্ড'}
                             </p>
                           </div>
                         </div>

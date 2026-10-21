@@ -73,17 +73,11 @@ export const Footer: React.FC = () => {
           {/* Col 1: Brand (4 cols) */}
           <div className="lg:col-span-4 space-y-4">
             <div className="flex items-center gap-3">
-              {siteSettings.logoUrl ? (
-                <img
-                  src={siteSettings.logoUrl}
-                  alt="Logo"
-                  className="w-11 h-11 rounded-full object-cover border-2 border-amber-400 bg-white"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-amber-400 border-2 border-emerald-600 flex items-center justify-center text-emerald-950">
-                  <GraduationCap className="w-6 h-6" />
-                </div>
-              )}
+              <img
+                src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+                alt="Logo"
+                className="w-11 h-11 rounded-full object-cover border-[2.5px] border-[#F59E0B] bg-[#00A859] shadow-xs"
+              />
               <div>
                 <h3 className="text-base font-bold text-white leading-tight">
                   {siteSettings.schoolNameBangla}
@@ -233,7 +227,7 @@ export const Footer: React.FC = () => {
               {siteSettings.copyrightText || `© 2026 ${siteSettings.schoolNameBangla} (${siteSettings.schoolNameEnglish})। সর্বস্বত্ব সংরক্ষিত।`}
             </p>
             <p className="text-[11px] text-emerald-400/80 mt-0.5">
-              EIIN: {siteSettings.eiin || '121820'} • স্থাপিত: {siteSettings.establishedYear || '১৯৮২'}
+              স্থাপিত: {siteSettings.establishedYear || '১৯৮২'}
             </p>
           </div>
 

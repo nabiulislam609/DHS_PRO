@@ -1,9 +1,63 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Anthropic Sans Web Text', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root {
+  --primary: #0B7A55;
+  --primary-dark: #064E3B;
+  --primary-soft: #E8F5EE;
+  --bg: #F6F7F5;
+  --surface: #FFFFFF;
+  --text: #14211B;
+  --muted: #5B6B63;
+  --border: #E2E8E4;
+}
+
 @layer base {
-  body {
-    font-family: 'Hind Siliguri', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  html, body {
+    font-family: 'Anthropic Sans Web Text', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+    background-color: var(--bg);
   }
+
+  button, input, select, textarea {
+    font-family: inherit;
+  }
+}
+
+/* Page fade-in animation adhering to prefers-reduced-motion */
+@media (prefers-reduced-motion: no-preference) {
+  .subpage-fade-in {
+    animation: subpageFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes subpageFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Card hover elevation */
+.design-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.design-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(11, 122, 85, 0.08), 0 4px 6px -4px rgba(11, 122, 85, 0.05);
 }
 
 /* Custom scrollbar for admin and modals */

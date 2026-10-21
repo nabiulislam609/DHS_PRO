@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useSchool } from '../../context/SchoolContext';
 import { DownloadableForm } from '../../types';
 import { DedicatedHeader } from './DedicatedHeader';
+import { PageHero } from './PageHero';
 import {
   FileText,
   Download,
@@ -61,35 +62,23 @@ export const DedicatedFormsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-gray-800 flex flex-col font-sans">
-      {/* Top Institutional Header matching Home Page logo & unified EIIN */}
-      <DedicatedHeader portalTitle="গুরুত্বপূর্ণ প্রাতিষ্ঠানিক ফরম ও ডাউনলোড পোর্টাল" />
+    <div className="min-h-screen bg-[#F6F7F5] text-[#14211B] flex flex-col font-sans subpage-fade-in">
+      {/* Top Institutional Header */}
+      <DedicatedHeader pageName="ফরম ও ডাউনলোড" />
 
-      {/* Main Content Area - Matching Result Page Layout */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 py-8 flex-1 w-full">
-        {/* Top Dark Emerald Header Banner - Completely in Bengali matching Results page */}
-        <div className="bg-gradient-to-br from-[#063326] via-[#094132] to-[#042018] rounded-3xl p-8 sm:p-12 shadow-xl border border-emerald-900/40 relative overflow-hidden print:hidden">
-          {/* Subtle decorative circles */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+      {/* Unified PageHero Banner */}
+      <PageHero
+        title="গুরুত্বপূর্ণ প্রাতিষ্ঠানিক ফরমসমূহ"
+        description="ভর্তি, ছুটি, প্রশংসাপত্র, টিসি ও অন্যান্য ফরম প্রিভিউ, ইউনিকোড PDF ডাউনলোড ও সরাসরি প্রিন্ট করুন।"
+        badgeText="প্রাতিষ্ঠানিক ফরম ও ডাউনলোড পোর্টাল"
+        badgeIcon={<Bookmark className="w-3.5 h-3.5 text-emerald-300" />}
+        breadcrumbs={[{ label: 'ফরম ও ডাউনলোড' }]}
+      />
 
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-1.5 bg-[#0f4d3a]/80 text-[#34d399] border border-[#16654a] px-3.5 py-1 rounded-full text-xs font-semibold mb-4">
-              <Bookmark className="w-3.5 h-3.5 text-emerald-400" />
-              <span>বিদ্যালয়ের প্রাতিষ্ঠানিক ফরম ও ডাউনলোড পোর্টাল</span>
-            </div>
-
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              গুরুত্বপূর্ণ প্রাতিষ্ঠানিক ফরমসমূহ (Forms & Downloads)
-            </h2>
-
-            <p className="text-emerald-100/80 text-xs sm:text-sm mt-2.5 max-w-2xl leading-relaxed">
-              ভর্তি, ছুটি, প্রশংসাপত্র, টিসি ও অন্যান্য ফরম প্রিভিউ, ইউনিকোড PDF ডাউনলোড ও সরাসরি প্রিন্ট করুন।
-            </p>
-          </div>
-        </div>
-
-        {/* Search & Category Filter Card - Matching Results Page White Card */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6 sm:p-8 space-y-6 print:hidden">
+      {/* Main Content Area - Overlapping Hero Banner with -mt-16 */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 -mt-16 relative z-20 pb-16 flex-1 w-full">
+        {/* Search & Category Filter Card */}
+        <div className="bg-white rounded-2xl border border-[#E2E8E4] shadow-md p-6 sm:p-8 space-y-6 print:hidden">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 text-gray-900 font-bold text-base sm:text-lg">
               <Search className="w-5 h-5 text-emerald-600" />
@@ -271,13 +260,13 @@ export const DedicatedFormsPage: React.FC = () => {
                     </span>
                   </div>
 
-                  {/* Action Buttons Grid */}
-                  <div className="pt-3 border-t border-gray-100 grid grid-cols-4 gap-1.5">
+                  {/* Action Buttons: 4 buttons equal size, 2x2 on mobile, single row on desktop, PDF in primary color */}
+                  <div className="pt-3 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {/* 1. View / Preview Button */}
                     <button
                       type="button"
                       onClick={() => setPreviewForm(form)}
-                      className="inline-flex items-center justify-center gap-1 px-2 py-2 rounded-xl text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition cursor-pointer"
+                      className="inline-flex items-center justify-center gap-1.5 h-10 px-2.5 rounded-xl text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition cursor-pointer"
                       title="ফরম প্রিভিউ ও বিবরণ দেখুন"
                     >
                       <Eye className="w-3.5 h-3.5 text-gray-600" />
@@ -288,19 +277,19 @@ export const DedicatedFormsPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => printForm(form, siteSettings)}
-                      className="inline-flex items-center justify-center gap-1 px-2 py-2 rounded-xl text-xs font-bold text-purple-800 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition cursor-pointer shadow-2xs"
+                      className="inline-flex items-center justify-center gap-1.5 h-10 px-2.5 rounded-xl text-xs font-bold text-[#064E3B] bg-white border border-[#0B7A55]/40 hover:bg-[#E8F5EE] transition cursor-pointer shadow-2xs"
                       title="সরাসরি A4 সাইজে প্রিন্ট করুন"
                     >
-                      <Printer className="w-3.5 h-3.5 text-purple-700" />
+                      <Printer className="w-3.5 h-3.5 text-[#0B7A55]" />
                       <span>প্রিন্ট</span>
                     </button>
 
-                    {/* 3. Unicode PDF Download Button */}
+                    {/* 3. Unicode PDF Download Button - Primary Color */}
                     <button
                       type="button"
                       disabled={isGeneratingThis}
                       onClick={() => handleDownloadPdf(form)}
-                      className="inline-flex items-center justify-center gap-1 px-2 py-2 rounded-xl text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 transition cursor-pointer shadow-xs disabled:opacity-60"
+                      className="inline-flex items-center justify-center gap-1.5 h-10 px-2.5 rounded-xl text-xs font-bold text-white bg-[#0B7A55] hover:bg-[#064E3B] transition cursor-pointer shadow-xs disabled:opacity-60"
                       title="সম্পূর্ণ বাংলায় ইউনিকোড PDF ফাইল ডাউনলোড করুন"
                     >
                       {isGeneratingThis ? (
@@ -315,7 +304,7 @@ export const DedicatedFormsPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => downloadEditableForm(form, siteSettings)}
-                      className="inline-flex items-center justify-center gap-1 px-2 py-2 rounded-xl text-xs font-bold text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition cursor-pointer shadow-2xs"
+                      className="inline-flex items-center justify-center gap-1.5 h-10 px-2.5 rounded-xl text-xs font-bold text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition cursor-pointer shadow-2xs"
                       title="মাইক্রোসফট ওয়ার্ড (.docx) এডিটেবল ফাইল ডাউনলোড"
                     >
                       <Download className="w-3.5 h-3.5 text-blue-700" />

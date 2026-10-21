@@ -126,17 +126,11 @@ export const AdminSidebar: React.FC = () => {
     <aside className="w-64 bg-[#051c14] text-gray-300 h-screen max-h-screen sticky top-0 flex flex-col select-none shrink-0 border-r border-[#0d3124] overflow-hidden z-20">
       {/* Top Section: Brand Header (Fixed top) */}
       <div className="p-4 border-b border-[#0d3124] flex items-center gap-3 shrink-0 bg-[#051c14]">
-        {siteSettings.logoUrl ? (
-          <img
-            src={siteSettings.logoUrl}
-            alt="Logo"
-            className="w-10 h-10 rounded-full object-cover border-2 border-amber-400 shrink-0 bg-white"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-amber-400 border-2 border-emerald-950 flex items-center justify-center text-emerald-950 shrink-0">
-            <GraduationCap className="w-6 h-6" />
-          </div>
-        )}
+        <img
+          src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+          alt="Logo"
+          className="w-10 h-10 rounded-full object-cover border-[2.5px] border-[#F59E0B] shrink-0 bg-[#00A859] shadow-xs"
+        />
         <div className="overflow-hidden">
           <h2 className="text-sm font-bold text-white tracking-wide truncate">
             {siteSettings.shortName || siteSettings.schoolNameBangla || 'Dadra HS'}

@@ -50,11 +50,11 @@ export const buildNoticeHtml = (
   const estd = siteSettings?.establishedYear || '১৯৮২';
   const eiin = siteSettings?.eiin || '121820';
   const memoNo = notice.code ? `DHS/২০২৬/বিজ্ঞপ্তি-${notice.code}` : 'DHS/২০২৬/বিজ্ঞপ্তি';
-  const logo = safeLogoDataUrl || siteSettings?.logoUrl || '';
+  const logo = safeLogoDataUrl || siteSettings?.logoUrl || '/assets/aistudio/image_08094a8b.png';
   const attachmentImg = safeAttachmentDataUrl || notice.attachmentUrl || '';
 
   return `
-    <div class="official-notice-letterhead" style="font-family: 'Hind Siliguri', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #0f172a; line-height: 1.6; width: 794px; max-width: 794px; min-height: 1123px; margin: 0 auto; background: #ffffff; padding: 40px 48px; box-sizing: border-box; text-align: left; display: flex; flex-direction: column; justify-content: space-between;">
+    <div class="official-notice-letterhead" style="font-family: 'Anthropic Sans Web Text', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #0f172a; line-height: 1.6; width: 794px; max-width: 794px; min-height: 1123px; margin: 0 auto; background: #ffffff; padding: 40px 48px; box-sizing: border-box; text-align: left; display: flex; flex-direction: column; justify-content: space-between;">
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
         @page {
@@ -70,7 +70,7 @@ export const buildNoticeHtml = (
           box-sizing: border-box !important;
         }
         .official-notice-letterhead, .official-notice-letterhead * {
-          font-family: 'Hind Siliguri', 'SolaimanLipi', 'Kalpurush', -apple-system, BlinkMacSystemFont, sans-serif !important;
+          font-family: 'Anthropic Sans Web Text', 'Hind Siliguri', 'SolaimanLipi', 'Kalpurush', -apple-system, BlinkMacSystemFont, sans-serif !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
@@ -83,8 +83,8 @@ export const buildNoticeHtml = (
           <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 6px;">
             ${
               logo
-                ? `<img src="${logo}" alt="Logo" style="width: 56px; height: 56px; object-fit: contain; border-radius: 8px;" crossOrigin="anonymous" />`
-                : `<div style="width: 52px; height: 52px; border-radius: 50%; background: #064e3b; color: #fde047; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 24px; border: 2px solid #047857; text-align: center; line-height: 52px;">দ</div>`
+                ? `<img src="${logo}" alt="Logo" style="width: 56px; height: 56px; object-fit: contain; border-radius: 50%; border: 2.5px solid #F59E0B; background-color: #00A859;" crossOrigin="anonymous" />`
+                : `<div style="width: 52px; height: 52px; border-radius: 50%; background: #00A859; color: #fde047; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 24px; border: 2.5px solid #F59E0B; text-align: center; line-height: 52px;">দ</div>`
             }
             <div style="text-align: center;">
               <h1 style="font-size: 24px; font-weight: 900; color: #064e3b; margin: 0; line-height: 1.2;">${schoolNameBn}</h1>

@@ -1,5 +1,153 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { toCanvas } from 'html-to-image';
+
+/**
+ * Convert any CSS OKLCH color string to standard rgb() / rgba()
+ * so that legacy color parsers (like html2canvas) never throw unsupported function errors.
+ */
+export const oklchToRgb = (oklchStr: string): string => {
+  try {
+    const match = oklchStr.match(
+      /oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+%?))?\s*\)/i
+    );
+    if (!match) return '#ffffff';
+    const L = match[1].endsWith('%') ? parseFloat(match[1]) / 100 : parseFloat(match[1]);
+    const C = parseFloat(match[2]);
+    const H = parseFloat(match[3]);
+    const A = match[4]
+      ? match[4].endsWith('%')
+        ? parseFloat(match[4]) / 100
+        : parseFloat(match[4])
+      : 1;
+
+    const hRad = (H * Math.PI) / 180;
+    const a = C * Math.cos(hRad);
+    const b = C * Math.sin(hRad);
+
+    const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+    const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+    const s_ = L - 0.0894841775 * a - 1.291485548 * b;
+
+    const l = l_ * l_;
+    const m = m_ * m_;
+    const s = s_ * s_;
+
+    const lCube = l * l_;
+    const mCube = m * m_;
+    const sCube = s * s_;
+
+    const rLin = +4.076743409 * lCube - 3.3077115913 * mCube + 0.2309699292 * sCube;
+    const gLin = -1.2684380046 * lCube + 2.6097574011 * mCube - 0.3413193965 * sCube;
+    const bLin = -0.0041960863 * lCube - 0.7034186147 * mCube + 1.707614701 * sCube;
+
+    const gamma = (c: number) => {
+      const clamped = Math.max(0, Math.min(1, c));
+      return clamped <= 0.0031308
+        ? 12.92 * clamped
+        : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
+    };
+
+    const r = Math.round(gamma(rLin) * 255);
+    const g = Math.round(gamma(gLin) * 255);
+    const bRound = Math.round(gamma(bLin) * 255);
+
+    if (A < 1) {
+      return `rgba(${r}, ${g}, ${bRound}, ${A})`;
+    }
+    return `rgb(${r}, ${g}, ${bRound})`;
+  } catch {
+    return '#ffffff';
+  }
+};
+
+/**
+ * Deeply sanitize an element and its cloned subtrees to remove all OKLCH color notations.
+ */
+export const sanitizeOklchInTree = (root: Element, doc?: Document): void => {
+  try {
+    const targetDoc = doc || root.ownerDocument || document;
+
+    // 1. Sanitize all <style> elements in targetDoc
+    targetDoc.querySelectorAll('style').forEach((s) => {
+      if (s.textContent && s.textContent.includes('oklch')) {
+        s.textContent = s.textContent.replace(
+          /oklch\(\s*[\d.]+%?\s+[\d.]+\s+[\d.]+(?:\s*\/\s*[\d.]+%?)?\s*\)/gi,
+          (m) => oklchToRgb(m)
+        );
+      }
+    });
+
+    // 2. Walk all elements in root and replace OKLCH in inline and computed styles
+    const processEl = (node: Element) => {
+      const htmlEl = node as HTMLElement;
+      if (!htmlEl.style) return;
+
+      const styleAttr = htmlEl.getAttribute('style');
+      if (styleAttr && styleAttr.includes('oklch')) {
+        htmlEl.setAttribute(
+          'style',
+          styleAttr.replace(
+            /oklch\(\s*[\d.]+%?\s+[\d.]+\s+[\d.]+(?:\s*\/\s*[\d.]+%?)?\s*\)/gi,
+            (m) => oklchToRgb(m)
+          )
+        );
+      }
+
+      try {
+        const win = targetDoc.defaultView || window;
+        const computed = win.getComputedStyle(htmlEl);
+
+        const props = [
+          'backgroundColor',
+          'color',
+          'borderTopColor',
+          'borderRightColor',
+          'borderBottomColor',
+          'borderLeftColor',
+          'outlineColor',
+        ] as const;
+
+        props.forEach((p) => {
+          const val = computed[p];
+          if (typeof val === 'string' && val.includes('oklch')) {
+            const cssName = p.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+            htmlEl.style.setProperty(cssName, oklchToRgb(val), 'important');
+          }
+        });
+
+        if (computed.boxShadow && computed.boxShadow.includes('oklch')) {
+          htmlEl.style.setProperty(
+            'box-shadow',
+            computed.boxShadow.replace(
+              /oklch\(\s*[\d.]+%?\s+[\d.]+\s+[\d.]+(?:\s*\/\s*[\d.]+%?)?\s*\)/gi,
+              (m) => oklchToRgb(m)
+            ),
+            'important'
+          );
+        }
+
+        if (computed.textShadow && computed.textShadow.includes('oklch')) {
+          htmlEl.style.setProperty(
+            'text-shadow',
+            computed.textShadow.replace(
+              /oklch\(\s*[\d.]+%?\s+[\d.]+\s+[\d.]+(?:\s*\/\s*[\d.]+%?)?\s*\)/gi,
+              (m) => oklchToRgb(m)
+            ),
+            'important'
+          );
+        }
+      } catch {
+        // Continue
+      }
+    };
+
+    processEl(root);
+    root.querySelectorAll('*').forEach(processEl);
+  } catch {
+    // Continue
+  }
+};
 
 export type PdfOrientation = 'portrait' | 'landscape';
 
@@ -173,7 +321,7 @@ export const generatePdfFromHtml = async (
     container.style.padding = `${marginMm}mm`;
     container.style.background = '#ffffff';
     container.style.color = '#111827';
-    container.style.fontFamily = "'Hind Siliguri', 'Noto Sans Bengali', system-ui, -apple-system, sans-serif";
+    container.style.fontFamily = "'Anthropic Sans Web Text', 'Hind Siliguri', 'Noto Sans Bengali', system-ui, -apple-system, sans-serif";
     container.style.zIndex = '-99999';
     container.style.overflow = 'visible';
     container.style.opacity = '1';
@@ -269,22 +417,55 @@ export const generatePdfFromHtml = async (
       targetMinHeight
     );
 
-    // 6. Capture high-resolution canvas with html2canvas (scale: 2 for ultra-crisp Bengali text)
-    const canvas = await html2canvas(container, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: false,
-      logging: false,
-      backgroundColor: '#ffffff',
-      width: targetWidth,
-      height: targetHeight,
-      windowWidth: targetWidth,
-      windowHeight: targetHeight,
-      scrollX: 0,
-      scrollY: 0,
-      x: 0,
-      y: 0,
-    });
+    // 5.5 Pre-sanitize any computed OKLCH colors in the container tree before canvas rasterization
+    sanitizeOklchInTree(container, document);
+
+    // 6. Capture high-resolution canvas (scale: 2 for ultra-crisp Bengali text)
+    // Primary engine: toCanvas from html-to-image (native browser engine renderer, 100% immune to CSS parser bugs like OKLCH).
+    // Secondary engine: html2canvas with active onclone OKLCH sanitization fallback.
+    let canvas: HTMLCanvasElement;
+    try {
+      canvas = await toCanvas(container, {
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+        width: targetWidth,
+        height: targetHeight,
+        skipFonts: true,
+        style: {
+          position: 'static',
+          top: '0',
+          left: '0',
+          transform: 'none',
+          margin: '0',
+          opacity: '1',
+          visibility: 'visible',
+        },
+      });
+
+      if (!canvas || canvas.width === 0 || canvas.height === 0) {
+        throw new Error('toCanvas returned invalid canvas dimensions');
+      }
+    } catch (toCanvasError) {
+      console.warn('toCanvas fallback to sanitized html2canvas:', toCanvasError);
+      canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        backgroundColor: '#ffffff',
+        width: targetWidth,
+        height: targetHeight,
+        windowWidth: targetWidth,
+        windowHeight: targetHeight,
+        scrollX: 0,
+        scrollY: 0,
+        x: 0,
+        y: 0,
+        onclone: (clonedDoc, clonedEl) => {
+          sanitizeOklchInTree(clonedEl || clonedDoc.body, clonedDoc);
+        },
+      });
+    }
 
     // 7. Initialize jsPDF in A4 format with requested orientation
     const pdf = new jsPDF({

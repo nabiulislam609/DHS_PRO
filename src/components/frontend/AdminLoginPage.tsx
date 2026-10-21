@@ -66,17 +66,11 @@ export const AdminLoginPage: React.FC = () => {
             onClick={() => setCurrentFrontendPage('home')}
             className="flex items-center gap-2.5 cursor-pointer group"
           >
-            {siteSettings.logoUrl ? (
-              <img
-                src={siteSettings.logoUrl}
-                alt="Logo"
-                className="w-8 h-8 rounded-lg object-cover border border-white/20 shadow-sm"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-amber-300 font-extrabold text-sm">
-                দ
-              </div>
-            )}
+            <img
+              src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+              alt="Logo"
+              className="w-8 h-8 rounded-full object-cover border-[2px] border-[#F59E0B] shadow-sm bg-[#00A859]"
+            />
             <div>
               <span className="font-extrabold text-sm tracking-wider uppercase text-white/90 group-hover:text-white transition">
                 {siteSettings.schoolNameEnglish || 'DADRA HIGH SCHOOL'}
@@ -99,35 +93,21 @@ export const AdminLoginPage: React.FC = () => {
         {/* Center: Big Prominent Logo Card (Matching Image 3) */}
         <div className="relative z-10 flex flex-col items-center justify-center my-auto py-10">
           <div className="w-64 h-64 sm:w-72 sm:h-72 rounded-3xl bg-[#090307]/90 border border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-md p-8 flex flex-col items-center justify-center text-center transition transform hover:scale-[1.02] duration-300 group">
-            {siteSettings.logoUrl ? (
-              <div className="space-y-4">
-                <img
-                  src={siteSettings.logoUrl}
-                  alt="School Emblem"
-                  className="w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-2xl object-cover border-2 border-white/15 shadow-xl bg-white/5 p-1"
-                />
-                <div>
-                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-wider uppercase font-mono">
-                    {siteSettings.shortName || 'DADRA HS'}
-                  </h3>
-                  <p className="text-xs text-rose-300/80 font-semibold tracking-widest uppercase mt-0.5">
-                    ADMIN PORTAL
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-2xl bg-gradient-to-br from-rose-900/60 to-purple-950/70 border border-rose-500/30 flex items-center justify-center shadow-inner group-hover:border-rose-400/50 transition">
-                  <GraduationCap className="w-12 h-12 text-rose-200" />
-                </div>
-                <h3 className="text-xl sm:text-2xl font-black text-white tracking-widest uppercase font-mono">
+            <div className="space-y-4">
+              <img
+                src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+                alt="School Emblem"
+                className="w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-full object-cover border-[3px] border-[#F59E0B] shadow-2xl bg-[#00A859] p-0.5"
+              />
+              <div>
+                <h3 className="text-xl sm:text-2xl font-black text-white tracking-wider uppercase font-mono">
                   {siteSettings.shortName || 'DADRA HS'}
                 </h3>
-                <p className="text-[11px] text-rose-300 font-bold tracking-widest uppercase">
-                  MANAGEMENT PORTAL
+                <p className="text-xs text-rose-300/80 font-semibold tracking-widest uppercase mt-0.5">
+                  ADMIN PORTAL
                 </p>
               </div>
-            )}
+            </div>
           </div>
         </div>
 

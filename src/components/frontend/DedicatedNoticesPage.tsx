@@ -2,8 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { useSchool } from '../../context/SchoolContext';
 import { Notice } from '../../types';
 import { DedicatedHeader } from './DedicatedHeader';
+import { PageHero } from './PageHero';
+import { SITE_CONFIG } from '../../config/siteConfig';
+import { toBengaliDigits, formatBengaliDate, getBengaliDateParts } from '../../utils/bengaliFormatters';
 import {
-  ArrowLeft,
   Search,
   Pin,
   Calendar,
@@ -21,6 +23,7 @@ import {
   Layers,
   Image as ImageIcon,
   ExternalLink,
+  Sparkles,
 } from 'lucide-react';
 import { triggerFileDownload, openFileInNewTab } from '../../utils/fileDownloader';
 import { printNotice, downloadNoticePdf } from '../../utils/noticePdfGenerator';
@@ -38,16 +41,11 @@ export const DedicatedNoticesPage: React.FC = () => {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  const handleGoHome = () => {
-    setCurrentFrontendPage('home');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const categories = ['সব', 'জরুরি', 'সাধারণ', 'পরীক্ষা', 'ভর্তি', 'গুরুত্বপূর্ণ', 'ক্রীড়া', 'অনুষ্ঠান'];
 
-  // Filter notices based on search & category
+  // Filter notices based on search & category with pinned notices on top
   const filteredNotices = useMemo(() => {
-    return notices.filter((notice) => {
+    const list = notices.filter((notice) => {
       const matchesCategory =
         selectedCategory === 'সব' || notice.category === selectedCategory;
       const q = searchQuery.toLowerCase().trim();
@@ -58,14 +56,18 @@ export const DedicatedNoticesPage: React.FC = () => {
         (notice.code && notice.code.toLowerCase().includes(q));
       return matchesCategory && matchesSearch;
     });
+
+    // Pinned notices always on top
+    return list.slice().sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return 0;
+    });
   }, [notices, selectedCategory, searchQuery]);
 
   // Pagination calculation
   const totalPages = Math.max(1, Math.ceil(filteredNotices.length / itemsPerPage));
-  
-  // Ensure current page is valid
   const safeCurrentPage = Math.min(currentPage, totalPages);
-  
   const startIndex = (safeCurrentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, filteredNotices.length);
   const currentNotices = filteredNotices.slice(startIndex, endIndex);
@@ -92,7 +94,7 @@ export const DedicatedNoticesPage: React.FC = () => {
   const getCategoryBadgeClass = (category: string) => {
     switch (category) {
       case 'জরুরি':
-        return 'bg-rose-50 text-rose-700 border-rose-200';
+        return 'bg-rose-50 text-rose-700 border-rose-200 font-bold';
       case 'পরীক্ষা':
         return 'bg-purple-50 text-purple-700 border-purple-200';
       case 'ভর্তি':
@@ -130,76 +132,42 @@ export const DedicatedNoticesPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] flex flex-col font-sans">
-      {/* Top Institutional Header matching Home Page logo & unified EIIN */}
-      <DedicatedHeader portalTitle="সকল নোটিশ ও অফিসিয়াল বিজ্ঞপ্তি আর্কাইভ" />
+    <div className="min-h-screen bg-[#F6F7F5] text-[#14211B] flex flex-col font-sans subpage-fade-in">
+      {/* Top Institutional Header */}
+      <DedicatedHeader pageName="নোটিশ বোর্ড" />
 
-      {/* Modern Top Dark Emerald Header Banner */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-6 sm:pt-8 w-full print:hidden">
-        <div className="bg-gradient-to-br from-[#063326] via-[#094132] to-[#042018] rounded-3xl p-6 sm:p-10 shadow-xl border border-emerald-900/40 relative overflow-hidden text-center sm:text-left">
-          {/* Subtle decorative glowing background */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-
-          {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-xs text-emerald-200/70 mb-4 font-medium justify-center sm:justify-start">
-            <button
-              onClick={handleGoHome}
-              className="hover:text-emerald-300 transition cursor-pointer"
-            >
-              হোম
-            </button>
-            <span>/</span>
-            <span>নোটিশ বোর্ড</span>
-            <span>/</span>
-            <span className="text-white font-bold">সকল নোটিশ</span>
-          </nav>
-
-          <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-2.5">
-              <div className="inline-flex items-center gap-1.5 bg-[#0f4d3a]/80 text-[#34d399] border border-[#16654a] px-3.5 py-1 rounded-full text-xs font-semibold">
-                <FileText className="w-3.5 h-3.5 text-emerald-300" />
-                <span>নোটিশ ও বিজ্ঞপ্তি আর্কাইভ</span>
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-                বিদ্যালয়ের সকল নোটিশ ও বিজ্ঞপ্তি
-              </h2>
-              <p className="text-emerald-100/80 text-xs sm:text-sm max-w-2xl leading-relaxed">
-                দাদরা উচ্চ বিদ্যালয়ের সাম্প্রতিক ও পূর্ববর্তী সকল নোটিশ, সার্কুলার, পরীক্ষার সময়সূচী ও জরুরি বার্তা একনজরে দেখুন।
-              </p>
+      {/* Unified PageHero Banner */}
+      <PageHero
+        title="বিদ্যালয়ের সকল নোটিশ ও বিজ্ঞপ্তি"
+        description="দাদরা উচ্চ বিদ্যালয়ের সাম্প্রতিক ও পূর্ববর্তী সকল নোটিশ, সার্কুলার, পরীক্ষার সময়সূচী ও জরুরি বার্তা একনজরে দেখুন।"
+        badgeText="নোটিশ ও বিজ্ঞপ্তি আর্কাইভ"
+        badgeIcon={<FileText className="w-3.5 h-3.5 text-emerald-300" />}
+        breadcrumbs={[{ label: 'নোটিশ বোর্ড' }]}
+        stats={
+          <div className="flex items-center gap-2">
+            <div className="bg-emerald-900/60 border border-emerald-600/40 rounded-xl px-3.5 py-1.5 text-center backdrop-blur-xs min-w-[70px]">
+              <span className="block text-xl font-black text-white">
+                {toBengaliDigits(notices.length)}
+              </span>
+              <span className="text-[10px] font-semibold text-emerald-200">মোট নোটিশ</span>
             </div>
-
-            {/* Quick Stat Badges */}
-            <div className="flex items-center gap-3 shrink-0 justify-center sm:justify-start">
-              <div className="bg-emerald-900/70 border border-emerald-700/50 rounded-2xl px-4 py-2.5 shadow-2xs text-center min-w-[90px] backdrop-blur-xs">
-                <span className="block text-xl sm:text-2xl font-black text-white">
-                  {notices.length}
+            {urgentCount > 0 && (
+              <div className="bg-rose-950/60 border border-rose-600/40 rounded-xl px-3.5 py-1.5 text-center backdrop-blur-xs min-w-[70px]">
+                <span className="block text-xl font-black text-rose-300">
+                  {toBengaliDigits(urgentCount)}
                 </span>
-                <span className="text-[11px] font-semibold text-emerald-200">মোট নোটিশ</span>
+                <span className="text-[10px] font-semibold text-rose-200">জরুরি</span>
               </div>
-
-              <div className="bg-rose-950/60 border border-rose-600/40 rounded-2xl px-4 py-2.5 shadow-2xs text-center min-w-[90px] backdrop-blur-xs">
-                <span className="block text-xl sm:text-2xl font-black text-rose-300">
-                  {urgentCount}
-                </span>
-                <span className="text-[11px] font-semibold text-rose-200">জরুরি নোটিশ</span>
-              </div>
-
-              <div className="bg-amber-950/60 border border-amber-600/40 rounded-2xl px-4 py-2.5 shadow-2xs text-center min-w-[90px] backdrop-blur-xs">
-                <span className="block text-xl sm:text-2xl font-black text-amber-300">
-                  {pinnedCount}
-                </span>
-                <span className="text-[11px] font-semibold text-amber-200">পিন করা</span>
-              </div>
-            </div>
+            )}
           </div>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-8 py-8 space-y-6">
-        {/* Search, Filter and Items Per Page Control Bar */}
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/80 shadow-xs space-y-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      {/* Main Content Area - Overlapping Hero Banner with -mt-16 */}
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-8 space-y-6 -mt-16 relative z-20 pb-16">
+        {/* Search, Filter and Items Per Page Control Bar - Sticky */}
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E2E8E4] shadow-md space-y-3.5 print:hidden sticky top-20 z-30 backdrop-blur-md">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
             {/* Search Input */}
             <div className="relative flex-1 max-w-lg">
               <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -213,19 +181,20 @@ export const DedicatedNoticesPage: React.FC = () => {
               {searchQuery && (
                 <button
                   onClick={() => handleSearchChange('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                  aria-label="মুছুন"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
 
-            {/* Items Per Page Selector (Requested by User) & View Toggle */}
+            {/* Items Per Page Selector & Layout Switcher */}
             <div className="flex flex-wrap items-center gap-3 self-end lg:self-auto">
               <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700">
                 <Layers className="w-3.5 h-3.5 text-emerald-700" />
                 <label htmlFor="itemsPerPageSelect" className="shrink-0">
-                  প্রতি পেজে নোটিশ:
+                  প্রতি পেজে:
                 </label>
                 <select
                   id="itemsPerPageSelect"
@@ -244,31 +213,33 @@ export const DedicatedNoticesPage: React.FC = () => {
               {/* Layout Switcher */}
               <div className="flex items-center bg-gray-100 p-0.5 rounded-xl border border-gray-200">
                 <button
+                  type="button"
                   onClick={() => setViewLayout('list')}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer min-h-[36px] ${
                     viewLayout === 'list'
-                      ? 'bg-white text-emerald-800 shadow-2xs'
+                      ? 'bg-white text-emerald-800 shadow-2xs font-bold'
                       : 'text-gray-500 hover:text-gray-800'
                   }`}
                 >
-                  তালিকা (List)
+                  তালিকা
                 </button>
                 <button
+                  type="button"
                   onClick={() => setViewLayout('grid')}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer min-h-[36px] ${
                     viewLayout === 'grid'
-                      ? 'bg-white text-emerald-800 shadow-2xs'
+                      ? 'bg-white text-emerald-800 shadow-2xs font-bold'
                       : 'text-gray-500 hover:text-gray-800'
                   }`}
                 >
-                  কার্ড (Grid)
+                  কার্ড
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Category Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 scrollbar-thin">
+          {/* Category Filter Pills - Horizontally scrollable on mobile */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 scrollbar-none">
             <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
               <Filter className="w-3 h-3" /> ক্যাটাগরি:
             </span>
@@ -281,20 +252,21 @@ export const DedicatedNoticesPage: React.FC = () => {
               return (
                 <button
                   key={cat}
+                  type="button"
                   onClick={() => handleCategoryChange(cat)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold shrink-0 transition cursor-pointer flex items-center gap-1.5 min-h-[36px] ${
                     isActive
-                      ? 'bg-[#15803d] text-white shadow-xs'
+                      ? 'bg-emerald-700 text-white shadow-xs'
                       : 'bg-gray-100 hover:bg-gray-200/80 text-gray-700'
                   }`}
                 >
                   <span>{cat}</span>
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
                       isActive ? 'bg-white/20 text-white' : 'bg-white text-gray-600'
                     }`}
                   >
-                    {count}
+                    {toBengaliDigits(count)}
                   </span>
                 </button>
               );
@@ -305,24 +277,26 @@ export const DedicatedNoticesPage: React.FC = () => {
         {/* Results Counter Bar */}
         <div className="flex items-center justify-between text-xs text-gray-500 font-medium px-1">
           <span>
-            মোট <strong className="text-gray-900 font-bold">{filteredNotices.length}</strong> টি নোটিশের মধ্যে{' '}
-            <strong className="text-emerald-800 font-bold">
-              {filteredNotices.length > 0 ? startIndex + 1 : 0} - {endIndex}
+            মোট <strong className="text-gray-900 font-bold font-mono">{toBengaliDigits(filteredNotices.length)}</strong> টি নোটিশের মধ্যে{' '}
+            <strong className="text-emerald-800 font-bold font-mono">
+              {filteredNotices.length > 0 ? toBengaliDigits(startIndex + 1) : toBengaliDigits(0)} - {toBengaliDigits(endIndex)}
             </strong>{' '}
             দেখাচ্ছে
           </span>
           <span>
-            পৃষ্ঠা <strong className="text-gray-900 font-bold">{safeCurrentPage}</strong> এর{' '}
-            <strong className="text-gray-900 font-bold">{totalPages}</strong>
+            পৃষ্ঠা <strong className="text-gray-900 font-bold font-mono">{toBengaliDigits(safeCurrentPage)}</strong> এর{' '}
+            <strong className="text-gray-900 font-bold font-mono">{toBengaliDigits(totalPages)}</strong>
           </span>
         </div>
 
         {/* Notices Content */}
         {filteredNotices.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center space-y-3">
-            <AlertCircle className="w-10 h-10 text-gray-300 mx-auto" />
-            <h3 className="text-base font-bold text-gray-800">কোনো নোটিশ পাওয়া যায়নি</h3>
-            <p className="text-xs text-gray-500 max-w-sm mx-auto">
+          <div className="bg-white rounded-2xl border border-gray-200 p-8 sm:p-12 text-center space-y-3 shadow-xs">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-100">
+              <FileText className="w-8 h-8" />
+            </div>
+            <h3 className="text-base sm:text-lg font-bold text-gray-800">কোনো নোটিশ পাওয়া যায়নি</h3>
+            <p className="text-xs sm:text-sm text-gray-500 max-w-sm mx-auto">
               আপনার অনুসন্ধান বা নির্বাচিত ক্যাটাগরির সাথে মিলে এমন কোনো নোটিশ বর্তমানে নেই।
             </p>
             <button
@@ -330,156 +304,157 @@ export const DedicatedNoticesPage: React.FC = () => {
                 setSearchQuery('');
                 setSelectedCategory('সব');
               }}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:underline pt-2"
+              className="inline-flex items-center gap-1 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer min-h-[44px]"
             >
               সকল নোটিশ পুনরায় দেখুন
             </button>
           </div>
         ) : viewLayout === 'list' ? (
-          /* List View */
+          /* List View: Left Date Box, Center Title & 2-line Desc, Right Action Buttons */
           <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs divide-y divide-gray-100 overflow-hidden">
-            {currentNotices.map((notice) => (
-              <div
-                key={notice.id}
-                onClick={() => setSelectedNotice(notice)}
-                className="p-4 sm:p-5 hover:bg-emerald-50/40 transition cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div className="flex items-start gap-4">
-                  {/* Date Badge */}
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex flex-col items-center justify-center shrink-0 group-hover:bg-[#15803d] transition">
-                    <span className="text-sm font-bold text-emerald-900 group-hover:text-white leading-none">
-                      {notice.date.split(' ')[0] || '০১'}
-                    </span>
-                    <span className="text-[10px] text-emerald-700 group-hover:text-emerald-100 uppercase mt-0.5 font-bold">
-                      {notice.date.split(' ')[1] || 'SEP'}
-                    </span>
-                  </div>
-
-                  {/* Details */}
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${getCategoryBadgeClass(
-                          notice.category
-                        )}`}
-                      >
-                        {notice.category}
+            {currentNotices.map((notice) => {
+              const dateParts = getBengaliDateParts(notice.date);
+              return (
+                <div
+                  key={notice.id}
+                  onClick={() => setSelectedNotice(notice)}
+                  className="p-4 sm:p-5 hover:bg-emerald-50/40 transition cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div className="flex items-start gap-3.5 sm:gap-4 min-w-0 flex-1">
+                    {/* Left Date Block - Completely in Bengali */}
+                    <div className="w-13 h-13 rounded-xl bg-emerald-50 border border-emerald-200/80 flex flex-col items-center justify-center shrink-0 group-hover:bg-emerald-700 transition duration-200 text-center p-1">
+                      <span className="text-base sm:text-lg font-black text-emerald-950 group-hover:text-white leading-none font-mono">
+                        {dateParts.dayBangla || '০১'}
                       </span>
-
-                      {notice.pinned && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-                          <Pin className="w-2.5 h-2.5 fill-amber-500" />
-                          <span>পিন্ড</span>
-                        </span>
-                      )}
-
-                      {notice.attachmentUrl && (
-                        <span
-                          className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                            notice.attachmentType === 'pdf'
-                              ? 'bg-rose-50 text-rose-700 border-rose-200'
-                              : 'bg-blue-50 text-blue-700 border-blue-200'
-                          }`}
-                        >
-                          {notice.attachmentType === 'pdf' ? (
-                            <>
-                              <FileText className="w-2.5 h-2.5" />
-                              <span>PDF ফাইল</span>
-                            </>
-                          ) : (
-                            <>
-                              <ImageIcon className="w-2.5 h-2.5" />
-                              <span>ছবি সংযুক্ত</span>
-                            </>
-                          )}
-                        </span>
-                      )}
-
-                      {notice.code && (
-                        <span className="text-[10px] font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                          স্মারক: {notice.code}
-                        </span>
-                      )}
-
-                      <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        <span>{notice.date}</span>
+                      <span className="text-[10px] text-emerald-800 group-hover:text-emerald-100 font-bold truncate mt-0.5 max-w-full">
+                        {dateParts.monthBangla || 'অক্টোবর'}
                       </span>
                     </div>
 
-                    <h3 className="text-sm sm:text-base font-bold text-gray-900 group-hover:text-emerald-800 transition">
-                      {notice.title}
-                    </h3>
+                    {/* Center Details: Tags, Title, max 2-line Description */}
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${getCategoryBadgeClass(
+                            notice.category
+                          )}`}
+                        >
+                          {notice.category}
+                        </span>
 
-                    <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
-                      {notice.content}
-                    </p>
+                        {notice.pinned && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-md">
+                            <Pin className="w-2.5 h-2.5 fill-amber-500 text-amber-600" />
+                            <span>পিন করা</span>
+                          </span>
+                        )}
+
+                        {notice.attachmentUrl && (
+                          <span
+                            className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                              notice.attachmentType === 'pdf'
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : 'bg-blue-50 text-blue-700 border-blue-200'
+                            }`}
+                          >
+                            {notice.attachmentType === 'pdf' ? (
+                              <>
+                                <FileText className="w-2.5 h-2.5" />
+                                <span>PDF</span>
+                              </>
+                            ) : (
+                              <>
+                                <ImageIcon className="w-2.5 h-2.5" />
+                                <span>ছবি</span>
+                              </>
+                            )}
+                          </span>
+                        )}
+
+                        {notice.code && (
+                          <span className="text-[10px] font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                            স্মারক: {toBengaliDigits(notice.code)}
+                          </span>
+                        )}
+
+                        <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span>{formatBengaliDate(notice.date)}</span>
+                        </span>
+                      </div>
+
+                      <h3 className="text-sm sm:text-base font-bold text-gray-900 group-hover:text-emerald-800 transition line-clamp-1">
+                        {notice.title}
+                      </h3>
+
+                      <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+                        {notice.content}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right Action Buttons */}
+                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        printNotice(notice, siteSettings);
+                      }}
+                      className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-600 hover:text-emerald-800 transition cursor-pointer border border-gray-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                      title="প্রিন্ট করুন"
+                      aria-label="প্রিন্ট করুন"
+                    >
+                      <Printer className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={downloadingId === notice.id}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        setDownloadingId(notice.id);
+                        try {
+                          await downloadNoticePdf(notice, siteSettings);
+                        } finally {
+                          setDownloadingId(null);
+                        }
+                      }}
+                      className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 transition cursor-pointer border border-emerald-200 disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                      title="PDF ডাউনলোড"
+                      aria-label="PDF ডাউনলোড"
+                    >
+                      {downloadingId === notice.id ? (
+                        <span className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin inline-block" />
+                      ) : (
+                        <Download className="w-4 h-4" />
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedNotice(notice)}
+                      className="inline-flex items-center gap-1 px-3 py-2 bg-emerald-700 group-hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-2xs min-h-[44px]"
+                    >
+                      <span>বিস্তারিত</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
-
-                {/* Right Action Buttons */}
-                <div className="shrink-0 flex items-center gap-1.5 self-end sm:self-center">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedNotice(notice);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-[#15803d] text-emerald-800 hover:text-white font-semibold text-xs transition cursor-pointer border border-emerald-200"
-                    title="বিস্তারিত দেখুন"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>বিস্তারিত</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      printNotice(notice, siteSettings);
-                    }}
-                    className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-100 text-gray-600 hover:text-emerald-800 transition cursor-pointer"
-                    title="প্রিন্ট করুন"
-                  >
-                    <Printer className="w-3.5 h-3.5" />
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={downloadingId === notice.id}
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      setDownloadingId(notice.id);
-                      try {
-                        await downloadNoticePdf(notice, siteSettings);
-                      } finally {
-                        setDownloadingId(null);
-                      }
-                    }}
-                    className="p-1.5 rounded-lg border border-gray-200 hover:bg-rose-50 text-gray-600 hover:text-rose-700 transition cursor-pointer disabled:opacity-50"
-                    title="PDF ডাউনলোড করুন"
-                  >
-                    {downloadingId === notice.id ? (
-                      <span className="w-3.5 h-3.5 border-2 border-rose-600 border-t-transparent rounded-full animate-spin inline-block" />
-                    ) : (
-                      <Download className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           /* Grid View */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {currentNotices.map((notice) => (
               <div
                 key={notice.id}
                 onClick={() => setSelectedNotice(notice)}
-                className="bg-white rounded-2xl border border-gray-200/90 shadow-xs hover:shadow-md hover:border-emerald-300 transition cursor-pointer flex flex-col justify-between p-5 group"
+                className="bg-white rounded-2xl p-5 border border-gray-200/90 shadow-xs hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer flex flex-col justify-between group"
               >
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${getCategoryBadgeClass(
                         notice.category
@@ -489,9 +464,9 @@ export const DedicatedNoticesPage: React.FC = () => {
                     </span>
 
                     {notice.pinned && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-                        <Pin className="w-2.5 h-2.5 fill-amber-500" />
-                        <span>পিন্ড</span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-md">
+                        <Pin className="w-2.5 h-2.5 fill-amber-500 text-amber-600" />
+                        <span>পিন করা</span>
                       </span>
                     )}
 
@@ -527,10 +502,10 @@ export const DedicatedNoticesPage: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1 text-gray-400 text-[11px]">
-                    <Calendar className="w-3 h-3" />
-                    <span>{notice.date}</span>
+                <div className="mt-4 pt-3.5 border-t border-gray-100 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1 text-gray-500 text-[11px]">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                    <span>{formatBengaliDate(notice.date)}</span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
@@ -540,8 +515,9 @@ export const DedicatedNoticesPage: React.FC = () => {
                         e.stopPropagation();
                         printNotice(notice, siteSettings);
                       }}
-                      className="p-1 rounded-md hover:bg-gray-100 text-gray-500 hover:text-emerald-800 transition cursor-pointer"
+                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-emerald-800 transition cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
                       title="প্রিন্ট করুন"
+                      aria-label="প্রিন্ট করুন"
                     >
                       <Printer className="w-3.5 h-3.5" />
                     </button>
@@ -557,16 +533,17 @@ export const DedicatedNoticesPage: React.FC = () => {
                           setDownloadingId(null);
                         }
                       }}
-                      className="p-1 rounded-md hover:bg-rose-50 text-gray-500 hover:text-rose-700 transition cursor-pointer disabled:opacity-50"
+                      className="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-700 transition cursor-pointer disabled:opacity-50 min-h-[36px] min-w-[36px] flex items-center justify-center"
                       title="PDF ডাউনলোড"
+                      aria-label="PDF ডাউনলোড"
                     >
                       {downloadingId === notice.id ? (
-                        <span className="w-3.5 h-3.5 border-2 border-rose-600 border-t-transparent rounded-full animate-spin inline-block" />
+                        <span className="w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin inline-block" />
                       ) : (
                         <Download className="w-3.5 h-3.5" />
                       )}
                     </button>
-                    <span className="inline-flex items-center gap-1 font-bold text-emerald-700 group-hover:text-emerald-900 ml-1">
+                    <span className="inline-flex items-center gap-1 font-bold text-emerald-700 group-hover:text-emerald-900 ml-1 text-xs">
                       <span>পড়ুন</span>
                       <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition" />
                     </span>
@@ -577,31 +554,30 @@ export const DedicatedNoticesPage: React.FC = () => {
           </div>
         )}
 
-        {/* Pagination Bar */}
+        {/* Big Tap-Friendly Pagination Bar */}
         {totalPages > 1 && (
           <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-xs text-gray-600 font-medium">
-              পৃষ্ঠা <strong className="font-bold text-gray-900">{safeCurrentPage}</strong> এর{' '}
-              <strong className="font-bold text-gray-900">{totalPages}</strong> (মোট {filteredNotices.length} টি নোটিশ)
+              পৃষ্ঠা <strong className="font-bold text-gray-900 font-mono">{toBengaliDigits(safeCurrentPage)}</strong> এর{' '}
+              <strong className="font-bold text-gray-900 font-mono">{toBengaliDigits(totalPages)}</strong> (মোট {toBengaliDigits(filteredNotices.length)} টি নোটিশ)
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
               {/* Prev Button */}
               <button
                 disabled={safeCurrentPage <= 1}
                 onClick={() => {
                   setCurrentPage((p) => Math.max(1, p - 1));
-                  window.scrollTo({ top: 300, behavior: 'smooth' });
+                  window.scrollTo({ top: 200, behavior: 'smooth' });
                 }}
-                className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-xs font-bold border border-gray-200 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="inline-flex items-center gap-1 px-3.5 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-xs font-bold border border-gray-200 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-h-[44px]"
               >
-                <ChevronLeft className="w-3.5 h-3.5" />
+                <ChevronLeft className="w-4 h-4" />
                 <span>পূর্ববর্তী</span>
               </button>
 
-              {/* Page Number Buttons */}
+              {/* Page Number Buttons - Minimum 44px tap targets */}
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
-                // Show max 5 page buttons around current
                 if (
                   pageNum === 1 ||
                   pageNum === totalPages ||
@@ -612,15 +588,15 @@ export const DedicatedNoticesPage: React.FC = () => {
                       key={pageNum}
                       onClick={() => {
                         setCurrentPage(pageNum);
-                        window.scrollTo({ top: 300, behavior: 'smooth' });
+                        window.scrollTo({ top: 200, behavior: 'smooth' });
                       }}
-                      className={`w-8 h-8 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      className={`min-w-[44px] h-11 rounded-xl text-xs font-bold font-mono transition cursor-pointer px-2 flex items-center justify-center ${
                         pageNum === safeCurrentPage
-                          ? 'bg-[#15803d] text-white shadow-xs'
+                          ? 'bg-emerald-700 text-white shadow-xs font-extrabold'
                           : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
                       }`}
                     >
-                      {pageNum}
+                      {toBengaliDigits(pageNum)}
                     </button>
                   );
                 } else if (
@@ -641,244 +617,174 @@ export const DedicatedNoticesPage: React.FC = () => {
                 disabled={safeCurrentPage >= totalPages}
                 onClick={() => {
                   setCurrentPage((p) => Math.min(totalPages, p + 1));
-                  window.scrollTo({ top: 300, behavior: 'smooth' });
+                  window.scrollTo({ top: 200, behavior: 'smooth' });
                 }}
-                className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-xs font-bold border border-gray-200 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="inline-flex items-center gap-1 px-3.5 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-xs font-bold border border-gray-200 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-h-[44px]"
               >
                 <span>পরবর্তী</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
       </main>
 
-      {/* Official Notice Detail Modal */}
+      {/* Notice Detail & Print Modal */}
       {selectedNotice && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fadeIn"
+          onClick={() => setSelectedNotice(null)}
+        >
           <div
-            id="printable-notice-modal"
-            className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative border border-gray-100 my-8"
+            className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl relative border border-gray-100 max-h-[92vh] overflow-y-auto space-y-6"
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setSelectedNotice(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 p-1.5 rounded-full hover:bg-gray-100 transition cursor-pointer print:hidden"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Official Header */}
-            <div className="text-center pb-4 border-b-2 border-emerald-800/20 mb-6 space-y-1">
-              <div className="flex items-center justify-center gap-2">
-                {siteSettings.logoUrl ? (
-                  <img
-                    src={siteSettings.logoUrl}
-                    alt="Logo"
-                    className="w-10 h-10 object-contain"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-emerald-800 text-amber-300 font-bold flex items-center justify-center text-base">
-                    দ
-                  </div>
-                )}
-                <h2 className="text-xl sm:text-2xl font-black text-emerald-950">
-                  {siteSettings.schoolNameBangla}
-                </h2>
-              </div>
-              <p className="text-xs text-gray-500 font-medium">
-                {siteSettings?.address || 'দাদরা, জয়পুরহাট সদর, জয়পুরহাট'} • স্থাপিত: {siteSettings?.establishedYear || '১৯৮২'} • EIIN: {siteSettings?.eiin || '121820'}
-              </p>
-              <div className="inline-block bg-emerald-100 text-emerald-900 font-bold text-[11px] px-3 py-0.5 rounded-full mt-1">
-                বিজ্ঞপ্তি / নোটিশ
-              </div>
-            </div>
-
-            {/* Metadata Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-gray-50 p-3 rounded-xl border border-gray-200 mb-6">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-gray-600">স্মারক নং:</span>
-                <span className="font-mono text-gray-800">
-                  {selectedNotice.code || 'DHS/২০২৬/বিজ্ঞপ্তি'}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-gray-600">তারিখ:</span>
-                <span className="text-gray-800 font-medium">{selectedNotice.date}</span>
-              </div>
-
+            {/* Modal Top Actions */}
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <div className="flex items-center gap-2">
                 <span
-                  className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md border ${getCategoryBadgeClass(
+                  className={`text-xs font-bold px-3 py-1 rounded-full border ${getCategoryBadgeClass(
                     selectedNotice.category
                   )}`}
                 >
                   {selectedNotice.category}
                 </span>
                 {selectedNotice.pinned && (
-                  <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-                    📌 পিন্ড
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-300 px-3 py-1 rounded-full">
+                    <Pin className="w-3 h-3 fill-amber-500" />
+                    <span>পিন করা নোটিশ</span>
                   </span>
                 )}
               </div>
-            </div>
 
-            {/* Notice Title */}
-            <div className="space-y-4 mb-8">
-              <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-snug border-l-4 border-emerald-700 pl-3">
-                বিষয়: {selectedNotice.title}
-              </h3>
-
-              {/* Full Content */}
-              <div className="text-xs sm:text-sm text-gray-700 leading-relaxed space-y-3 whitespace-pre-line bg-[#fcfaf7] p-5 rounded-xl border border-gray-200/70">
-                {selectedNotice.content}
-              </div>
-
-              {/* Notice Photo / PDF Attachment */}
-              {selectedNotice.attachmentUrl && (
-                <div className="space-y-3 pt-3 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-gray-800 flex items-center gap-1.5">
-                      {selectedNotice.attachmentType === 'pdf' ? (
-                        <>
-                          <FileText className="w-4 h-4 text-rose-600" />
-                          <span>সংযুক্ত অফিসিয়াল পিডিএফ কপি:</span>
-                        </>
-                      ) : (
-                        <>
-                          <ImageIcon className="w-4 h-4 text-emerald-600" />
-                          <span>সংযুক্ত অফিসিয়াল নোটিশের ছবি:</span>
-                        </>
-                      )}
-                    </span>
-                    {selectedNotice.attachmentSize && (
-                      <span className="text-[10px] text-gray-400 font-mono">
-                        ফাইলের আকার: {selectedNotice.attachmentSize}
-                      </span>
-                    )}
-                  </div>
-
-                  {selectedNotice.attachmentType === 'image' ? (
-                    <div className="space-y-2">
-                      <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center p-2">
-                        <img
-                          src={selectedNotice.attachmentUrl}
-                          alt={selectedNotice.attachmentName || selectedNotice.title}
-                          className="max-h-96 w-auto object-contain rounded-lg"
-                        />
-                      </div>
-                      <div className="flex justify-end gap-2 print:hidden">
-                        <button
-                          type="button"
-                          onClick={() => openFileInNewTab(selectedNotice.attachmentUrl!)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg text-xs font-semibold transition cursor-pointer border border-emerald-200"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          <span>নতুন ট্যাবে দেখুন</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            triggerFileDownload(
-                              selectedNotice.attachmentUrl!,
-                              selectedNotice.attachmentName || 'notice-photo.jpg'
-                            )
-                          }
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#15803d] hover:bg-[#166534] text-white rounded-lg text-xs font-semibold transition cursor-pointer shadow-2xs"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>ছবি ডাউনলোড</span>
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-rose-50/70 border border-rose-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-12 h-12 rounded-xl bg-rose-100 border border-rose-200 flex flex-col items-center justify-center text-rose-700 shrink-0">
-                          <FileText className="w-6 h-6" />
-                          <span className="text-[9px] font-black uppercase">PDF</span>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs sm:text-sm font-bold text-gray-900 truncate">
-                            {selectedNotice.attachmentName || 'অফিসিয়াল বিজ্ঞপ্তি ডকুমেন্ট.pdf'}
-                          </p>
-                          <p className="text-[11px] text-gray-500 mt-0.5">
-                            মুদ্রণযোগ্য ও সত্যায়িত পিডিএফ অনুলিপি
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 self-end sm:self-center shrink-0 print:hidden">
-                        <button
-                          type="button"
-                          onClick={() => openFileInNewTab(selectedNotice.attachmentUrl!)}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          <span>পিডিএফ দেখুন</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            triggerFileDownload(
-                              selectedNotice.attachmentUrl!,
-                              selectedNotice.attachmentName || 'notice-document.pdf'
-                            )
-                          }
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>ডাউনলোড</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Signature Block */}
-            <div className="flex justify-end pt-4 border-t border-gray-200 mb-6">
-              <div className="text-center space-y-1">
-                <div className="w-28 h-8 border-b border-gray-400 mx-auto flex items-end justify-center font-script text-xs text-gray-500 italic">
-                  স্বাক্ষরিত
-                </div>
-                <p className="text-xs font-bold text-gray-900">প্রধান শিক্ষক</p>
-                <p className="text-[11px] text-gray-500">{siteSettings.schoolNameBangla}</p>
-              </div>
-            </div>
-
-            {/* Footer Buttons (Hidden during Print) */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-100 print:hidden text-xs">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handlePrintModal}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#15803d] hover:bg-[#166534] text-white rounded-xl font-bold transition cursor-pointer shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold transition cursor-pointer min-h-[36px]"
                 >
-                  <Printer className="w-4 h-4" />
-                  <span>প্রিন্ট করুন</span>
+                  <Printer className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">প্রিন্ট</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={handleDownloadPdfModal}
                   disabled={isExportingPdf}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold transition cursor-pointer shadow-xs disabled:opacity-50"
+                  onClick={handleDownloadPdfModal}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-50 min-h-[36px]"
                 >
-                  <Download className="w-4 h-4" />
-                  <span>{isExportingPdf ? 'PDF তৈরি হচ্ছে...' : 'পিডিএফ ডাউনলোড'}</span>
+                  {isExportingPdf ? (
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                  ) : (
+                    <Download className="w-3.5 h-3.5" />
+                  )}
+                  <span>PDF</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedNotice(null)}
+                  className="p-1.5 text-gray-400 hover:text-gray-800 hover:bg-gray-100 rounded-full transition cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  aria-label="বন্ধ করুন"
+                >
+                  <X className="w-5 h-5" />
                 </button>
               </div>
+            </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedNotice(null)}
-                className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition cursor-pointer"
-              >
-                বন্ধ করুন
-              </button>
+            {/* Official Notice Letterhead */}
+            <div className="text-center space-y-1.5 border-b border-gray-100 pb-4">
+              <div className="flex items-center justify-center gap-2.5">
+                <img
+                  src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+                  alt="Logo"
+                  className="w-10 h-10 rounded-full object-cover border-[2.5px] border-[#F59E0B] bg-[#00A859] shadow-xs"
+                  loading="lazy"
+                />
+                <h2 className="text-xl sm:text-2xl font-black text-emerald-950">
+                  {siteSettings.schoolNameBangla || SITE_CONFIG.schoolNameBangla}
+                </h2>
+              </div>
+              <p className="text-xs text-gray-500 font-medium">
+                {SITE_CONFIG.address} • স্থাপিত: {SITE_CONFIG.establishedYear}
+              </p>
+              <div className="inline-block bg-emerald-100 text-emerald-900 font-bold text-[11px] px-3.5 py-0.5 rounded-full mt-1">
+                অফিসিয়াল বিজ্ঞপ্তি / নোটিশ
+              </div>
+            </div>
+
+            {/* Metadata Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-gray-50 p-3 rounded-xl border border-gray-200">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-gray-600">স্মারক নং:</span>
+                <span className="font-mono text-gray-800">
+                  {selectedNotice.code ? toBengaliDigits(selectedNotice.code) : 'DHS/২০২৬/বিজ্ঞপ্তি'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-gray-600">তারিখ:</span>
+                <span className="text-gray-800 font-medium">
+                  {formatBengaliDate(selectedNotice.date)}
+                </span>
+              </div>
+            </div>
+
+            {/* Notice Title & Content */}
+            <div className="space-y-4">
+              <h3 className="text-lg sm:text-xl font-black text-gray-900 leading-snug">
+                {selectedNotice.title}
+              </h3>
+
+              <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line font-sans">
+                {selectedNotice.content}
+              </div>
+            </div>
+
+            {/* Attachment preview if any */}
+            {selectedNotice.attachmentUrl && (
+              <div className="border border-emerald-200 bg-emerald-50/50 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                    <FileText className="w-4 h-4 text-emerald-700" />
+                    <span>সংযুক্ত ফাইল ({selectedNotice.attachmentType?.toUpperCase() || 'FILE'})</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      triggerFileDownload(
+                        selectedNotice.attachmentUrl!,
+                        `Notice-${selectedNotice.code || 'Attachment'}`
+                      )
+                    }
+                    className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 hover:underline cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>ডাউনলোড করুন</span>
+                  </button>
+                </div>
+
+                {selectedNotice.attachmentType === 'image' && (
+                  <div className="max-h-80 overflow-hidden rounded-xl border border-emerald-200/80 bg-white flex items-center justify-center">
+                    <img
+                      src={selectedNotice.attachmentUrl}
+                      alt="Notice Attachment"
+                      className="max-h-80 w-auto object-contain cursor-pointer"
+                      onClick={() => openFileInNewTab(selectedNotice.attachmentUrl!)}
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Notice Footer Authority Signature */}
+            <div className="pt-6 border-t border-gray-200 flex justify-end">
+              <div className="text-center space-y-1">
+                <div className="w-32 border-b border-gray-400 mx-auto" />
+                <p className="text-xs font-bold text-gray-900">প্রধান শিক্ষক</p>
+                <p className="text-[11px] text-gray-500">{SITE_CONFIG.schoolNameBangla}</p>
+              </div>
             </div>
           </div>
         </div>

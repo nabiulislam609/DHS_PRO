@@ -34,24 +34,24 @@ export const LeadershipMessages: React.FC = () => {
         {leadership.map((item) => (
           <div
             key={item.id}
-            className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-100 shadow-xs hover:shadow-md transition relative flex flex-col justify-between"
+            className="design-card bg-white rounded-2xl p-6 sm:p-8 border border-[#E2E8E4] shadow-xs hover:shadow-md transition relative flex flex-col justify-between"
           >
             {/* Top quote icon */}
-            <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center mb-4">
-              <Quote className="w-5 h-5 fill-emerald-600" />
+            <div className="w-10 h-10 rounded-full bg-[#E8F5EE] text-[#0B7A55] flex items-center justify-center mb-4">
+              <Quote className="w-5 h-5 fill-[#0B7A55]" />
             </div>
 
             {/* Quote body */}
-            <p className="text-sm sm:text-base text-gray-600 leading-relaxed italic mb-6">
+            <p className="text-sm sm:text-base text-[#14211B] leading-relaxed italic mb-6">
               "{item.message}"
             </p>
 
             {/* Author Info with Enlarged Circular Profile Picture (112px on Desktop, 88px on Mobile) */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-5 pt-5 border-t border-gray-100 text-center sm:text-left">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-5 pt-5 border-t border-[#E2E8E4] text-center sm:text-left">
               {item.image ? (
                 <div
                   onClick={() => setActiveLightbox({ url: item.image!, name: item.name, role: item.role })}
-                  className="w-[88px] h-[88px] sm:w-[112px] sm:h-[112px] aspect-square rounded-full overflow-hidden border-4 border-emerald-600 shadow-md shrink-0 cursor-pointer hover:scale-105 hover:border-emerald-700 transition duration-300 relative group"
+                  className="w-[88px] h-[88px] sm:w-[112px] sm:h-[112px] aspect-square rounded-full overflow-hidden border-4 border-[#0B7A55] shadow-md shrink-0 cursor-pointer hover:scale-105 hover:border-[#064E3B] transition duration-300 relative group"
                   title={`${item.name}-এর বড় ছবি দেখতে ক্লিক করুন`}
                 >
                   <img

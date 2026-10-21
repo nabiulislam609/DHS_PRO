@@ -664,7 +664,11 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // 1. Fetch all config documents in a single collection query (1 network call)
       const configs = await fetchAllConfigDocsOnce();
       if (configs[CONFIG_DOCS.SITE_SETTINGS]) {
-        setSiteSettings(configs[CONFIG_DOCS.SITE_SETTINGS]);
+        const loaded = configs[CONFIG_DOCS.SITE_SETTINGS];
+        if (!loaded.logoUrl) {
+          loaded.logoUrl = '/assets/aistudio/image_08094a8b.png';
+        }
+        setSiteSettings(loaded);
       }
       if (configs[CONFIG_DOCS.HERO_SLIDES]) {
         setHeroSlides(configs[CONFIG_DOCS.HERO_SLIDES]);

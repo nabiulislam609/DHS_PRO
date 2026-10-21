@@ -4,7 +4,9 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { generatePdfFromElement } from '../../utils/universalPdfGenerator';
 import { useSchool } from '../../context/SchoolContext';
-import { DedicatedHeader } from './DedicatedHeader';
+import { SiteHeader } from './SiteHeader';
+import { PageHero } from './PageHero';
+import { SiteFooter } from './SiteFooter';
 import { Student, ActiveExam } from '../../types';
 import {
   CreditCard,
@@ -460,190 +462,197 @@ export const DedicatedAdmitCardPage: React.FC = () => {
     : '';
 
   return (
-    <div className="min-h-screen bg-slate-50 text-gray-800 flex flex-col font-sans">
-      {/* Top Institutional Header matching Home Page logo & unified EIIN */}
-      <DedicatedHeader portalTitle="অনলাইন অ্যাডমিট কার্ড (প্রবেশপত্র) ও রুটিন পোর্টাল" />
+    <div className="min-h-screen bg-[#F6F7F5] text-[#14211B] flex flex-col font-sans subpage-fade-in">
+      {/* Top Institutional Header */}
+      <SiteHeader pageName="অনলাইন অ্যাডমিট কার্ড" />
 
-      {/* Main Content Area - Matching Result Page Layout */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 py-8 flex-1 w-full">
-        {/* Top Dark Emerald Header Banner - Completely in Bengali matching Results page */}
-        <div className="bg-gradient-to-br from-[#063326] via-[#094132] to-[#042018] rounded-3xl p-8 sm:p-12 shadow-xl border border-emerald-900/40 relative overflow-hidden print:hidden">
-          {/* Subtle decorative circles */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+      {/* Unified PageHero Banner */}
+      <PageHero
+        title="অনলাইন পরীক্ষার প্রবেশপত্র (অ্যাডমিট কার্ড)"
+        description="সঠিক পরীক্ষার নাম, শ্রেণি ও রোল নম্বর দিয়ে প্রবেশপত্র ও পরীক্ষার সময়সূচি যাচাই করুন এবং অফিশিয়াল কপি ডাউনলোড ও সরাসরি প্রিন্ট করুন।"
+        badgeText="অনলাইন পরীক্ষা ব্যবস্থাপনা ও প্রবেশপত্র পোর্টাল"
+        badgeIcon={<Bookmark className="w-3.5 h-3.5 text-emerald-300" />}
+        breadcrumbs={[{ label: 'অ্যাডমিট কার্ড' }]}
+      />
 
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-1.5 bg-[#0f4d3a]/80 text-[#34d399] border border-[#16654a] px-3.5 py-1 rounded-full text-xs font-semibold mb-4">
-              <Bookmark className="w-3.5 h-3.5 text-emerald-400" />
-              <span>অনলাইন পরীক্ষা ব্যবস্থাপনা ও প্রবেশপত্র পোর্টাল</span>
-            </div>
-
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              অনলাইন পরীক্ষার প্রবেশপত্র (অ্যাডমিট কার্ড)
-            </h2>
-
-            <p className="text-emerald-100/80 text-xs sm:text-sm mt-2.5 max-w-2xl leading-relaxed">
-              সঠিক পরীক্ষার নাম, শ্রেণি ও রোল নম্বর দিয়ে প্রবেশপত্র ও পরীক্ষার সময়সূচি যাচাই করুন এবং অফিশিয়াল কপি ডাউনলোড ও সরাসরি প্রিন্ট করুন।
-            </p>
-          </div>
-        </div>
-
+      {/* Main Content Area - Overlapping Hero Banner with -mt-16 */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-8 space-y-6 -mt-16 relative z-20 pb-16 flex-1 w-full">
         {/* Global Inactive Warning if no exam is active */}
         {(allActiveExams.length === 0 || admitCardConfig?.isActive === false) && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-900 text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 print:hidden">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="bg-amber-50 border border-amber-300 text-amber-900 text-xs px-4 py-3 rounded-2xl flex items-center gap-2.5 print:hidden shadow-xs">
+            <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
             <span>বর্তমানে বিদ্যালয়ে কোনো পরীক্ষা অনুষ্ঠিত হচ্ছে না বা প্রবেশপত্র ডাউনলোড সাময়িকভাবে স্থগিত রয়েছে।</span>
           </div>
         )}
 
-        {/* Search Student Examination Record Card - Completely in Bengali matching Results Page */}
-        <div id="admit-search-card" className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6 sm:p-8 space-y-6 print:hidden">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2 text-gray-900 font-bold text-base sm:text-lg">
-              <Search className="w-5 h-5 text-emerald-600" />
+        {/* Search Student Examination Record Card */}
+        <div id="admit-search-card" className="bg-white rounded-2xl border border-[#E2E8E4] shadow-md p-6 sm:p-8 space-y-5 print:hidden">
+          <div className="flex items-center justify-between flex-wrap gap-2 border-b border-[#E2E8E4] pb-4">
+            <div className="flex items-center gap-2.5 text-[#14211B] font-bold text-base sm:text-lg">
+              <div className="w-8 h-8 rounded-xl bg-[#E8F5EE] text-[#0B7A55] flex items-center justify-center">
+                <Search className="w-4 h-4" />
+              </div>
               <span>শিক্ষার্থীর পরীক্ষার প্রবেশপত্র অনুসন্ধান করুন</span>
             </div>
-            <span className="text-xs text-gray-500 font-medium">
-              * পরীক্ষার নাম, শ্রেণি ও রোল নম্বর প্রদান করুন
+            <span className="text-xs text-[#5B6B63] font-medium bg-gray-50 px-3 py-1 rounded-full border border-gray-200">
+              * পরীক্ষার নাম, শ্রেণি ও রোল নম্বর আবশ্যক
             </span>
           </div>
 
-          <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-            {/* Field: Roll Number */}
-            <div className="md:col-span-3 space-y-1.5">
-              <label className="block text-xs font-bold text-gray-700">
-                শ্রেণির রোল নম্বর <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="যেমন: ১, ২, ৩... (e.g. 1, 2, 3)"
-                value={rollInput}
-                onChange={(e) => {
-                  setRollInput(e.target.value);
-                  setInputError(null);
-                  setSearched(false);
-                  setFoundStudent(null);
-                }}
-                className={`w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm transition ${
-                  inputError
-                    ? 'border-2 border-red-500 bg-red-50/40 text-red-900 placeholder-red-400 focus:outline-hidden focus:border-red-600'
-                    : 'bg-gray-50/70 border border-gray-200 text-gray-800 placeholder-gray-400 focus:outline-hidden focus:border-emerald-600 focus:bg-white'
-                }`}
-              />
-            </div>
-
-            {/* Field: Class */}
-            <div className={isClass910 ? 'md:col-span-3 space-y-1.5' : 'md:col-span-3 space-y-1.5'}>
-              <label className="block text-xs font-bold text-gray-700">
-                শ্রেণি নির্বাচন করুন <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={selectedClass}
-                onChange={(e) => {
-                  setSelectedClass(e.target.value);
-                  setInputError(null);
-                  setSearched(false);
-                  setFoundStudent(null);
-                }}
-                className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm cursor-pointer transition bg-gray-50/70 border border-gray-200 text-gray-800 focus:outline-hidden focus:border-emerald-600 focus:bg-white"
-              >
-                {CLASS_OPTIONS.map((cls, idx) => (
-                  <option key={idx} value={cls}>{cls}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Field: Group (if 9 or 10) */}
-            {isClass910 && (
-              <div className="md:col-span-2 space-y-1.5">
+          <form onSubmit={handleSearch} className="space-y-4">
+            {/* 4 Fields Grid - Clean 2x2 or 4-column layout */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+              {/* Field: Roll Number */}
+              <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-gray-700">
-                  বিভাগ <span className="text-red-500">*</span>
+                  শ্রেণির রোল নম্বর <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={selectedGroup}
+                <input
+                  type="text"
+                  placeholder="যেমন: ১, ২, ৩... (e.g. 1, 2, 3)"
+                  value={rollInput}
                   onChange={(e) => {
-                    setSelectedGroup(e.target.value);
+                    setRollInput(e.target.value);
                     setInputError(null);
                     setSearched(false);
                     setFoundStudent(null);
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm cursor-pointer transition bg-gray-50/70 border border-gray-200 text-gray-800 focus:outline-hidden focus:border-emerald-600 focus:bg-white"
+                  className={`w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm transition h-11 ${
+                    inputError && !rollInput.trim()
+                      ? 'border-2 border-red-500 bg-red-50/40 text-red-900 placeholder-red-400 focus:outline-hidden focus:border-red-600'
+                      : 'bg-gray-50/70 border border-[#E2E8E4] text-gray-800 placeholder-gray-400 focus:outline-hidden focus:border-[#0B7A55] focus:bg-white'
+                  }`}
+                />
+              </div>
+
+              {/* Field: Class */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-700">
+                  শ্রেণি নির্বাচন করুন <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedClass}
+                  onChange={(e) => {
+                    setSelectedClass(e.target.value);
+                    setInputError(null);
+                    setSearched(false);
+                    setFoundStudent(null);
+                  }}
+                  className="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm cursor-pointer transition bg-gray-50/70 border border-[#E2E8E4] text-gray-800 focus:outline-hidden focus:border-[#0B7A55] focus:bg-white h-11"
                 >
-                  {GROUP_OPTIONS.map((grp, idx) => (
-                    <option key={idx} value={grp}>{grp} বিভাগ</option>
+                  {CLASS_OPTIONS.map((cls, idx) => (
+                    <option key={idx} value={cls}>{cls}</option>
                   ))}
                 </select>
               </div>
-            )}
 
-            {/* Field: Exam Term */}
-            <div className={isClass910 ? 'md:col-span-2 space-y-1.5' : 'md:col-span-4 space-y-1.5'}>
-              <label className="block text-xs font-bold text-gray-700">
-                পরীক্ষার নাম / টার্ম <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={selectedExamTerm}
-                onChange={(e) => {
-                  setSelectedExamTerm(e.target.value);
-                  setInputError(null);
-                  setSearched(false);
-                  setFoundStudent(null);
-                }}
-                className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm cursor-pointer transition bg-gray-50/70 border border-gray-200 text-gray-800 focus:outline-hidden focus:border-emerald-600 focus:bg-white"
-              >
-                <option value="">-- পরীক্ষার নাম নির্বাচন করুন --</option>
-                {examTermOptions.map((term, idx) => (
-                  <option key={idx} value={term.value}>
-                    {term.label}
-                  </option>
-                ))}
-              </select>
+              {/* Field: Group (if class 9/10) or Info */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-700">
+                  শাখা / বিভাগ {isClass910 && <span className="text-red-500">*</span>}
+                </label>
+                {isClass910 ? (
+                  <select
+                    value={selectedGroup}
+                    onChange={(e) => {
+                      setSelectedGroup(e.target.value);
+                      setInputError(null);
+                      setSearched(false);
+                      setFoundStudent(null);
+                    }}
+                    className="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm cursor-pointer transition bg-gray-50/70 border border-[#E2E8E4] text-gray-800 focus:outline-hidden focus:border-[#0B7A55] focus:bg-white h-11"
+                  >
+                    {GROUP_OPTIONS.map((grp, idx) => (
+                      <option key={idx} value={grp}>{grp} বিভাগ</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm bg-gray-100/70 border border-[#E2E8E4] text-gray-500 flex items-center h-11">
+                    সাধারণ (সকল বিষয়)
+                  </div>
+                )}
+              </div>
+
+              {/* Field: Exam Term - Fully visible without truncation */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-gray-700">
+                  পরীক্ষার নাম / টার্ম <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedExamTerm}
+                  onChange={(e) => {
+                    setSelectedExamTerm(e.target.value);
+                    setInputError(null);
+                    setSearched(false);
+                    setFoundStudent(null);
+                  }}
+                  className="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm cursor-pointer transition bg-gray-50/70 border border-[#E2E8E4] text-gray-800 focus:outline-hidden focus:border-[#0B7A55] focus:bg-white h-11 min-w-0"
+                >
+                  <option value="">-- পরীক্ষার নাম নির্বাচন করুন --</option>
+                  {examTermOptions.map((term, idx) => (
+                    <option key={idx} value={term.value}>
+                      {term.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Submit Button */}
-            <div className="md:col-span-2">
+            {/* Validation Error in Bengali */}
+            {inputError && (
+              <p className="text-xs text-red-600 font-semibold flex items-center gap-1.5 bg-red-50 border border-red-200 px-3.5 py-2 rounded-xl">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                <span>{inputError}</span>
+              </p>
+            )}
+
+            {/* Primary Submit Button on single line */}
+            <div className="pt-1 flex justify-end">
               <button
                 type="submit"
-                className="w-full bg-[#059669] hover:bg-[#047857] text-white py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-sm cursor-pointer hover:shadow"
+                className="w-full sm:w-auto min-w-[200px] h-11 bg-[#0B7A55] hover:bg-[#064E3B] text-white py-2.5 px-6 rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-xs hover:shadow-md cursor-pointer"
               >
                 <Search className="w-4 h-4" />
-                <span>প্রবেশপত্র অনুসন্ধান</span>
+                <span>প্রবেশপত্র অনুসন্ধান করুন</span>
               </button>
             </div>
           </form>
 
-          {/* Inline Input Validation / Error Banner (sleek & non-intrusive) */}
-          {inputError && (
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-2.5 text-xs flex items-center gap-2 animate-fadeIn shadow-2xs">
-              <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
-              <span className="font-medium">{inputError}</span>
-            </div>
-          )}
-
-          {/* Search Result Feedback */}
+          {/* Search Result Summary Card when found */}
           {searched && foundStudent && (
-            <div className="pt-1">
-              <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-emerald-950 shadow-2xs animate-fadeIn">
-                <div className="flex items-center gap-2.5">
-                  <CheckCircle className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span>
-                    ✓ তথ্য সঠিক ও অনুমোদিত! শিক্ষার্থী <strong>{foundStudent.name}</strong> (রোল: <strong>{foundStudent.roll}</strong>, শ্রেণি: <strong>{selectedClass}</strong>) এর অফিশিয়াল প্রবেশপত্র নিচে প্রস্তুত।
-                  </span>
+            <div className="pt-2">
+              <div className="bg-[#E8F5EE] border border-[#0B7A55]/30 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs text-[#064E3B] shadow-xs animate-fadeIn">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-full bg-[#0B7A55] text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <CheckCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#14211B]">
+                      {foundStudent.name} (রোল: {foundStudent.roll})
+                    </h3>
+                    <p className="text-xs text-[#5B6B63] mt-0.5">
+                      শ্রেণি: {selectedClass} {selectedGroup ? `(${selectedGroup} বিভাগ)` : ''} · {selectedExamTerm || currentExam?.examTerm || 'বার্ষিক পরীক্ষা'}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={handlePrint}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold text-xs shadow-xs transition cursor-pointer"
-                  >
-                    <Printer className="w-3.5 h-3.5" />
-                    <span>প্রিন্ট</span>
-                  </button>
+
+                {/* Action buttons: PDF filled green, Print outline */}
+                <div className="flex items-center gap-2.5 self-end md:self-center shrink-0">
                   <button
                     onClick={handleDownloadPdf}
                     disabled={isDownloadingPdf}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs shadow-xs transition cursor-pointer disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 h-10 px-4 bg-[#0B7A55] hover:bg-[#064E3B] text-white rounded-xl font-bold text-xs shadow-xs hover:shadow-md transition cursor-pointer disabled:opacity-50 min-w-[120px]"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>{isDownloadingPdf ? 'PDF তৈরি হচ্ছে...' : 'PDF ডাউনলোড'}</span>
+                    <span>{isDownloadingPdf ? 'তৈরি হচ্ছে...' : 'PDF ডাউনলোড'}</span>
+                  </button>
+
+                  <button
+                    onClick={handlePrint}
+                    className="inline-flex items-center justify-center gap-2 h-10 px-4 bg-white border-2 border-[#0B7A55] text-[#064E3B] hover:bg-[#E8F5EE] rounded-xl font-bold text-xs shadow-2xs transition cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>প্রিন্ট</span>
                   </button>
                 </div>
               </div>
@@ -651,18 +660,59 @@ export const DedicatedAdmitCardPage: React.FC = () => {
           )}
         </div>
 
-        {/* Initial Prompt When Not Searched Yet */}
+        {/* 3-Step Guide Card when not searched yet */}
         {!searched && (
-          <div className="bg-white rounded-2xl border border-gray-200/80 p-8 text-center space-y-3 print:hidden shadow-xs">
-            <div className="w-12 h-12 mx-auto rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
-              <CreditCard className="w-6 h-6" />
+          <div className="bg-white rounded-2xl border border-[#E2E8E4] p-6 sm:p-8 space-y-6 print:hidden shadow-xs">
+            <div className="text-center max-w-lg mx-auto space-y-1.5">
+              <span className="text-[11px] font-bold text-[#0B7A55] tracking-wider uppercase bg-[#E8F5EE] px-3 py-1 rounded-full">
+                সহজ ৩ ধাপের নির্দেশিকা
+              </span>
+              <h3 className="text-lg font-bold text-[#14211B] pt-1">
+                প্রবেশপত্র সংগ্রহের সহজ নিয়মাবলী
+              </h3>
+              <p className="text-xs text-[#5B6B63] leading-relaxed">
+                অনলাইনে মাত্র ৩টি তথ্য প্রদান করে পরীক্ষার অফিশিয়াল প্রবেশপত্র ডাউনলোড ও প্রিন্ট করুন।
+              </p>
             </div>
-            <h3 className="font-bold text-gray-900 text-base">
-              প্রবেশপত্র পেতে সঠিক তথ্য প্রদান করুন
-            </h3>
-            <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
-              শিক্ষার্থীর সঠিক শ্রেণি ও ক্লাস রোল নম্বর দিয়ে &quot;প্রবেশপত্র অনুসন্ধান&quot; বাটনে ক্লিক করুন।
-            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              <div className="bg-gray-50/80 rounded-xl p-4 border border-[#E2E8E4] text-center space-y-2 hover:border-[#0B7A55]/40 transition">
+                <div className="w-10 h-10 rounded-full bg-[#E8F5EE] text-[#0B7A55] font-black text-sm flex items-center justify-center mx-auto">
+                  ১
+                </div>
+                <h4 className="font-bold text-sm text-[#14211B]">শ্রেণি বাছুন</h4>
+                <p className="text-xs text-[#5B6B63] leading-relaxed">
+                  ড্রপডাউন তালিকা থেকে শিক্ষার্থীর অধ্যয়নরত শ্রেণি ও বিভাগ নির্বাচন করুন।
+                </p>
+              </div>
+
+              <div className="bg-gray-50/80 rounded-xl p-4 border border-[#E2E8E4] text-center space-y-2 hover:border-[#0B7A55]/40 transition">
+                <div className="w-10 h-10 rounded-full bg-[#E8F5EE] text-[#0B7A55] font-black text-sm flex items-center justify-center mx-auto">
+                  ২
+                </div>
+                <h4 className="font-bold text-sm text-[#14211B]">রোল নম্বর দিন</h4>
+                <p className="text-xs text-[#5B6B63] leading-relaxed">
+                  শ্রেণি শিক্ষকের দেওয়া সঠিক ক্লাস রোল নম্বর ইনপুট বক্সে লিখুন।
+                </p>
+              </div>
+
+              <div className="bg-gray-50/80 rounded-xl p-4 border border-[#E2E8E4] text-center space-y-2 hover:border-[#0B7A55]/40 transition">
+                <div className="w-10 h-10 rounded-full bg-[#E8F5EE] text-[#0B7A55] font-black text-sm flex items-center justify-center mx-auto">
+                  ৩
+                </div>
+                <h4 className="font-bold text-sm text-[#14211B]">পরীক্ষা বাছুন</h4>
+                <p className="text-xs text-[#5B6B63] leading-relaxed">
+                  চলতি পরীক্ষার নাম বাছাই করে অনুসন্ধান বাটনে ক্লিক করলেই কার্ড প্রস্তুত হবে।
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-emerald-50/50 rounded-xl p-3.5 border border-emerald-200/60 text-xs text-emerald-900 flex items-start gap-2.5">
+              <CreditCard className="w-4 h-4 text-[#0B7A55] shrink-0 mt-0.5" />
+              <span>
+                <strong>জরুরি নির্দেশনা:</strong> পরীক্ষা কক্ষে অবশ্যই প্রবেশপত্রের রঙ্গিন বা সাদাকালো স্পষ্ট প্রিন্ট কপি সঙ্গে আনতে হবে। কোনো অসঙ্গতি পরিলক্ষিত হলে দ্রুত শ্রেণি শিক্ষকের সাথে যোগাযোগ করুন।
+              </span>
+            </div>
           </div>
         )}
 
@@ -767,17 +817,11 @@ export const DedicatedAdmitCardPage: React.FC = () => {
               {/* School Header */}
               <div className="text-center border-b-2 border-emerald-900 pb-3 mb-4 relative">
                 <div className="flex items-center justify-center gap-3.5 mb-1">
-                  {siteSettings.logoUrl ? (
-                    <img
-                      src={siteSettings.logoUrl}
-                      alt="Logo"
-                      className="w-13 h-13 rounded-full object-cover border-2 border-emerald-800 shadow-2xs"
-                    />
-                  ) : (
-                    <div className="w-13 h-13 rounded-full bg-emerald-800 text-amber-300 flex items-center justify-center shadow-2xs">
-                      <GraduationCap className="w-6 h-6" />
-                    </div>
-                  )}
+                  <img
+                    src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+                    alt="Logo"
+                    className="w-13 h-13 rounded-full object-cover border-[2.5px] border-[#F59E0B] bg-[#00A859] shadow-2xs"
+                  />
                   <div>
                     <h2 className="text-lg sm:text-2xl font-extrabold text-emerald-950 tracking-tight">
                       {siteSettings.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}
@@ -786,7 +830,7 @@ export const DedicatedAdmitCardPage: React.FC = () => {
                       {siteSettings.schoolNameEnglish || 'Dadra High School'}
                     </p>
                     <p className="text-[10.5px] text-gray-500">
-                      {siteSettings.address || 'দাদরা, জয়পুরহাট সদর, জয়পুরহাট'} • স্থাপিত: {siteSettings.establishedYear || '১৯৮২'} • EIIN: {siteSettings.eiin || '121820'}
+                      {siteSettings.address || 'দাদরা, জয়পুরহাট সদর, জয়পুরহাট'} • স্থাপিত: {siteSettings.establishedYear || '১৯৮২'}
                     </p>
                   </div>
                 </div>

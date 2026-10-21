@@ -1657,17 +1657,11 @@ export const ManageStaff: React.FC = () => {
                 {/* Official Letterhead */}
                 <div className="text-center border-b-2 border-emerald-800 pb-4 space-y-1">
                   <div className="flex items-center justify-center gap-3">
-                    {siteSettings?.logoUrl ? (
-                      <img
-                        src={siteSettings.logoUrl}
-                        alt="Logo"
-                        className="w-14 h-14 object-contain rounded-full border border-gray-300"
-                      />
-                    ) : (
-                      <div className="w-14 h-14 rounded-full bg-emerald-800 text-white flex items-center justify-center text-2xl font-bold">
-                        {siteSettings?.schoolNameBangla?.charAt(0) || 'দ'}
-                      </div>
-                    )}
+                    <img
+                      src={siteSettings?.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+                      alt="Logo"
+                      className="w-14 h-14 object-cover rounded-full border-[2.5px] border-[#F59E0B] bg-[#00A859] shadow-xs"
+                    />
                     <div className="text-center">
                       <h2 className="text-xl sm:text-2xl font-extrabold text-emerald-900 leading-tight">
                         {siteSettings?.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}

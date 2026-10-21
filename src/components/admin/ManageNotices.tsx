@@ -692,17 +692,11 @@ export const ManageNotices: React.FC = () => {
             <div id="admin-notice-view-modal" className="space-y-6">
               <div className="text-center pb-4 border-b-2 border-emerald-800/30 space-y-1">
                 <div className="flex items-center justify-center gap-3">
-                  {siteSettings.logoUrl ? (
-                    <img
-                      src={siteSettings.logoUrl}
-                      alt="Logo"
-                      className="w-12 h-12 object-contain"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-emerald-800 text-amber-300 font-black flex items-center justify-center text-xl shadow-xs">
-                      দ
-                    </div>
-                  )}
+                  <img
+                    src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+                    alt="Logo"
+                    className="w-12 h-12 rounded-full object-cover border-[2.5px] border-[#F59E0B] bg-[#00A859] shadow-xs"
+                  />
                   <div>
                     <h2 className="text-xl sm:text-2xl font-black text-emerald-950">
                       {siteSettings.schoolNameBangla}

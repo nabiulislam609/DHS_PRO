@@ -171,9 +171,9 @@ export const buildExamNoticeHtml = (
           <tr>
             <td style="width: 80px; vertical-align: middle; text-align: left;">
               ${
-                siteSettings.logoUrl
-                  ? `<img src="${siteSettings.logoUrl}" alt="Logo" style="width: 74px; height: 74px; object-fit: contain; border-radius: 50%; border: 1.5px solid #d1fae5; padding: 2px;" />`
-                  : `<div style="width: 70px; height: 70px; border-radius: 50%; background: #ecfdf5; border: 2px solid #047857; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #047857; font-size: 20px;">দা.উ.বি</div>`
+                (siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png')
+                  ? `<img src="${siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}" alt="Logo" style="width: 74px; height: 74px; object-fit: contain; border-radius: 50%; border: 2.5px solid #F59E0B; background-color: #00A859;" />`
+                  : `<div style="width: 70px; height: 70px; border-radius: 50%; background: #00A859; border: 2.5px solid #F59E0B; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fde047; font-size: 20px;">দা.উ.বি</div>`
               }
             </td>
             <td style="vertical-align: middle; text-align: center; padding: 0 10px;">

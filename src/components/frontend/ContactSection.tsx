@@ -96,7 +96,7 @@ export const ContactSection: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         {/* Left 5 cols: Contact info & Map mockup */}
         <div className="lg:col-span-5 flex flex-col gap-6 h-full">
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+          <div className="design-card bg-white p-6 rounded-2xl border border-[#E2E8E4] shadow-xs space-y-4">
             {/* Address */}
             <div className="flex items-start gap-3">
               <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
@@ -157,24 +157,24 @@ export const ContactSection: React.FC = () => {
           </div>
 
           {/* Real Interactive Google Map - stretches naturally to align with right card */}
-          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex-1 flex flex-col justify-between gap-3">
+          <div className="design-card bg-white p-5 rounded-2xl border border-[#E2E8E4] shadow-xs flex-1 flex flex-col justify-between gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-emerald-700" />
+                <MapPin className="w-4 h-4 text-[#0B7A55]" />
                 <h4 className="text-xs font-bold text-gray-800">বিদ্যালয়ের অবস্থান (গুগল ম্যাপ)</h4>
               </div>
               <a
                 href={directMapUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0B7A55] hover:text-[#064E3B] hover:underline cursor-pointer"
               >
                 <span>বড় ম্যাপে দেখুন</span>
                 <ExternalLink className="w-3 h-3" />
               </a>
             </div>
 
-            <div className="w-full flex-1 min-h-[170px] sm:min-h-[190px] rounded-xl overflow-hidden border border-gray-200/80 shadow-2xs relative bg-gray-100">
+            <div className="w-full flex-1 min-h-[170px] sm:min-h-[190px] rounded-xl overflow-hidden border border-[#E2E8E4] shadow-2xs relative bg-gray-100">
               <iframe
                 title="Google Map Location"
                 src={getMapEmbedUrl()}
@@ -184,7 +184,7 @@ export const ContactSection: React.FC = () => {
                 allowFullScreen
               />
             </div>
-            <p className="text-[11px] text-gray-500 text-center font-medium">
+            <p className="text-[11px] text-[#5B6B63] text-center font-medium">
               📍 {siteSettings.address || 'দাদরা, জয়পুরহাট সদর, রাজশাহী, বাংলাদেশ'}
             </p>
           </div>
@@ -192,7 +192,7 @@ export const ContactSection: React.FC = () => {
 
         {/* Right 7 cols: "বার্তা পাঠান" Form - full height with equal stretch */}
         <div className="lg:col-span-7 h-full flex flex-col">
-          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-xs h-full flex flex-col">
+          <div className="design-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2E8E4] shadow-xs h-full flex flex-col">
             <h3 className="text-lg font-bold text-gray-900 mb-1">বার্তা পাঠান</h3>
             <p className="text-xs text-gray-500 mb-6">নিচের ফর্ম পূরণ করে আমাদের বার্তা পাঠান</p>
 

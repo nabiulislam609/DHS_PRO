@@ -221,12 +221,12 @@ export const ManageSiteSettings: React.FC = () => {
 
               <div className="flex items-center gap-3">
                 {form.logoUrl ? (
-                  <div className="relative w-12 h-12 rounded-lg border border-gray-300 bg-white p-1 flex items-center justify-center shrink-0">
-                    <img src={form.logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
+                  <div className="relative w-12 h-12 rounded-full border-2 border-[#F59E0B] bg-[#00A859] p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+                    <img src={form.logoUrl} alt="Logo" className="w-full h-full object-cover rounded-full" />
                     <button
                       type="button"
                       onClick={() => setForm({ ...form, logoUrl: '' })}
-                      className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white rounded-full p-0.5"
+                      className="absolute -top-1 -right-1 bg-rose-600 text-white rounded-full p-0.5 shadow-xs"
                       title="সরান"
                     >
                       <Trash2 className="w-2.5 h-2.5" />

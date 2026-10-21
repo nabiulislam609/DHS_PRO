@@ -166,7 +166,7 @@ export const buildFormHtml = (
   const email = siteSettings?.email || 'info@dadrahs.edu.bd';
   const estd = siteSettings?.establishedYear || '১৯৮২';
   const eiin = siteSettings?.eiin || '121820';
-  const logo = siteSettings?.logoUrl || '';
+  const logo = siteSettings?.logoUrl || '/assets/aistudio/image_08094a8b.png';
 
   // Common Header Template
   const renderHeader = () => `
@@ -174,8 +174,8 @@ export const buildFormHtml = (
       <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 4px;">
         ${
           logo
-            ? `<img src="${logo}" alt="Logo" style="width: 52px; height: 52px; object-fit: contain; border-radius: 8px;" crossOrigin="anonymous" />`
-            : `<div style="width: 50px; height: 50px; border-radius: 50%; background: ${theme.primaryColor}; color: #fde047; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 24px; border: 2px solid ${theme.secondaryColor}; text-align: center; line-height: 50px;">দ</div>`
+            ? `<img src="${logo}" alt="Logo" style="width: 52px; height: 52px; object-fit: contain; border-radius: 50%; border: 2.5px solid #F59E0B; background-color: #00A859;" crossOrigin="anonymous" />`
+            : `<div style="width: 50px; height: 50px; border-radius: 50%; background: #00A859; color: #fde047; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 24px; border: 2.5px solid #F59E0B; text-align: center; line-height: 50px;">দ</div>`
         }
         <div style="text-align: center;">
           <h1 style="font-size: 22px; font-weight: 900; color: ${theme.primaryColor}; margin: 0; line-height: 1.2;">${schoolNameBn}</h1>

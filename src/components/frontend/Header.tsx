@@ -224,10 +224,7 @@ export const Header: React.FC = () => {
         >
           <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
             {/* Left Contact Info */}
-            <div className="flex flex-wrap items-center gap-3 sm:gap-6">
-              <div className="inline-flex items-center gap-1 bg-emerald-800/80 px-2 sm:px-2.5 py-0.5 rounded-full border border-emerald-600/50 text-[11px] font-bold text-emerald-100 font-mono tracking-wider shadow-2xs">
-                <span>EIIN: {siteSettings.eiin || '121820'}</span>
-              </div>
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6">
               <div className="flex items-center gap-1.5 hover:text-emerald-200 transition">
                 <Phone className="w-3.5 h-3.5 text-emerald-300" />
                 <span>{siteSettings.topBarPhone || siteSettings.phone1}</span>
@@ -283,27 +280,16 @@ export const Header: React.FC = () => {
         style={{ paddingTop: `${navPaddingY}px`, paddingBottom: `${navPaddingY}px` }}
       >
         {/* Brand Logo & Name */}
-        <div className="flex items-center gap-2.5 sm:gap-3 cursor-pointer" onClick={handleHomeClick}>
-          {siteSettings.logoUrl ? (
-            <img
-              src={siteSettings.logoUrl}
-              alt="Logo"
-              className={`${logoSizeClass} rounded-full object-cover border-2 border-emerald-800 shadow-xs bg-white transition-all`}
-            />
-          ) : (
-            <div className={`${logoSizeClass} rounded-full bg-amber-400 border-2 border-emerald-800 flex items-center justify-center shadow-xs text-emerald-950 font-bold transition-all`}>
-              <GraduationCap className="w-6 h-6 text-emerald-900" />
-            </div>
-          )}
+        <div className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group" onClick={handleHomeClick}>
+          <img
+            src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+            alt={siteSettings.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}
+            className={`${logoSizeClass} rounded-full object-cover border-[2.5px] border-[#F59E0B] shadow-xs bg-[#00A859] transition-all group-hover:scale-105`}
+          />
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-bold text-emerald-900 leading-tight">
-                {siteSettings.schoolNameBangla}
-              </h1>
-              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 text-[10px] sm:text-[11px] font-bold px-2 sm:px-2.5 py-0.5 rounded-full border border-emerald-300 shadow-2xs font-mono shrink-0">
-                EIIN: {siteSettings.eiin || '121820'}
-              </span>
-            </div>
+            <h1 className="text-lg sm:text-xl font-bold text-emerald-900 leading-tight">
+              {siteSettings.schoolNameBangla}
+            </h1>
             <p className="text-[11px] sm:text-xs text-gray-500 font-medium tracking-wide">
               {siteSettings.schoolNameEnglish}
             </p>
