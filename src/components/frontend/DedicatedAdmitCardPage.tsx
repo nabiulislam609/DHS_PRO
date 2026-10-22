@@ -441,8 +441,8 @@ export const DedicatedAdmitCardPage: React.FC = () => {
       const dateFormatted = `${dayBn} ${monthBn} ${yearBn}`;
 
       const isIct = subItem.name.includes('তথ্য ও যোগাযোগ') || subItem.name.includes('ICT');
-      const timeStr = isIct ? 'সকাল ১০:০০ - দুপুর ১২:০০' : 'সকাল ১০:০০ - দুপুর ০১:০০';
-      const roomNum = `১০${(idx % 4) + 1}`;
+      const configuredTime = currentExam?.examTime?.trim() || admitCardConfig?.examTime?.trim();
+      const timeStr = isIct ? 'সকাল ১০:০০ - দুপুর ১২:০০' : (configuredTime || 'সকাল ১০:০০ - দুপুর ০১:০০');
 
       return {
         serial: idx + 1,
@@ -452,10 +452,9 @@ export const DedicatedAdmitCardPage: React.FC = () => {
         typeLabel: subItem.typeLabel,
         date: dateFormatted,
         time: timeStr,
-        room: roomNum,
       };
     });
-  }, [activeValidatedSubjects, currentExam?.examStartDate, admitCardConfig?.examStartDate]);
+  }, [activeValidatedSubjects, currentExam?.examStartDate, currentExam?.examTime, admitCardConfig?.examStartDate, admitCardConfig?.examTime]);
 
   const studentImage = foundStudent
     ? foundStudent.image || getStudentResultImage({ studentName: foundStudent.name, roll: foundStudent.roll, studentId: foundStudent.id }, students)
@@ -814,33 +813,36 @@ export const DedicatedAdmitCardPage: React.FC = () => {
               <div className="absolute bottom-2 left-2 w-8 h-8 border-b-2 border-l-2 border-emerald-800 pointer-events-none" />
               <div className="absolute bottom-2 right-2 w-8 h-8 border-b-2 border-r-2 border-emerald-800 pointer-events-none" />
 
-              {/* School Header */}
+              {/* School Header - Symmetrical Balanced Grid for 100% Exact Center Alignment */}
               <div className="text-center border-b-2 border-emerald-900 pb-3 mb-4 relative">
-                <div className="flex items-center justify-center gap-3.5 mb-1">
-                  <img
-                    src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
-                    alt="Logo"
-                    className="w-13 h-13 rounded-full object-cover border-[2.5px] border-[#F59E0B] bg-[#00A859] shadow-2xs"
-                  />
-                  <div>
-                    <h2 className="text-lg sm:text-2xl font-extrabold text-emerald-950 tracking-tight">
-                      {siteSettings.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}
+                <div className="grid grid-cols-[60px_1fr_60px] items-center mb-2">
+                  <div className="flex justify-start">
+                    <img
+                      src={siteSettings.logoUrl || '/assets/aistudio/Logo_a3f5277a.png'}
+                      alt="Logo"
+                      className="w-13 h-13 rounded-full object-cover border-[2.5px] border-[#F59E0B] bg-[#00A859] shadow-2xs"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <h2 className="text-xl sm:text-2xl font-black text-emerald-950 tracking-tight leading-tight">
+                      {siteSettings.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}
                     </h2>
-                    <p className="text-xs sm:text-sm font-semibold text-gray-700 tracking-wide">
+                    <p className="text-xs sm:text-sm font-bold text-gray-700 tracking-wide uppercase">
                       {siteSettings.schoolNameEnglish || 'Dadra High School'}
                     </p>
-                    <p className="text-[10.5px] text-gray-500">
+                    <p className="text-[10.5px] text-gray-500 font-medium mt-0.5">
                       {siteSettings.address || 'দাদরা, জয়পুরহাট সদর, জয়পুরহাট'} • স্থাপিত: {siteSettings.establishedYear || '১৯৮২'}
                     </p>
                   </div>
+                  <div className="w-13" aria-hidden="true" />
                 </div>
 
-                {/* Admit Card Banner Title */}
-                <div className="mt-2 inline-block bg-emerald-900 text-white px-5 py-0.5 rounded-full text-xs font-extrabold tracking-wide uppercase shadow-xs">
+                {/* Admit Card Banner Title & Exam Title */}
+                <div className="inline-block bg-[#064E3B] text-white px-6 py-0.5 rounded-full text-xs font-extrabold tracking-wide uppercase shadow-xs">
                   প্রবেশপত্র • ADMIT CARD
                 </div>
-                <p className="text-xs font-bold text-emerald-900 mt-0.5">
-                  {currentExam?.examTerm || selectedExamTerm || admitCardConfig?.examTerm || 'বার্ষিক পরীক্ষা ২০২৬'}
+                <p className="text-xs sm:text-sm font-bold text-emerald-950 mt-1">
+                  {currentExam?.examTerm || selectedExamTerm || admitCardConfig?.examTerm || 'বার্ষিক পরীক্ষা'}
                 </p>
               </div>
 
@@ -916,24 +918,23 @@ export const DedicatedAdmitCardPage: React.FC = () => {
                   <thead>
                     <tr className="bg-emerald-900 text-white text-[10.5px] uppercase tracking-wider font-bold">
                       <th className="py-1.5 px-2 border border-emerald-800 w-10 text-center">ক্র.নং</th>
-                      <th className="py-1.5 px-2.5 border border-emerald-800 w-18 text-center">বিষয় কোড</th>
+                      <th className="py-1.5 px-2.5 border border-emerald-800 w-20 text-center">বিষয় কোড</th>
                       <th className="py-1.5 px-3 border border-emerald-800">পরীক্ষার বিষয়</th>
-                      <th className="py-1.5 px-2.5 border border-emerald-800 w-28">তারিখ</th>
-                      <th className="py-1.5 px-2.5 border border-emerald-800 w-36">সময়</th>
-                      <th className="py-1.5 px-2 border border-emerald-800 text-center w-16">কক্ষ নং</th>
-                      <th className="py-1.5 px-2 border border-emerald-800 text-center w-24">পরিদর্শকের স্বাক্ষর</th>
+                      <th className="py-1.5 px-3 border border-emerald-800 w-32">তারিখ</th>
+                      <th className="py-1.5 px-3 border border-emerald-800 w-44">সময়</th>
+                      <th className="py-1.5 px-2 border border-emerald-800 text-center w-28">পরিদর্শকের স্বাক্ষর</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 text-gray-800 font-medium">
                     {examSubjectsRoutine.map((item, idx) => (
                       <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/70'}>
-                        <td className="py-1 px-2 border border-gray-200 text-center font-mono text-[10.5px]">
+                        <td className="py-1.5 px-2 border border-gray-200 text-center font-mono text-[10.5px]">
                           {item.serial}
                         </td>
-                        <td className="py-1 px-2.5 border border-gray-200 text-center font-mono font-bold text-emerald-900 text-[10.5px]">
+                        <td className="py-1.5 px-2.5 border border-gray-200 text-center font-mono font-bold text-emerald-900 text-[10.5px]">
                           {item.code}
                         </td>
-                        <td className="py-1 px-3 border border-gray-200 font-bold text-gray-900 text-[11px]">
+                        <td className="py-1.5 px-3 border border-gray-200 font-bold text-gray-900 text-[11px]">
                           <span className="flex items-center gap-1.5">
                             <span>{item.subject}</span>
                             {item.type === 'elective' && (
@@ -943,16 +944,13 @@ export const DedicatedAdmitCardPage: React.FC = () => {
                             )}
                           </span>
                         </td>
-                        <td className="py-1 px-2.5 border border-gray-200 text-[10.5px]">
+                        <td className="py-1.5 px-3 border border-gray-200 text-[10.5px]">
                           {item.date}
                         </td>
-                        <td className="py-1 px-2.5 border border-gray-200 text-[10.5px]">
+                        <td className="py-1.5 px-3 border border-gray-200 text-[10.5px]">
                           {item.time}
                         </td>
-                        <td className="py-1 px-2 border border-gray-200 text-center font-mono text-[10.5px]">
-                          {item.room}
-                        </td>
-                        <td className="py-1 px-2 border border-gray-200 text-center text-gray-300">
+                        <td className="py-1.5 px-2 border border-gray-200 text-center text-gray-300">
                           —
                         </td>
                       </tr>
@@ -982,27 +980,37 @@ export const DedicatedAdmitCardPage: React.FC = () => {
                 </ol>
               </div>
 
-              {/* Signatures */}
-              <div className="flex items-end justify-between pt-4 border-t border-gray-300 text-center text-xs text-gray-700">
-                <div className="space-y-1">
-                  <div className="w-32 border-b border-gray-400 mx-auto mb-1" />
-                  <span className="font-bold text-gray-800 text-[11px]">শ্রেণি শিক্ষকের স্বাক্ষর</span>
+              {/* Unified Headmaster Signature Only */}
+              <div className="flex items-end justify-between pt-4 border-t border-gray-300 text-xs text-gray-700">
+                <div className="text-[10px] text-gray-500 space-y-0.5">
+                  <p className="font-semibold text-emerald-900">
+                    * প্রবেশপত্রটি ডিজিটাল ভেরিফাইড ও সংরক্ষিত।
+                  </p>
+                  <p>মুদ্রণ তারিখ: {new Date().toLocaleDateString('bn-BD')}</p>
                 </div>
 
-                <div className="space-y-1 text-center">
-                  <div className="w-14 h-14 rounded-full border-2 border-dashed border-emerald-700 mx-auto flex items-center justify-center text-[9px] text-emerald-800 font-bold opacity-80 rotate-[-12deg]">
-                    বিদ্যালয় সিল
-                  </div>
-                  <span className="text-[9px] text-gray-500">অফিসিয়াল সিলমোহর</span>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="font-serif italic text-emerald-950 text-sm font-bold opacity-80 mb-0.5">
-                    Md. Abdul Karim
-                  </div>
-                  <div className="w-32 border-b border-gray-400 mx-auto mb-1" />
-                  <span className="font-bold text-gray-800 text-[11px]">প্রধান শিক্ষকের স্বাক্ষর</span>
-                  <span className="block text-[9px] text-gray-500">দাদরা উচ্চ বিদ্যালয়</span>
+                <div className="text-center min-w-[170px] space-y-1">
+                  {siteSettings.headmasterSignatureUrl ? (
+                    <img
+                      src={siteSettings.headmasterSignatureUrl}
+                      alt="প্রধান শিক্ষকের স্বাক্ষর"
+                      className="h-10 max-w-[140px] mx-auto object-contain mb-0.5"
+                    />
+                  ) : (
+                    <div className="font-serif italic text-emerald-950 text-sm font-bold opacity-90 mb-0.5">
+                      {siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}
+                    </div>
+                  )}
+                  <div className="w-36 border-b-2 border-emerald-950 mx-auto mb-1" />
+                  <span className="font-bold text-gray-900 text-xs block">
+                    {siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}
+                  </span>
+                  <span className="font-medium text-[11px] text-gray-700 block">
+                    {siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}
+                  </span>
+                  <span className="text-[10px] text-gray-500 block">
+                    {siteSettings.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1177,9 +1185,18 @@ export const DedicatedAdmitCardPage: React.FC = () => {
       {/* Institutional Website Footer */}
       <Footer />
 
-      {/* Print Specific CSS */}
+      {/* Print Specific CSS with Narrow Margin and A4 Single-Page Fit */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
+          @page {
+            size: A4 portrait;
+            margin: 8mm;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+          }
           body * {
             visibility: hidden;
           }
@@ -1190,11 +1207,15 @@ export const DedicatedAdmitCardPage: React.FC = () => {
             position: absolute;
             left: 0;
             top: 0;
-            width: 100%;
-            margin: 0;
-            padding: 20px;
-            box-shadow: none;
-            border: 2px solid #064e3b;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 16px !important;
+            box-shadow: none !important;
+            border: 2px solid #064e3b !important;
+            page-break-after: avoid !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
         }
       `}} />

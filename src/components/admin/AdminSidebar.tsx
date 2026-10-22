@@ -29,6 +29,7 @@ import {
   Bookmark,
   Download,
   ShieldCheck,
+  Globe,
 } from 'lucide-react';
 
 interface MenuItem {
@@ -69,6 +70,7 @@ export const AdminSidebar: React.FC = () => {
     {
       group: 'ওয়েবসাইট',
       items: [
+        { id: 'frontend_editor' as AdminTab, label: 'ফ্রন্টএন্ড (Frontend)', icon: Globe },
         { id: 'hero' as AdminTab, label: 'হিরো স্লাইড', icon: Sliders },
         { id: 'navigation' as AdminTab, label: 'নেভিগেশন মেনু', icon: Navigation },
         { id: 'downloads' as AdminTab, label: 'ডাউনলোড ও ফরম মেনু', icon: Download },
@@ -101,6 +103,7 @@ export const AdminSidebar: React.FC = () => {
         { id: 'programs' as AdminTab, label: 'প্রোগ্রাম', icon: BookOpen },
         { id: 'statistics' as AdminTab, label: 'পরিসংখ্যান', icon: BarChart3 },
         { id: 'performance' as AdminTab, label: 'ফলাফলের ধারা চার্ট', icon: Award },
+        { id: 'frontend_editor' as AdminTab, label: 'ফ্রন্টএন্ড (Frontend)', icon: Globe },
       ],
     },
     {
@@ -127,7 +130,7 @@ export const AdminSidebar: React.FC = () => {
       {/* Top Section: Brand Header (Fixed top) */}
       <div className="p-4 border-b border-[#0d3124] flex items-center gap-3 shrink-0 bg-[#051c14]">
         <img
-          src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+          src={siteSettings.logoUrl || '/assets/aistudio/Logo_a3f5277a.png'}
           alt="Logo"
           className="w-10 h-10 rounded-full object-cover border-[2.5px] border-[#F59E0B] shrink-0 bg-[#00A859] shadow-xs"
         />

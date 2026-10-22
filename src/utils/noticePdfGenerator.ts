@@ -50,7 +50,7 @@ export const buildNoticeHtml = (
   const estd = siteSettings?.establishedYear || '১৯৮২';
   const eiin = siteSettings?.eiin || '121820';
   const memoNo = notice.code ? `DHS/২০২৬/বিজ্ঞপ্তি-${notice.code}` : 'DHS/২০২৬/বিজ্ঞপ্তি';
-  const logo = safeLogoDataUrl || siteSettings?.logoUrl || '/assets/aistudio/image_08094a8b.png';
+  const logo = safeLogoDataUrl || siteSettings?.logoUrl || '/assets/aistudio/Logo_a3f5277a.png';
   const attachmentImg = safeAttachmentDataUrl || notice.attachmentUrl || '';
 
   return `
@@ -146,19 +146,22 @@ ${notice.content}
       </div>
 
       <!-- Footer & Signature Section (Anchored to Bottom of Portrait Sheet) -->
-      <div style="flex-shrink: 0; margin-top: 40px;">
+      <div style="flex-shrink: 0; margin-top: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-          <div style="width: 80px; height: 80px; border: 2px dashed #064e3b; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 9px; font-weight: 800; color: #064e3b; transform: rotate(-10deg); opacity: 0.85;">
-            বিদ্যালয়<br>অফিসিয়াল<br>সিলমোহর
+          <div style="text-align: left; font-size: 10px; color: #64748b;">
+            <span style="color: #047857; font-weight: 700;">✓ নোটিশটি প্রশাসনিকভাবে অনুমোদিত ও সংরক্ষিত।</span>
           </div>
 
-          <div style="text-align: center; width: 180px;">
-            <div style="font-family: cursive, sans-serif; font-size: 13px; color: #334155; margin-bottom: 2px;">
-              স্বাক্ষরিত
-            </div>
-            <div style="width: 140px; border-bottom: 1px solid #475569; margin: 0 auto 6px auto;"></div>
-            <div style="font-weight: 800; font-size: 13px; color: #0f172a;">প্রধান শিক্ষক</div>
-            <div style="font-size: 11px; color: #64748b;">${schoolNameBn}</div>
+          <div style="text-align: center; min-width: 170px;">
+            ${
+              siteSettings?.headmasterSignatureUrl
+                ? `<img src="${siteSettings.headmasterSignatureUrl}" alt="Signature" style="height: 38px; max-width: 140px; object-fit: contain; margin-bottom: 2px;" crossOrigin="anonymous" />`
+                : `<div style="font-family: cursive, sans-serif; font-size: 14px; color: #047857; font-weight: bold; margin-bottom: 2px;">${siteSettings?.headmasterName || 'মো: সাদেকুল ইসলাম'}</div>`
+            }
+            <div style="width: 140px; border-bottom: 1.5px solid #0f172a; margin: 0 auto 4px auto;"></div>
+            <div style="font-weight: 800; font-size: 12.5px; color: #0f172a;">${siteSettings?.headmasterName || 'মো: সাদেকুল ইসলাম'}</div>
+            <div style="font-weight: 600; font-size: 11px; color: #475569;">${siteSettings?.headmasterDesignation || 'প্রধান শিক্ষক'}</div>
+            <div style="font-size: 10px; color: #64748b;">${schoolNameBn}</div>
           </div>
         </div>
 

@@ -163,6 +163,7 @@ export type DocumentKind =
   | 'exam_schedule'
   | 'attendance_sheet'
   | 'roster'
+  | 'voucher'
   | 'general';
 
 export interface GeneratePdfOptions {
@@ -181,9 +182,13 @@ export interface GeneratePdfOptions {
    */
   fileName: string;
   /**
-   * Margin around the document in millimeters (default: 12mm, recommended: 10-15mm)
+   * Margin around the document in millimeters (default: 7mm, recommended: 6-10mm)
    */
   marginMm?: number;
+  /**
+   * Force fit onto a single A4 page without multi-page slicing
+   */
+  forceSinglePage?: boolean;
   /**
    * Optional callback when download starts or succeeds
    */
@@ -297,7 +302,7 @@ export const generatePdfFromHtml = async (
   const isLandscape = orientation === 'landscape';
   const targetWidth = isLandscape ? LANDSCAPE_WIDTH_PX : PORTRAIT_WIDTH_PX;
   const targetMinHeight = isLandscape ? LANDSCAPE_PAGE_HEIGHT_PX : PORTRAIT_PAGE_HEIGHT_PX;
-  const marginMm = typeof options.marginMm === 'number' ? options.marginMm : 12; // 12mm default (10-15mm range)
+  const marginMm = typeof options.marginMm === 'number' ? options.marginMm : 7; // 7mm narrow margin default
 
   let container: HTMLElement | null = null;
 
@@ -485,10 +490,23 @@ export const generatePdfFromHtml = async (
     const canvasPageHeightPx = (canvas.width * pageHeightMm) / pageWidthMm;
     const domScale = canvas.width / targetWidth; // usually 2
 
-    // Check if content fits comfortably on a single page (with 3mm tolerance)
-    if (totalContentHeightMm <= pageHeightMm + 3) {
+    // Check if content fits on a single page or is intended as a single-page document (Admit Card, Marksheet, Notice, Form)
+    const isSinglePageDocument =
+      options.forceSinglePage === true ||
+      options.docKind === 'certificate' ||
+      options.docKind === 'voucher' ||
+      options.docKind === 'routine' ||
+      totalContentHeightMm <= pageHeightMm * 1.30;
+
+    if (isSinglePageDocument) {
       const imgData = canvas.toDataURL('image/png', 1.0);
-      pdf.addImage(imgData, 'PNG', 0, 0, pageWidthMm, totalContentHeightMm, undefined, 'FAST');
+      // If content is slightly longer than pageHeightMm, scale proportionally so it fits strictly on 1 A4 page with NO 2nd page!
+      const scale = Math.min(1, pageHeightMm / totalContentHeightMm);
+      const renderWidth = pageWidthMm * scale;
+      const renderHeight = totalContentHeightMm * scale;
+      const offsetX = (pageWidthMm - renderWidth) / 2;
+      const offsetY = 0;
+      pdf.addImage(imgData, 'PNG', offsetX, offsetY, renderWidth, renderHeight, undefined, 'FAST');
     } else {
       // Content extends past 1 page: Slice into distinct, beautiful A4 pages
       // Collect bounding positions of table rows, headings, and paragraphs to avoid slicing in the middle of a row

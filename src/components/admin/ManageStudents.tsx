@@ -492,9 +492,12 @@ export const ManageStudents: React.FC = () => {
   </table>
 
   <div class="footer">
-    <div class="sign-box">শ্রেণি শিক্ষকের স্বাক্ষর</div>
     <div class="sign-box">হিসাবরক্ষক</div>
-    <div class="sign-box">প্রধান শিক্ষকের স্বাক্ষর ও সিল</div>
+    <div class="sign-box">
+      ${siteSettings.headmasterSignatureUrl ? `<img src="${siteSettings.headmasterSignatureUrl}" height="30" style="display:block; margin:0 auto;" /><br/>` : ''}
+      <strong>${siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}</strong><br/>
+      ${siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}
+    </div>
   </div>
 </body>
 </html>`;
@@ -805,8 +808,11 @@ export const ManageStudents: React.FC = () => {
   </div>
   <div class="signatures">
     <div class="sign-box">অভিভাবকের স্বাক্ষর</div>
-    <div class="sign-box">শ্রেণি শিক্ষকের স্বাক্ষর</div>
-    <div class="sign-box">প্রধান শিক্ষকের স্বাক্ষর ও সিল</div>
+    <div class="sign-box">
+      ${siteSettings.headmasterSignatureUrl ? `<img src="${siteSettings.headmasterSignatureUrl}" height="30" style="display:block; margin:0 auto;" /><br/>` : ''}
+      <strong>${siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}</strong><br/>
+      ${siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}
+    </div>
   </div>
 </body>
 </html>`;
@@ -2254,13 +2260,16 @@ export const ManageStudents: React.FC = () => {
                 {/* Signatures Area */}
                 <div className="mt-12 pt-8 flex items-center justify-between text-xs text-gray-600 border-t border-gray-100">
                   <div className="text-center border-t border-dashed border-gray-400 pt-1 w-32">
-                    শ্রেণি শিক্ষকের স্বাক্ষর
-                  </div>
-                  <div className="text-center border-t border-dashed border-gray-400 pt-1 w-32">
                     হিসাবরক্ষক
                   </div>
-                  <div className="text-center border-t border-dashed border-gray-400 pt-1 w-36">
-                    প্রধান শিক্ষকের স্বাক্ষর ও সিল
+                  <div className="text-center min-w-[150px]">
+                    {siteSettings.headmasterSignatureUrl && (
+                      <img src={siteSettings.headmasterSignatureUrl} alt="Signature" className="h-8 max-w-[120px] mx-auto object-contain mb-1" />
+                    )}
+                    <div className="border-t border-dashed border-gray-400 pt-1">
+                      <span className="font-bold text-gray-900 block">{siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}</span>
+                      <span className="text-[10px] text-gray-600">{siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2960,18 +2969,17 @@ export const ManageStudents: React.FC = () => {
                     {/* Official Signatures Row */}
                     <div className="mt-12 pt-6 flex items-center justify-between text-xs text-gray-600 border-t border-dashed border-gray-300">
                       <div className="text-center">
-                        <div className="w-28 border-t border-gray-400 pt-1 font-semibold text-gray-700">
+                        <div className="w-32 border-t border-gray-400 pt-1 font-semibold text-gray-700">
                           অভিভাবকের স্বাক্ষর
                         </div>
                       </div>
-                      <div className="text-center">
-                        <div className="w-32 border-t border-gray-400 pt-1 font-semibold text-gray-700">
-                          শ্রেণি শিক্ষকের স্বাক্ষর
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="w-40 border-t border-gray-400 pt-1 font-semibold text-gray-700">
-                          প্রধান শিক্ষকের স্বাক্ষর ও সিল
+                      <div className="text-center min-w-[150px]">
+                        {siteSettings.headmasterSignatureUrl && (
+                          <img src={siteSettings.headmasterSignatureUrl} alt="Signature" className="h-8 max-w-[120px] mx-auto object-contain mb-1" />
+                        )}
+                        <div className="w-40 border-t border-gray-400 pt-1">
+                          <span className="font-bold text-gray-900 block text-xs">{siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}</span>
+                          <span className="text-[10px] text-gray-600 font-medium">{siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}</span>
                         </div>
                       </div>
                     </div>

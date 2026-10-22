@@ -282,7 +282,7 @@ export const Header: React.FC = () => {
         {/* Brand Logo & Name */}
         <div className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group" onClick={handleHomeClick}>
           <img
-            src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+            src={siteSettings.logoUrl || '/assets/aistudio/Logo_a3f5277a.png'}
             alt={siteSettings.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}
             className={`${logoSizeClass} rounded-full object-cover border-[2.5px] border-[#F59E0B] shadow-xs bg-[#00A859] transition-all group-hover:scale-105`}
           />
@@ -570,7 +570,7 @@ export const Header: React.FC = () => {
             }}
             className="bg-[#15803d] hover:bg-[#166534] text-white px-3.5 py-1.5 rounded-lg font-semibold shadow-xs hover:shadow transition cursor-pointer text-xs sm:text-sm"
           >
-            ভর্তি আবেদন
+            {siteSettings.headerAdmissionBtnText || 'ভর্তি আবেদন'}
           </button>
         </nav>
 
@@ -580,7 +580,7 @@ export const Header: React.FC = () => {
             onClick={() => setIsAdmissionModalOpen(true)}
             className="bg-[#15803d] text-white px-3 py-1.5 rounded text-xs font-semibold"
           >
-            ভর্তি আবেদন
+            {siteSettings.headerAdmissionBtnText || 'ভর্তি আবেদন'}
           </button>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

@@ -80,14 +80,14 @@ export const AcademicPrograms: React.FC = () => {
                   onClick={() => setSelectedProgram(prog)}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-900 cursor-pointer"
                 >
-                  <span>বিস্তারিত জানুন</span>
+                  <span>{siteSettings.programsDetailBtnText || 'বিস্তারিত জানুন'}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => setIsAdmissionModalOpen(true)}
                   className="text-xs text-gray-500 hover:text-emerald-700 font-medium cursor-pointer"
                 >
-                  ভর্তি আবেদন →
+                  {siteSettings.programsApplyBtnText || 'ভর্তি আবেদন →'}
                 </button>
               </div>
             </div>

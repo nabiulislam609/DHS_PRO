@@ -24,6 +24,7 @@ import { ManageAcademicPrograms } from './ManageAcademicPrograms';
 import { ManageStatistics } from './ManageStatistics';
 import { ManageDownloads } from './ManageDownloads';
 import { ManageAdminSecurity } from './ManageAdminSecurity';
+import { ManageFrontendContent } from './ManageFrontendContent';
 import { GenericSectionManager } from './GenericSectionManager';
 import { AdminLoginPage } from '../frontend/AdminLoginPage';
 import { Eye, Bell, ShieldCheck, LogOut, AlertTriangle, X } from 'lucide-react';
@@ -74,6 +75,8 @@ export const AdminPanel: React.FC = () => {
         return <ManageGallery />;
       case 'settings':
         return <ManageSiteSettings />;
+      case 'frontend_editor':
+        return <ManageFrontendContent />;
       case 'header_settings':
         return <ManageHeaderAndTicker />;
       case 'hero':

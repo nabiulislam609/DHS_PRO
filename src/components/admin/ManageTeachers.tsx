@@ -303,8 +303,11 @@ export const ManageTeachers: React.FC = () => {
   </table>
   <div class="footer-sign">
     <div class="sign-col">হিসাবরক্ষক</div>
-    <div class="sign-col">সহকারী প্রধান শিক্ষক</div>
-    <div class="sign-col">প্রধান শিক্ষকের স্বাক্ষর ও সিল</div>
+    <div class="sign-col">
+      ${siteSettings.headmasterSignatureUrl ? `<img src="${siteSettings.headmasterSignatureUrl}" height="30" style="display:block; margin:0 auto;" /><br/>` : ''}
+      <strong>${siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}</strong><br/>
+      ${siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}
+    </div>
   </div>
 </body>
 </html>`;
@@ -549,8 +552,11 @@ export const ManageTeachers: React.FC = () => {
 
   <div class="footer">
     <div class="sign-box">সংশ্লিষ্ট শিক্ষকের স্বাক্ষর</div>
-    <div class="sign-box">সহকারী প্রধান শিক্ষক</div>
-    <div class="sign-box">প্রধান শিক্ষকের স্বাক্ষর ও সিল</div>
+    <div class="sign-box">
+      ${siteSettings.headmasterSignatureUrl ? `<img src="${siteSettings.headmasterSignatureUrl}" height="32" style="display:block; margin:0 auto 4px;" /><br/>` : ''}
+      <strong>${siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}</strong><br/>
+      ${siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}
+    </div>
   </div>
 </body>
 </html>`;
@@ -1125,11 +1131,16 @@ export const ManageTeachers: React.FC = () => {
                     <div className="w-32 border-t border-gray-400 pt-1 font-semibold text-gray-700">হিসাবরক্ষক</div>
                   </div>
                   <div className="text-center">
-                    <div className="w-36 border-t border-gray-400 pt-1 font-semibold text-gray-700">সহকারী প্রধান শিক্ষক</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-40 border-t border-gray-400 pt-1 font-semibold text-gray-700">
-                      প্রধান শিক্ষকের স্বাক্ষর ও সিল
+                    <div className="w-48 border-t border-gray-400 pt-1 font-semibold text-gray-700">
+                      {siteSettings.headmasterSignatureUrl && (
+                        <img
+                          src={siteSettings.headmasterSignatureUrl}
+                          alt="স্বাক্ষর"
+                          className="h-8 mx-auto object-contain mb-1"
+                        />
+                      )}
+                      <div className="font-bold text-gray-900">{siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}</div>
+                      <div className="text-[11px] text-gray-600">{siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}</div>
                     </div>
                   </div>
                 </div>
@@ -1519,7 +1530,7 @@ export const ManageTeachers: React.FC = () => {
                 <div className="text-center border-b-2 border-emerald-800 pb-4 space-y-1">
                   <div className="flex items-center justify-center gap-3">
                     <img
-                      src={siteSettings?.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+                      src={siteSettings?.logoUrl || '/assets/aistudio/Logo_a3f5277a.png'}
                       alt="Logo"
                       className="w-14 h-14 object-cover rounded-full border-[2.5px] border-[#F59E0B] bg-[#00A859] shadow-xs"
                     />
@@ -1587,11 +1598,16 @@ export const ManageTeachers: React.FC = () => {
                     <div className="w-32 border-t border-gray-400 pt-1 font-semibold text-gray-700">সংশ্লিষ্ট শিক্ষক</div>
                   </div>
                   <div className="text-center">
-                    <div className="w-36 border-t border-gray-400 pt-1 font-semibold text-gray-700">সহকারী প্রধান শিক্ষক</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-40 border-t border-gray-400 pt-1 font-semibold text-gray-700">
-                      প্রধান শিক্ষকের স্বাক্ষর ও সিল
+                    <div className="w-48 border-t border-gray-400 pt-1 font-semibold text-gray-700">
+                      {siteSettings.headmasterSignatureUrl && (
+                        <img
+                          src={siteSettings.headmasterSignatureUrl}
+                          alt="স্বাক্ষর"
+                          className="h-8 mx-auto object-contain mb-1"
+                        />
+                      )}
+                      <div className="font-bold text-gray-900">{siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}</div>
+                      <div className="text-[11px] text-gray-600">{siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}</div>
                     </div>
                   </div>
                 </div>

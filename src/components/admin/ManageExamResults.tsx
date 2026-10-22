@@ -16,9 +16,11 @@ import {
   GraduationCap,
   Pencil,
   AlertCircle,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { ExamResult, SubjectMark, Student } from '../../types';
 import { getStudentResultImage, getStudentPhoto } from '../../utils/studentPhoto';
+import { BulkImportResultsModal } from './BulkImportResultsModal';
 
 export { getStudentResultImage, getStudentPhoto };
 import {
@@ -100,8 +102,16 @@ export const PRESET_SUBJECTS = [
 ];
 
 export const ManageExamResults: React.FC = () => {
-  const { examResults, students, addExamResult, deleteExamResult, updateExamResult } = useSchool();
+  const {
+    examResults,
+    students,
+    addExamResult,
+    addMultipleExamResults,
+    deleteExamResult,
+    updateExamResult,
+  } = useSchool();
   const [modalOpen, setModalOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewingResult, setViewingResult] = useState<ExamResult | null>(null);
   const [editingResultId, setEditingResultId] = useState<string | null>(null);
@@ -583,13 +593,23 @@ export const ManageExamResults: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={openAddModal}
-          className="inline-flex items-center gap-2 bg-[#059669] hover:bg-[#047857] text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer self-start sm:self-auto shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Student Result</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto shrink-0">
+          <button
+            onClick={() => setIsBulkImportOpen(true)}
+            className="inline-flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold shadow-2xs transition cursor-pointer"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <span>বাল্ক ফলাফল আপলোড (Excel / CSV)</span>
+          </button>
+
+          <button
+            onClick={openAddModal}
+            className="inline-flex items-center gap-2 bg-[#059669] hover:bg-[#047857] text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Student Result</span>
+          </button>
+        </div>
       </div>
 
       {/* Search Bar - Exactly matching Image 2 */}
@@ -1380,6 +1400,15 @@ export const ManageExamResults: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Bulk Import Results Modal */}
+      {isBulkImportOpen && (
+        <BulkImportResultsModal
+          isOpen={isBulkImportOpen}
+          onClose={() => setIsBulkImportOpen(false)}
+          onImportResults={addMultipleExamResults}
+        />
       )}
     </div>
   );

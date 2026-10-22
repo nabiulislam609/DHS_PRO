@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useSchool } from '../../context/SchoolContext';
-import { DownloadableForm, NavigationSubItem, ActiveExam } from '../../types';
+import { DownloadableForm, NavigationSubItem, ActiveExam, ExamSubjectSchedule } from '../../types';
 import {
   Download,
   Plus,
@@ -66,16 +66,16 @@ export const AVAILABLE_EXAM_CLASSES = [
 ];
 
 export const PRESET_EXAM_SUGGESTIONS = [
-  'বার্ষিক পরীক্ষা ২০২৬ (Annual Exam)',
-  'অর্ধবার্ষিক পরীক্ষা ২০২৬ (Half-Yearly Exam)',
-  'Pre-Test Examination (2026)',
-  'Test Examination (2026)',
-  '১ম সাময়িক পরীক্ষা ২০২৬ (1st Terminal Exam)',
-  '২য় সাময়িক পরীক্ষা ২০২৬ (2nd Terminal Exam)',
-  'মডেল টেস্ট পরীক্ষা ২০২৬ (Model Test Exam)',
-  'মেধাবৃত্তি প্রস্তুতি পরীক্ষা ২০২৬',
-  'এসএসসি প্রস্তুতিমূলক পরীক্ষা ২০২৬ (SSC Prep Exam)',
-  'বিশেষ সাপ্তাহিক মূল্যায়ন পরীক্ষা ২০২৬',
+  'বার্ষিক পরীক্ষা (Annual Examination)',
+  'অর্ধবার্ষিক পরীক্ষা (Half-Yearly Examination)',
+  'Pre-Test Examination',
+  'Test Examination',
+  '১ম সাময়িক পরীক্ষা (1st Terminal Examination)',
+  '২য় সাময়িক পরীক্ষা (2nd Terminal Examination)',
+  'মডেল টেস্ট পরীক্ষা (Model Test Examination)',
+  'মেধাবৃত্তি প্রস্তুতি পরীক্ষা',
+  'এসএসসি প্রস্তুতিমূলক পরীক্ষা (SSC Preparatory Exam)',
+  'বিশেষ সাপ্তাহিক মূল্যায়ন পরীক্ষা',
 ];
 
 export const ManageDownloads: React.FC = () => {
@@ -170,13 +170,93 @@ export const ManageDownloads: React.FC = () => {
   const [editingExam, setEditingExam] = useState<ActiveExam | null>(null);
   const [viewingExam, setViewingExam] = useState<ActiveExam | null>(null);
   const [generatingExamPdfId, setGeneratingExamPdfId] = useState<string | null>(null);
-  const [examForm, setExamForm] = useState({
-    examTerm: 'বার্ষিক পরীক্ষা ২০২৬ (Annual Examination)',
+  // Helper to generate default subject schedules for an exam
+  const generateDefaultSubjectSchedules = (
+    startDateStr: string,
+    baseTime: string = 'সকাল ১০:০০ - দুপুর ০১:০০',
+    existingSubjects?: { subject: string; code?: string }[]
+  ): ExamSubjectSchedule[] => {
+    const subjectsToUse = existingSubjects && existingSubjects.length > 0 ? existingSubjects : [
+      { subject: 'বাংলা ১ম পত্র', code: '১০১' },
+      { subject: 'বাংলা ২য় পত্র', code: '১০২' },
+      { subject: 'ইংরেজি ১ম পত্র', code: '১০৭' },
+      { subject: 'ইংরেজি ২য় পত্র', code: '১০৮' },
+      { subject: 'সাধারণ গণিত', code: '১০৯' },
+      { subject: 'ধর্ম ও নৈতিক শিক্ষা', code: '১১১' },
+      { subject: 'তথ্য ও যোগাযোগ প্রযুক্তি (ICT)', code: '১৫৪' },
+      { subject: 'বিজ্ঞান / পদার্থবিজ্ঞান / হিসাববিজ্ঞান', code: '১২৭' },
+      { subject: 'বাংলাদেশ ও বিশ্বপরিচয় / রসায়ন / ব্যবসায় উদ্যোগ', code: '১৫০' },
+      { subject: 'উচ্চতর গণিত / জীববিজ্ঞান / ফিন্যান্স ও ব্যাংকিং', code: '১৩৮' },
+    ];
+
+    let startDay = 20;
+    let startMonth = 9; // October (0-indexed)
+    let startYear = 2026;
+
+    if (startDateStr) {
+      const bnToEn: Record<string, string> = {
+        '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+        '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9',
+      };
+      const normalizedStr = startDateStr.replace(/[০-৯]/g, (d) => bnToEn[d] || d);
+      const matchNumbers = normalizedStr.match(/\d+/g);
+      if (matchNumbers && matchNumbers.length > 0) {
+        const parsedDay = parseInt(matchNumbers[0], 10);
+        if (parsedDay > 0 && parsedDay <= 31) startDay = parsedDay;
+        if (matchNumbers.length > 1) {
+          const parsedYear = parseInt(matchNumbers[matchNumbers.length - 1], 10);
+          if (parsedYear >= 2020 && parsedYear <= 2040) startYear = parsedYear;
+        }
+      }
+    }
+
+    const bnMonths = [
+      'জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
+      'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
+    ];
+    const enToBnDigits = (n: number) => {
+      const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+      return String(n).replace(/\d/g, (d) => bnDigits[Number(d)]);
+    };
+
+    return subjectsToUse.map((s, idx) => {
+      const dayOffset = idx * 2;
+      const examDate = new Date(startYear, startMonth, startDay + dayOffset);
+      const dayBn = enToBnDigits(examDate.getDate());
+      const monthBn = bnMonths[examDate.getMonth()];
+      const yearBn = enToBnDigits(examDate.getFullYear());
+      const dateFormatted = `${dayBn} ${monthBn} ${yearBn}`;
+
+      const isIct = s.subject.includes('তথ্য ও যোগাযোগ') || s.subject.includes('ICT');
+      const timeStr = isIct ? 'সকাল ১০:০০ - দুপুর ১২:০০' : baseTime;
+
+      return {
+        subject: s.subject,
+        code: s.code || `${idx + 101}`,
+        date: dateFormatted,
+        time: timeStr,
+      };
+    });
+  };
+
+  const [examForm, setExamForm] = useState<{
+    examTerm: string;
+    examYear: string;
+    examStartDate: string;
+    examTime: string;
+    isActive: boolean;
+    eligibleClasses: string[];
+    description: string;
+    subjectSchedules: ExamSubjectSchedule[];
+  }>({
+    examTerm: 'বার্ষিক পরীক্ষা (Annual Examination)',
     examYear: '২০২৬',
     examStartDate: '১৫ নভেম্বর ২০২৬',
+    examTime: 'সকাল ১০:০০ - দুপুর ০১:০০',
     isActive: true,
     eligibleClasses: [...AVAILABLE_EXAM_CLASSES] as string[],
     description: '',
+    subjectSchedules: [],
   });
 
   // Keep local form in sync with admitCardConfig updates
@@ -364,29 +444,42 @@ export const ManageDownloads: React.FC = () => {
 
   const openAddExam = () => {
     setEditingExam(null);
+    const defaultStart = '২০ অক্টোবর ২০২৬';
+    const defaultTime = 'সকাল ১০:০০ - দুপুর ০১:০০';
     setExamForm({
       examTerm: '',
-      examYear: '২০২৬',
-      examStartDate: '২০ অক্টোবর ২০২৬',
+      examYear: admitCardConfig?.examYear || '২০২৬',
+      examStartDate: defaultStart,
+      examTime: defaultTime,
       isActive: true,
       eligibleClasses: [...AVAILABLE_EXAM_CLASSES],
       description: '',
+      subjectSchedules: generateDefaultSubjectSchedules(defaultStart, defaultTime),
     });
     setExamModalOpen(true);
   };
 
   const openEditExam = (exam: ActiveExam) => {
     setEditingExam(exam);
+    const defaultStart = exam.examStartDate || '২০ অক্টোবর ২০২৬';
+    const defaultTime = exam.examTime || 'সকাল ১০:০০ - দুপুর ০১:০০';
+    const schedules =
+      exam.subjectSchedules && exam.subjectSchedules.length > 0
+        ? [...exam.subjectSchedules]
+        : generateDefaultSubjectSchedules(defaultStart, defaultTime);
+
     setExamForm({
       examTerm: exam.examTerm,
       examYear: exam.examYear,
       examStartDate: exam.examStartDate,
+      examTime: defaultTime,
       isActive: exam.isActive,
       eligibleClasses:
         exam.eligibleClasses && exam.eligibleClasses.length > 0
           ? [...exam.eligibleClasses]
           : [...AVAILABLE_EXAM_CLASSES],
       description: exam.description || '',
+      subjectSchedules: schedules,
     });
     setExamModalOpen(true);
   };
@@ -397,6 +490,29 @@ export const ManageDownloads: React.FC = () => {
       alert('অনুগ্রহ করে কাস্টম পরীক্ষার নাম লিখুন বা সাজেশন থেকে নির্বাচন করুন');
       return;
     }
+
+    if (!examForm.subjectSchedules || examForm.subjectSchedules.length === 0) {
+      alert('পরীক্ষার রুটিনে কমপক্ষে একটি বিষয় থাকা বাধ্যতামূলক।');
+      return;
+    }
+
+    // MANDATORY validation: Every subject must have a date and time
+    for (let i = 0; i < examForm.subjectSchedules.length; i++) {
+      const s = examForm.subjectSchedules[i];
+      if (!s.subject.trim()) {
+        alert(`বিষয় নম্বর ${i + 1}-এর নাম লেখা বাধ্যতামূলক।`);
+        return;
+      }
+      if (!s.date.trim()) {
+        alert(`"${s.subject}" বিষয়ের পরীক্ষার তারিখ নির্ধারণ করা বাধ্যতামূলক!`);
+        return;
+      }
+      if (!s.time.trim()) {
+        alert(`"${s.subject}" বিষয়ের পরীক্ষার সময় নির্ধারণ করা বাধ্যতামূলক!`);
+        return;
+      }
+    }
+
     const chosenClasses =
       examForm.eligibleClasses && examForm.eligibleClasses.length > 0
         ? examForm.eligibleClasses
@@ -407,22 +523,26 @@ export const ManageDownloads: React.FC = () => {
         examTerm: examForm.examTerm.trim(),
         examYear: examForm.examYear.trim(),
         examStartDate: examForm.examStartDate.trim(),
+        examTime: examForm.examTime.trim(),
         isActive: examForm.isActive,
         eligibleClasses: chosenClasses,
         description: examForm.description.trim(),
+        subjectSchedules: examForm.subjectSchedules,
       });
-      alert(`"${examForm.examTerm}" পরীক্ষার তথ্য সফলভাবে আপডেট হয়েছে! ফ্রন্টএন্ডে তা হালনাগাদ হয়ে গেছে।`);
+      alert(`"${examForm.examTerm}" পরীক্ষার তথ্য ও বিষয়ভিত্তিক রুটিন সফলভাবে আপডেট হয়েছে! ফ্রন্টএন্ডে তা হালনাগাদ হয়ে গেছে।`);
     } else {
       addActiveExam({
         examTerm: examForm.examTerm.trim(),
         examYear: examForm.examYear.trim(),
         examStartDate: examForm.examStartDate.trim(),
+        examTime: examForm.examTime.trim(),
         isActive: examForm.isActive,
         eligibleClasses: chosenClasses,
         description: examForm.description.trim(),
+        subjectSchedules: examForm.subjectSchedules,
         createdDate: new Date().toISOString().split('T')[0],
       });
-      alert(`নতুন পরীক্ষা "${examForm.examTerm}" সফলভাবে যুক্ত হয়েছে! এটি এখন সরাসরি ফ্রন্টএন্ড প্রবেশপত্র পোর্টালে দৃশ্যমান ও সক্রিয়।`);
+      alert(`নতুন পরীক্ষা "${examForm.examTerm}" বিষয়ভিত্তিক রুটিনসহ সফলভাবে যুক্ত হয়েছে! এটি এখন সরাসরি ফ্রন্টএন্ড প্রবেশপত্র পোর্টালে দৃশ্যমান ও সক্রিয়।`);
     }
     setExamModalOpen(false);
     setEditingExam(null);
@@ -1001,7 +1121,7 @@ export const ManageDownloads: React.FC = () => {
                       <th className="py-2.5 px-3 w-10 text-center">ক্রম</th>
                       <th className="py-2.5 px-3">পরীক্ষার নাম (Exam Term)</th>
                       <th className="py-2.5 px-3">প্রযোজ্য শ্রেণি (Eligible Classes)</th>
-                      <th className="py-2.5 px-3">বছর ও শুরুর তারিখ</th>
+                      <th className="py-2.5 px-3">শিক্ষাবর্ষ ও সময়সূচি</th>
                       <th className="py-2.5 px-3 text-center">অবস্থা (Status)</th>
                       <th className="py-2.5 px-3 text-right">অ্যাকশন</th>
                     </tr>
@@ -1012,9 +1132,10 @@ export const ManageDownloads: React.FC = () => {
                       : [
                           {
                             id: 'default-exam-1',
-                            examTerm: admitCardConfig?.examTerm || 'Pre-Test Examination (2026)',
+                            examTerm: admitCardConfig?.examTerm || 'Pre-Test Examination',
                             examYear: admitCardConfig?.examYear || '২০২৬',
                             examStartDate: admitCardConfig?.examStartDate || '২০ অক্টোবর ২০২৬',
+                            examTime: admitCardConfig?.examTime || 'সকাল ১০:০০ - দুপুর ০১:০০',
                             isActive: admitCardConfig?.isActive !== false,
                             eligibleClasses: ['৯ম শ্রেণি', '১০ম শ্রেণি'],
                             description: '১০ম শ্রেণি ও এসএসসি পরীক্ষার্থীদের জন্য প্রাক-নির্বাচনী পরীক্ষা',
@@ -1072,8 +1193,11 @@ export const ManageDownloads: React.FC = () => {
                             )}
                           </td>
                           <td className="py-3 px-3">
-                            <div className="font-semibold text-gray-800">{ex.examYear}</div>
-                            <div className="text-[10.5px] text-gray-500">{ex.examStartDate}</div>
+                            <div className="font-bold text-gray-900">{ex.examYear}</div>
+                            <div className="text-[10.5px] text-gray-600 font-medium">{ex.examStartDate}</div>
+                            {ex.examTime && (
+                              <div className="text-[10px] text-emerald-800 font-semibold">{ex.examTime}</div>
+                            )}
                           </td>
                           <td className="py-3 px-3 text-center">
                             <button
@@ -1098,7 +1222,6 @@ export const ManageDownloads: React.FC = () => {
                           </td>
                           <td className="py-3 px-3 text-right">
                             <div className="flex items-center justify-end gap-1 flex-wrap">
-                              {/* View Button */}
                               <button
                                 type="button"
                                 onClick={() => setViewingExam(ex)}
@@ -1108,8 +1231,6 @@ export const ManageDownloads: React.FC = () => {
                                 <Eye className="w-3.5 h-3.5 text-emerald-700" />
                                 <span>ভিউ</span>
                               </button>
-
-                              {/* Edit Button */}
                               <button
                                 type="button"
                                 onClick={() => openEditExam(ex)}
@@ -1119,8 +1240,6 @@ export const ManageDownloads: React.FC = () => {
                                 <Edit2 className="w-3.5 h-3.5 text-blue-700" />
                                 <span>এডিট</span>
                               </button>
-
-                              {/* Delete Button */}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1134,8 +1253,6 @@ export const ManageDownloads: React.FC = () => {
                                 <Trash2 className="w-3.5 h-3.5 text-rose-700" />
                                 <span>ডিলিট</span>
                               </button>
-
-                              {/* Print Button */}
                               <button
                                 type="button"
                                 onClick={() => printExamSchedule(ex, siteSettings, students)}
@@ -1145,8 +1262,6 @@ export const ManageDownloads: React.FC = () => {
                                 <Printer className="w-3.5 h-3.5 text-purple-700" />
                                 <span>প্রিন্ট</span>
                               </button>
-
-                              {/* Download Button */}
                               <button
                                 type="button"
                                 disabled={generatingExamPdfId === ex.id}
@@ -1179,193 +1294,158 @@ export const ManageDownloads: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 2: Current Exam General Configuration & Candidate Instructions */}
-          <form onSubmit={handleSaveAdmitConfig} className="bg-white rounded-2xl border border-gray-200 p-6 space-y-6 shadow-xs">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-            <div>
-              <h3 className="font-bold text-gray-900 text-base">
-                প্রবেশপত্র (Admit Card) সাধারণ সেটিংস ও বিশেষ নিয়মাবলী
-              </h3>
-              <p className="text-xs text-gray-500">
-                বর্তমানে চলমান পরীক্ষার বিবরণ এবং পরীক্ষার্থীদের জন্য মুদ্রিত নির্দেশাবলী নির্ধারণ করুন।
-              </p>
-            </div>
-            <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full">
-              অটোমেটিক জেনারেশন সক্রিয়
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
-            {/* Exam Term with All Exam List selector */}
-            <div className="sm:col-span-2 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="block font-bold text-gray-700">
-                  সক্রিয় পরীক্ষার নাম (Active Exam Term) *
-                </label>
-                <span className="text-[11px] text-emerald-700 font-semibold">
-                  সকল পরীক্ষার তালিকা থেকে নির্বাচন করুন বা কাস্টম লিখুন
-                </span>
+          {/* Card 2: Minimal Viewing-Friendly Admit Card & General Rules Config */}
+          <form onSubmit={handleSaveAdmitConfig} className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm sm:text-base flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-emerald-700" />
+                  <span>প্রবেশপত্র সাধারণ সেটিংস ও বিশেষ নিয়মাবলী (General Config)</span>
+                </h3>
+                <p className="text-[11px] text-gray-500 mt-0.5">
+                  শিক্ষাবর্ষ, মূল পরীক্ষার নাম এবং প্রবেশপত্রে মুদ্রিত পরীক্ষার্থীদের নিয়মাবলী নির্ধারণ করুন
+                </p>
               </div>
-
-              {/* All Exam List Dropdown */}
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setAdmitForm((prev) => ({ ...prev, examTerm: e.target.value }));
-                  }
-                }}
-                defaultValue=""
-                className="w-full px-3 py-2 bg-emerald-50/60 border border-emerald-300 rounded-xl font-bold text-emerald-950 focus:border-emerald-600 focus:bg-white text-xs"
-              >
-                <option value="" disabled>-- সকল পরীক্ষার তালিকা থেকে বেছে নিন (All Exam List) --</option>
-                <option value="বার্ষিক পরীক্ষা ২০২৬ (Annual Examination)">বার্ষিক পরীক্ষা (Annual Examination)</option>
-                <option value="অর্ধবার্ষিক পরীক্ষা ২০২৬ (Half-Yearly Examination)">অর্ধবার্ষিক পরীক্ষা (Half-Yearly Examination)</option>
-                <option value="Pre-Test Examination (2026)">Pre-Test Examination (প্রাক-নির্বাচনী পরীক্ষা)</option>
-                <option value="Test Examination (2026)">Test Examination (নির্বাচনী / টেস্ট পরীক্ষা)</option>
-                <option value="১ম সাময়িক পরীক্ষা ২০২৬ (1st Terminal Exam)">১ম সাময়িক পরীক্ষা (1st Terminal Examination)</option>
-                <option value="২য় সাময়িক পরীক্ষা ২০২৬ (2nd Terminal Exam)">২য় সাময়িক পরীক্ষা (2nd Terminal Examination)</option>
-                <option value="মডেল টেস্ট পরীক্ষা ২০২৬ (Model Test Examination)">মডেল টেস্ট পরীক্ষা (Model Test Examination)</option>
-                <option value="এসএসসি প্রস্তুতিমূলক পরীক্ষা ২০২৬ (SSC Prep Exam)">এসএসসি প্রস্তুতিমূলক পরীক্ষা (SSC Preparatory Exam)</option>
-                <option value="মাসিক মূল্যায়ন পরীক্ষা ২০২৬ (Monthly Assessment)">মাসিক মূল্যায়ন পরীক্ষা (Monthly Assessment)</option>
-              </select>
-
-              {/* Editable Input */}
-              <input
-                type="text"
-                required
-                placeholder="যেমন: Pre-Test Examination (2026) অথবা বার্ষিক পরীক্ষা ২০২৬"
-                value={admitForm.examTerm}
-                onChange={(e) => setAdmitForm({ ...admitForm, examTerm: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:border-emerald-600 focus:bg-white"
-              />
-
-              {/* Quick Pills */}
-              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                <span className="text-[10px] text-gray-500 font-bold">দ্রুত নির্বাচন:</span>
-                {[
-                  'বার্ষিক পরীক্ষা ২০২৬',
-                  'অর্ধবার্ষিক পরীক্ষা ২০২৬',
-                  'Pre-Test Examination (2026)',
-                  'Test Examination (2026)',
-                  '১ম সাময়িক পরীক্ষা ২০২৬',
-                  'মডেল টেস্ট ২০২৬',
-                ].map((term, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setAdmitForm((prev) => ({ ...prev, examTerm: term }))}
-                    className={`text-[10.5px] px-2 py-0.5 rounded-lg border font-medium transition cursor-pointer ${
-                      admitForm.examTerm === term
-                        ? 'bg-emerald-700 text-white border-emerald-800 font-bold'
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/50'
-                    }`}
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Exam Year */}
-            <div className="space-y-1.5">
-              <label className="block font-bold text-gray-700">পরীক্ষার বছর (Year)</label>
-              <input
-                type="text"
-                value={admitForm.examYear}
-                onChange={(e) => setAdmitForm({ ...admitForm, examYear: e.target.value })}
-                placeholder="যেমন: ২০২৬"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:border-emerald-600 focus:bg-white"
-              />
-            </div>
-
-            {/* Exam Start Date */}
-            <div className="sm:col-span-2 space-y-1.5">
-              <label className="block font-bold text-gray-700">পরীক্ষা শুরুর তারিখ *</label>
-              <input
-                type="text"
-                value={admitForm.examStartDate}
-                onChange={(e) => setAdmitForm({ ...admitForm, examStartDate: e.target.value })}
-                placeholder="যেমন: ২০ অক্টোবর ২০২৬"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:border-emerald-600 focus:bg-white"
-              />
-              <span className="text-[10.5px] text-gray-500 block">
-                এই তারিখ অনুযায়ী প্রবেশপত্রের পরীক্ষার সময়সূচি ও রুটিন স্বয়ংক্রিয়ভাবে ধার্য হবে।
-              </span>
-            </div>
-
-            <div className="sm:col-span-1 flex items-center pt-5">
-              <label className="flex items-center gap-2 cursor-pointer font-bold text-gray-800">
-                <input
-                  type="checkbox"
-                  checked={admitForm.isActive}
-                  onChange={(e) => setAdmitForm({ ...admitForm, isActive: e.target.checked })}
-                  className="w-4 h-4 text-emerald-600 rounded"
-                />
-                <span className="text-xs">প্রবেশপত্র পোর্টাল চালু রাখুন</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Exam Instructions List */}
-          <div className="border-t border-gray-100 pt-5 space-y-3">
-            <label className="block font-bold text-gray-800 text-xs">
-              প্রবেশপত্রে প্রদর্শিত বিশেষ নির্দেশাবলী (Candidate Instructions):
-            </label>
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="নতুন নির্দেশ লিখুন..."
-                value={instructionInput}
-                onChange={(e) => setInstructionInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addInstruction();
-                  }
-                }}
-                className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs"
-              />
               <button
-                type="button"
-                onClick={addInstruction}
-                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                type="submit"
+                className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer self-start sm:self-auto"
               >
-                যুক্ত করুন
+                সংরক্ষণ করুন (Save)
               </button>
             </div>
 
-            <div className="space-y-2 pt-2">
-              {instructionsList.map((inst, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between gap-3 p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800"
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="font-bold text-emerald-800 font-mono">{idx + 1}.</span>
-                    <span>{inst}</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeInstruction(idx)}
-                    className="text-rose-500 hover:text-rose-700 p-1"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              {/* Custom Academic Year */}
+              <div className="space-y-1">
+                <label className="block font-bold text-gray-700">
+                  কাস্টম শিক্ষাবর্ষ (Custom Year) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={admitForm.examYear}
+                  onChange={(e) => setAdmitForm({ ...admitForm, examYear: e.target.value })}
+                  placeholder="যেমন: ২০২৬ বা ২০২৭"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-bold text-emerald-950 focus:border-emerald-600 focus:bg-white"
+                />
+                <span className="text-[10px] text-gray-500">
+                  বছর পরিবর্তন করলে সমগ্র প্রবেশপত্র সিস্টেমে এই বছর প্রযোজ্য হবে।
+                </span>
+              </div>
 
-          <div className="flex justify-end pt-4 border-t border-gray-100">
-            <button
-              type="submit"
-              className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
-            >
-              সংরক্ষণ করুন (Save Settings)
-            </button>
-          </div>
-        </form>
+              {/* Default Active Exam Term */}
+              <div className="space-y-1 sm:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label className="block font-bold text-gray-700">
+                    ডিফল্ট সক্রিয় পরীক্ষা (Default Exam Term) *
+                  </label>
+                  <span className="text-[10px] text-emerald-700 font-semibold">
+                    সাজেশন থেকে নির্বাচন করুন বা কাস্টম লিখুন
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setAdmitForm((prev) => ({ ...prev, examTerm: e.target.value }));
+                      }
+                    }}
+                    defaultValue=""
+                    className="w-1/2 px-3 py-2 bg-emerald-50/70 border border-emerald-300 rounded-xl font-bold text-emerald-950 text-xs focus:bg-white"
+                  >
+                    <option value="" disabled>-- পরীক্ষার তালিকা --</option>
+                    {PRESET_EXAM_SUGGESTIONS.map((preset, pIdx) => (
+                      <option key={pIdx} value={preset}>{preset}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    required
+                    placeholder="যেমন: Pre-Test Examination অথবা বার্ষিক পরীক্ষা"
+                    value={admitForm.examTerm}
+                    onChange={(e) => setAdmitForm({ ...admitForm, examTerm: e.target.value })}
+                    className="w-1/2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:border-emerald-600 focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Exam Start Date */}
+              <div className="space-y-1">
+                <label className="block font-bold text-gray-700">ডিফল্ট শুরুর তারিখ</label>
+                <input
+                  type="text"
+                  value={admitForm.examStartDate}
+                  onChange={(e) => setAdmitForm({ ...admitForm, examStartDate: e.target.value })}
+                  placeholder="যেমন: ২০ অক্টোবর ২০২৬"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl"
+                />
+              </div>
+
+              {/* Portal status toggle */}
+              <div className="sm:col-span-2 flex items-center pt-5">
+                <label className="flex items-center gap-2 cursor-pointer font-bold text-gray-800 bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-200">
+                  <input
+                    type="checkbox"
+                    checked={admitForm.isActive}
+                    onChange={(e) => setAdmitForm({ ...admitForm, isActive: e.target.checked })}
+                    className="w-4 h-4 text-emerald-600 rounded"
+                  />
+                  <span className="text-xs">প্রবেশপত্র পোর্টাল চালু রাখুন (অনলাইন ডাউনলোড সক্রিয়)</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Candidate Instructions List */}
+            <div className="border-t border-gray-100 pt-4 space-y-3">
+              <label className="block font-bold text-gray-800 text-xs">
+                প্রবেশপত্রে মুদ্রিত পরীক্ষার্থীদের বিশেষ নির্দেশাবলী (Candidate Instructions):
+              </label>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="নতুন নিয়ম বা নির্দেশ লিখুন..."
+                  value={instructionInput}
+                  onChange={(e) => setInstructionInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addInstruction();
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={addInstruction}
+                  className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  যুক্ত করুন
+                </button>
+              </div>
+
+              <div className="space-y-1.5 pt-1">
+                {instructionsList.map((inst, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between gap-3 p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-800"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="font-bold text-emerald-800 font-mono text-[11px]">{idx + 1}.</span>
+                      <span>{inst}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeInstruction(idx)}
+                      className="text-rose-500 hover:text-rose-700 p-1 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </form>
 
         {/* Class-wise Subject List Validation Card (Admin View) */}
         <div className="bg-white rounded-2xl border border-emerald-200 p-6 space-y-5 shadow-xs">
@@ -1740,8 +1820,8 @@ export const ManageDownloads: React.FC = () => {
 
       {/* Exam Add/Edit Modal */}
       {examModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-gray-100 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-3xl w-full p-5 sm:p-6 space-y-4 shadow-xl border border-gray-100 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
@@ -1858,16 +1938,16 @@ export const ManageDownloads: React.FC = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <label className="block font-bold text-gray-700">পরীক্ষার বছর *</label>
+                  <label className="block font-bold text-gray-700">কাস্টম শিক্ষাবর্ষ *</label>
                   <input
                     type="text"
                     required
                     value={examForm.examYear}
                     onChange={(e) => setExamForm({ ...examForm, examYear: e.target.value })}
-                    placeholder="যেমন: ২০২৬"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl"
+                    placeholder="যেমন: ২০২৬ বা ২০২৭"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-bold text-emerald-950"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1878,7 +1958,18 @@ export const ManageDownloads: React.FC = () => {
                     value={examForm.examStartDate}
                     onChange={(e) => setExamForm({ ...examForm, examStartDate: e.target.value })}
                     placeholder="যেমন: ২০ অক্টোবর ২০২৬"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-medium"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block font-bold text-gray-700">পরীক্ষার সময় (Exam Time) *</label>
+                  <input
+                    type="text"
+                    required
+                    value={examForm.examTime}
+                    onChange={(e) => setExamForm({ ...examForm, examTime: e.target.value })}
+                    placeholder="যেমন: সকাল ১০:০০ - দুপুর ০১:০০"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-medium"
                   />
                 </div>
               </div>
@@ -1957,6 +2048,201 @@ export const ManageDownloads: React.FC = () => {
                     ? '⚠️ কোনো শ্রেণি নির্বাচন না করলে স্বয়ংক্রিয়ভাবে সকল শ্রেণির জন্য গণ্য হবে।'
                     : `বর্তমানে ${examForm.eligibleClasses.length}টি শ্রেণি নির্বাচিত রয়েছে। শুধুমাত্র নির্বাচিত শ্রেণির শিক্ষার্থীরা এই পরীক্ষার প্রবেশপত্র ডাউনলোড করতে পারবে।`}
                 </p>
+              </div>
+
+              {/* Subject Schedule Section - Mandatory for every subject */}
+              <div className="space-y-3 p-3.5 bg-emerald-50/40 rounded-xl border-2 border-emerald-300">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200 pb-2.5">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-emerald-700" />
+                      <h4 className="font-bold text-gray-900 text-xs sm:text-sm">
+                        বিষয়ভিত্তিক পরীক্ষার তারিখ ও সময়সূচি (বাধ্যতামূলক) *
+                      </h4>
+                    </div>
+                    <p className="text-[10.5px] text-gray-600 mt-0.5">
+                      প্রবেশপত্রে প্রদর্শনের জন্য প্রতিটি বিষয়ের পরীক্ষার তারিখ এবং সময় অবশ্যই পূরণ করতে হবে।
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const regenerated = generateDefaultSubjectSchedules(
+                          examForm.examStartDate,
+                          examForm.examTime,
+                          examForm.subjectSchedules.map((s) => ({ subject: s.subject, code: s.code }))
+                        );
+                        setExamForm((prev) => ({ ...prev, subjectSchedules: regenerated }));
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-[11px] font-bold transition cursor-pointer"
+                      title="পরীক্ষা শুরুর তারিখ অনুযায়ী প্রতিটি বিষয়ের জন্য ২ দিন ব্যবধানে স্বয়ংক্রিয় তারিখ তৈরি করুন"
+                    >
+                      <Sparkles className="w-3 h-3 text-emerald-600" />
+                      <span>📅 অটো-ফিল তারিখ</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExamForm((prev) => ({
+                          ...prev,
+                          subjectSchedules: [
+                            ...prev.subjectSchedules,
+                            {
+                              subject: '',
+                              code: '',
+                              date: examForm.examStartDate || '২০ অক্টোবর ২০২৬',
+                              time: examForm.examTime || 'সকাল ১০:০০ - দুপুর ০১:০০',
+                            },
+                          ],
+                        }));
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-[11px] font-bold transition cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>বিষয় যোগ করুন</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Table of Subjects */}
+                <div className="overflow-x-auto border border-emerald-200 rounded-xl bg-white shadow-2xs max-h-72 overflow-y-auto">
+                  <table className="w-full text-left text-xs text-gray-700 border-collapse">
+                    <thead className="bg-emerald-50/80 text-emerald-950 font-bold border-b border-emerald-200 sticky top-0 z-10">
+                      <tr>
+                        <th className="p-2.5 w-8 text-center">#</th>
+                        <th className="p-2.5">বিষয় ও কোড *</th>
+                        <th className="p-2.5">পরীক্ষার তারিখ (বাধ্যতামূলক) *</th>
+                        <th className="p-2.5">পরীক্ষার সময় (বাধ্যতামূলক) *</th>
+                        <th className="p-2.5 w-10 text-center">মুছুন</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-emerald-100">
+                      {examForm.subjectSchedules.map((item, sIdx) => (
+                        <tr key={sIdx} className="hover:bg-emerald-50/30 transition">
+                          <td className="p-2 text-center font-bold text-gray-500 font-mono">
+                            {sIdx + 1}
+                          </td>
+                          <td className="p-2">
+                            <div className="space-y-1">
+                              <input
+                                type="text"
+                                required
+                                value={item.subject}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setExamForm((prev) => ({
+                                    ...prev,
+                                    subjectSchedules: prev.subjectSchedules.map((sch, i) =>
+                                      i === sIdx ? { ...sch, subject: val } : sch
+                                    ),
+                                  }));
+                                }}
+                                placeholder="বিষয়ের নাম (যেমন: বাংলা ১ম পত্র)"
+                                className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-bold text-gray-900 focus:bg-white focus:border-emerald-600 outline-hidden"
+                              />
+                              <input
+                                type="text"
+                                value={item.code || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setExamForm((prev) => ({
+                                    ...prev,
+                                    subjectSchedules: prev.subjectSchedules.map((sch, i) =>
+                                      i === sIdx ? { ...sch, code: val } : sch
+                                    ),
+                                  }));
+                                }}
+                                placeholder="কোড (ঐচ্ছিক, যেমন: ১০১)"
+                                className="w-full px-2 py-1 bg-white border border-gray-100 rounded text-[10px] text-gray-500 font-mono outline-hidden"
+                              />
+                            </div>
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="text"
+                              required
+                              value={item.date}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setExamForm((prev) => ({
+                                  ...prev,
+                                  subjectSchedules: prev.subjectSchedules.map((sch, i) =>
+                                    i === sIdx ? { ...sch, date: val } : sch
+                                  ),
+                                }));
+                              }}
+                              placeholder="যেমন: ২০ অক্টোবর ২০২৬"
+                              className={`w-full px-2.5 py-1.5 rounded-lg font-medium text-xs border outline-hidden transition ${
+                                !item.date.trim()
+                                  ? 'border-red-400 bg-red-50/60 text-red-900'
+                                  : 'border-gray-200 bg-gray-50 focus:bg-white focus:border-emerald-600 text-gray-900'
+                              }`}
+                            />
+                            {!item.date.trim() && (
+                              <span className="text-[10px] text-red-600 font-semibold block mt-0.5">
+                                * তারিখ আবশ্যক
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-2">
+                            <input
+                              type="text"
+                              required
+                              value={item.time}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setExamForm((prev) => ({
+                                  ...prev,
+                                  subjectSchedules: prev.subjectSchedules.map((sch, i) =>
+                                    i === sIdx ? { ...sch, time: val } : sch
+                                  ),
+                                }));
+                              }}
+                              placeholder="যেমন: সকাল ১০:০০ - দুপুর ০১:০০"
+                              className={`w-full px-2.5 py-1.5 rounded-lg font-medium text-xs border outline-hidden transition ${
+                                !item.time.trim()
+                                  ? 'border-red-400 bg-red-50/60 text-red-900'
+                                  : 'border-gray-200 bg-gray-50 focus:bg-white focus:border-emerald-600 text-gray-900'
+                              }`}
+                            />
+                            {!item.time.trim() && (
+                              <span className="text-[10px] text-red-600 font-semibold block mt-0.5">
+                                * সময় আবশ্যক
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (examForm.subjectSchedules.length <= 1) {
+                                  alert('কমপক্ষে একটি বিষয় রাখা আবশ্যক।');
+                                  return;
+                                }
+                                setExamForm((prev) => ({
+                                  ...prev,
+                                  subjectSchedules: prev.subjectSchedules.filter((_, i) => i !== sIdx),
+                                }));
+                              }}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
+                              title="বিষয়টি তালিকা থেকে বাদ দিন"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-emerald-900 font-semibold bg-emerald-100/60 p-2 rounded-lg">
+                  <span>মোট বিষয় সংখ্যা: {examForm.subjectSchedules.length} টি</span>
+                  <span>সব বিষয়ের তারিখ ও সময় প্রবেশপত্রে নিখুঁতভাবে প্রদর্শিত হবে</span>
+                </div>
               </div>
 
               <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200">

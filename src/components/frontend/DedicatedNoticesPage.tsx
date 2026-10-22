@@ -696,7 +696,7 @@ export const DedicatedNoticesPage: React.FC = () => {
             <div className="text-center space-y-1.5 border-b border-gray-100 pb-4">
               <div className="flex items-center justify-center gap-2.5">
                 <img
-                  src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+                  src={siteSettings.logoUrl || '/assets/aistudio/Logo_a3f5277a.png'}
                   alt="Logo"
                   className="w-10 h-10 rounded-full object-cover border-[2.5px] border-[#F59E0B] bg-[#00A859] shadow-xs"
                   loading="lazy"

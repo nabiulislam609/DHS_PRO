@@ -78,6 +78,7 @@ export type AdminTab =
   | 'settings'
   | 'header_settings'
   | 'sections'
+  | 'frontend_editor'
   | 'hero'
   | 'navigation'
   | 'downloads'
@@ -244,6 +245,7 @@ interface SchoolContextType {
 
   examResults: ExamResult[];
   addExamResult: (result: Omit<ExamResult, 'id'>) => void;
+  addMultipleExamResults: (results: (Omit<ExamResult, 'id'> & { id?: string })[]) => Promise<number>;
   updateExamResult: (id: string, result: Partial<ExamResult>) => void;
   deleteExamResult: (id: string) => void;
 
@@ -666,7 +668,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (configs[CONFIG_DOCS.SITE_SETTINGS]) {
         const loaded = configs[CONFIG_DOCS.SITE_SETTINGS];
         if (!loaded.logoUrl) {
-          loaded.logoUrl = '/assets/aistudio/image_08094a8b.png';
+          loaded.logoUrl = '/assets/aistudio/Logo_a3f5277a.png';
         }
         setSiteSettings(loaded);
       }
@@ -1898,6 +1900,23 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  const addMultipleExamResults = async (items: (Omit<ExamResult, 'id'> & { id?: string })[]): Promise<number> => {
+    if (!items || items.length === 0) return 0;
+    const newItems: ExamResult[] = items.map((item, idx) => {
+      const id = item.id && item.id.trim() ? item.id.trim() : generateUniqueId(`res_${Date.now()}_${idx}`);
+      return { ...item, id };
+    });
+    try {
+      await batchSaveDocuments(COLLECTIONS.EXAM_RESULTS, newItems);
+      setExamResults((prev) => [...newItems, ...prev]);
+      logActivity(`বাল্ক আপলোডের মাধ্যমে ${newItems.length} জন শিক্ষার্থীর পরীক্ষার ফলাফল যুক্ত করা হয়েছে`, 'setting');
+      return newItems.length;
+    } catch (err) {
+      handleMutationError(err, 'পরীক্ষার ফলাফল বাল্ক আপলোড সফল হয়নি');
+      return 0;
+    }
+  };
+
   const updateExamResult = async (id: string, updated: Partial<ExamResult>) => {
     const target = examResults.find((r) => r.id === id);
     if (!target) return;
@@ -2159,6 +2178,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         deleteAdmission,
         examResults,
         addExamResult,
+        addMultipleExamResults,
         updateExamResult,
         deleteExamResult,
         messages,

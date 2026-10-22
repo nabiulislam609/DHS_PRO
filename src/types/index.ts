@@ -219,15 +219,24 @@ export interface DownloadableForm {
   isCustomUploaded?: boolean;
 }
 
+export interface ExamSubjectSchedule {
+  subject: string;
+  date: string;
+  time: string;
+  code?: string;
+}
+
 export interface ActiveExam {
   id: string;
   examTerm: string;
   examYear: string;
   examStartDate: string;
+  examTime?: string;
   isActive: boolean;
   eligibleClasses?: string[];
   description?: string;
   createdDate?: string;
+  subjectSchedules?: ExamSubjectSchedule[];
 }
 
 export interface AdmitCardConfig {
@@ -236,9 +245,13 @@ export interface AdmitCardConfig {
   session: string;
   instructions: string[];
   principalSignatureUrl?: string;
+  headmasterSignatureUrl?: string;
+  headmasterName?: string;
+  headmasterDesignation?: string;
   schoolSealUrl?: string;
   isActive: boolean;
   examStartDate?: string;
+  examTime?: string;
   activeExamId?: string;
   availableExams?: ActiveExam[];
 }
@@ -294,6 +307,11 @@ export interface SiteSettings {
   totalClassrooms: string;
   totalAwards: string;
   customStats?: CustomStatItem[];
+
+  // Headmaster Signature & Identity
+  headmasterName?: string;
+  headmasterDesignation?: string;
+  headmasterSignatureUrl?: string;
 
   // Header & Top Bar Settings
   showTopBar?: boolean;
@@ -388,6 +406,44 @@ export interface SiteSettings {
   admissionHelpline?: string;
   admissionEndDate?: string;
   admissionFee?: string;
+
+  // Granular Frontend Sections Word-by-Word Customization
+  headerAdmissionBtnText?: string;
+  headerAdminBtnText?: string;
+  headerHelplineText?: string;
+
+  aboutIntroTitle?: string;
+  aboutObjectivesTitle?: string;
+  aboutMissionTitle?: string;
+  aboutVisionTitle?: string;
+  whyUsBadge?: string;
+  whyUsTitle?: string;
+  aboutCtaText?: string;
+
+  programsDetailBtnText?: string;
+  programsApplyBtnText?: string;
+
+  statStudentsLabel?: string;
+  statTeachersLabel?: string;
+  statPassRateLabel?: string;
+  statGpa5Label?: string;
+  statClassroomsLabel?: string;
+  statAwardsLabel?: string;
+
+  contactAddressLabel?: string;
+  contactPhoneLabel?: string;
+  contactEmailLabel?: string;
+  contactHoursLabel?: string;
+  contactSocialLabel?: string;
+  contactMapTitle?: string;
+  contactMapBtnText?: string;
+  contactFormTitle?: string;
+  contactFormSubtitle?: string;
+  contactSubmitBtnText?: string;
+
+  footerCol2Title?: string;
+  footerCol3Title?: string;
+  footerCol4Title?: string;
 }
 
 export interface ActivityLog {

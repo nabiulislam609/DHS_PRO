@@ -13,32 +13,32 @@ export const SchoolStats: React.FC = () => {
 
   const stats = [
     {
-      label: 'মোট শিক্ষার্থী',
+      label: siteSettings.statStudentsLabel || 'মোট শিক্ষার্থী',
       value: siteSettings.totalStudents,
       icon: Users,
     },
     {
-      label: 'শিক্ষক মণ্ডলী',
+      label: siteSettings.statTeachersLabel || 'শিক্ষক মণ্ডলী',
       value: siteSettings.totalTeachers,
       icon: GraduationCap,
     },
     {
-      label: 'সর্বমোট পাশের হার',
+      label: siteSettings.statPassRateLabel || 'সর্বমোট পাশের হার',
       value: siteSettings.passRate,
       icon: TrendingUp,
     },
     {
-      label: 'জিপিএ-৫ (এ বছর)',
+      label: siteSettings.statGpa5Label || 'জিপিএ-৫ (এ বছর)',
       value: siteSettings.gpa5Count,
       icon: Award,
     },
     {
-      label: 'ক্লাসরুম ও ল্যাব',
+      label: siteSettings.statClassroomsLabel || 'ক্লাসরুম ও ল্যাব',
       value: siteSettings.totalClassrooms,
       icon: Building,
     },
     {
-      label: 'অর্জিত পুরস্কার',
+      label: siteSettings.statAwardsLabel || 'অর্জিত পুরস্কার',
       value: siteSettings.totalAwards,
       icon: Trophy,
     },

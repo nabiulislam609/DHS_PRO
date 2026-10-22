@@ -15,11 +15,17 @@ import {
   Sliders,
   ExternalLink,
   AlertCircle,
+  PenTool,
 } from 'lucide-react';
 
 export const ManageSiteSettings: React.FC = () => {
   const { siteSettings, updateSiteSettings, setAdminTab } = useSchool();
-  const [form, setForm] = useState({ ...siteSettings });
+  const [form, setForm] = useState({
+    headmasterName: 'মো: সাদেকুল ইসলাম',
+    headmasterDesignation: 'প্রধান শিক্ষক',
+    headmasterSignatureUrl: '',
+    ...siteSettings,
+  });
   const [saved, setSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
@@ -27,10 +33,11 @@ export const ManageSiteSettings: React.FC = () => {
   const logoFileRef = useRef<HTMLInputElement | null>(null);
   const faviconFileRef = useRef<HTMLInputElement | null>(null);
   const ogImageFileRef = useRef<HTMLInputElement | null>(null);
+  const signatureFileRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    field: 'logoUrl' | 'faviconUrl' | 'ogImageUrl',
+    field: 'logoUrl' | 'faviconUrl' | 'ogImageUrl' | 'headmasterSignatureUrl',
     maxWidth = 600,
     maxHeight = 600
   ) => {
@@ -297,6 +304,143 @@ export const ManageSiteSettings: React.FC = () => {
                   onChange={(e) => setForm({ ...form, faviconUrl: e.target.value })}
                   className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-mono focus:outline-hidden focus:border-emerald-600"
                 />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section: প্রধান শিক্ষকের তথ্য ও ডিজিটাল স্বাক্ষর */}
+        <div className="bg-white rounded-2xl border border-emerald-200 shadow-xs p-6 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                <PenTool className="w-4 h-4 text-emerald-700" />
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-gray-900">
+                  প্রধান শিক্ষকের স্বাক্ষর ও পরিচিতি (Headmaster Signature & Seal)
+                </h3>
+                <p className="text-[11px] text-gray-500">
+                  ওয়েবসাইটের সকল অফিসিয়াল ফরম, প্রবেশপত্র (Admit Card), নম্বরপত্র (Marksheet) ও নোটিশে এই স্বাক্ষর ও নাম ব্যবহৃত হবে।
+                </p>
+              </div>
+            </div>
+            <span className="bg-emerald-100 text-emerald-800 text-[10.5px] font-bold px-2.5 py-1 rounded-full border border-emerald-200">
+              সকল নথিতে সক্রিয়
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">
+                প্রধান শিক্ষকের নাম (Headmaster Name) *
+              </label>
+              <input
+                type="text"
+                placeholder="যেমন: মো: সাদেকুল ইসলাম"
+                value={form.headmasterName || 'মো: সাদেকুল ইসলাম'}
+                onChange={(e) => setForm({ ...form, headmasterName: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-bold text-gray-900"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">
+                পদবী (Designation) *
+              </label>
+              <input
+                type="text"
+                placeholder="যেমন: প্রধান শিক্ষক"
+                value={form.headmasterDesignation || 'প্রধান শিক্ষক'}
+                onChange={(e) => setForm({ ...form, headmasterDesignation: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-hidden focus:border-emerald-600 font-medium"
+              />
+            </div>
+
+            {/* Signature Upload & Live Preview */}
+            <div className="sm:col-span-2 bg-emerald-50/50 p-4 rounded-xl border border-emerald-200 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <label className="font-bold text-emerald-950 flex items-center gap-1.5 text-xs">
+                    <PenTool className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>প্রধান শিক্ষকের ডিজিটাল স্বাক্ষর (Signature Image)</span>
+                  </label>
+                  <p className="text-[10.5px] text-gray-500 mt-0.5">
+                    স্বচ্ছ ব্যাকগ্রাউন্ডের (PNG/WebP/JPG) স্বাক্ষরের স্পষ্ট ছবি আপলোড করুন
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    ref={signatureFileRef}
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'headmasterSignatureUrl', 450, 180)}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => signatureFileRef.current?.click()}
+                    disabled={uploadingTarget === 'headmasterSignatureUrl'}
+                    className="inline-flex items-center gap-1.5 bg-[#15803d] hover:bg-[#166534] text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer disabled:opacity-50 shadow-2xs"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{uploadingTarget === 'headmasterSignatureUrl' ? 'আপলোড হচ্ছে...' : 'ডিভাইস থেকে স্বাক্ষর আপলোড'}</span>
+                  </button>
+                  {form.headmasterSignatureUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, headmasterSignatureUrl: '' })}
+                      className="inline-flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>স্বাক্ষর মুছুন</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Signature Preview & URL Input */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center pt-1">
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">
+                    স্বাক্ষর ইমেজ URL (ঐচ্ছিক — ডিভাইস আপলোড না থাকলে লিংক দিন):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://... অথবা উপরের বাটনে ক্লিক করে ডিভাইস থেকে ফাইল আপলোড করুন"
+                    value={form.headmasterSignatureUrl || ''}
+                    onChange={(e) => setForm({ ...form, headmasterSignatureUrl: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-mono focus:outline-hidden focus:border-emerald-600"
+                  />
+                </div>
+
+                {/* Live Preview Box */}
+                <div className="bg-white p-3 rounded-xl border border-emerald-200 text-center shadow-2xs">
+                  <span className="text-[10px] font-bold text-gray-500 block mb-1">
+                    নথিপত্রে যেমন দেখা যাবে:
+                  </span>
+                  <div className="h-12 flex items-center justify-center">
+                    {form.headmasterSignatureUrl ? (
+                      <img
+                        src={form.headmasterSignatureUrl}
+                        alt="Headmaster Signature"
+                        className="max-h-12 max-w-[150px] object-contain"
+                      />
+                    ) : (
+                      <div className="font-serif italic text-emerald-950 text-base font-bold opacity-80">
+                        {form.headmasterName || 'মো: সাদেকুল ইসলাম'}
+                      </div>
+                    )}
+                  </div>
+                  <div className="w-32 border-b border-gray-400 mx-auto my-1" />
+                  <span className="text-[10px] font-bold text-gray-800 block">
+                    {form.headmasterName || 'মো: সাদেকুল ইসলাম'}
+                  </span>
+                  <span className="text-[9px] text-gray-500 block">
+                    {form.headmasterDesignation || 'প্রধান শিক্ষক'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

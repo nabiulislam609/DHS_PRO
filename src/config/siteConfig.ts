@@ -12,5 +12,5 @@ export const SITE_CONFIG = {
   boardAffiliation: 'মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড, রাজশাহী',
   phone: '+৮৮০ ১৭১১-১২৩৪৫৬',
   email: 'info@dadrahs.edu.bd',
-  logoUrl: '/assets/aistudio/image_08094a8b.png',
+  logoUrl: '/assets/aistudio/Logo_a3f5277a.png',
 } as const;

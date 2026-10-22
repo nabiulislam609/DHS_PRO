@@ -58,7 +58,7 @@ export const AboutSection: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 text-emerald-700 font-bold mb-2">
                 <Bookmark className="w-4 h-4" />
-                <h3 className="text-base text-gray-900">ভূমিকা</h3>
+                <h3 className="text-base text-gray-900">{siteSettings.aboutIntroTitle || 'ভূমিকা'}</h3>
               </div>
               <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
                 {introText}
@@ -71,7 +71,7 @@ export const AboutSection: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 text-emerald-700 font-bold mb-2">
                 <Target className="w-4 h-4" />
-                <h3 className="text-base text-gray-900">উদ্দেশ্য</h3>
+                <h3 className="text-base text-gray-900">{siteSettings.aboutObjectivesTitle || 'উদ্দেশ্য'}</h3>
               </div>
               <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line font-medium">
                 {objectivesText}
@@ -84,7 +84,7 @@ export const AboutSection: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 text-emerald-700 font-bold mb-2">
                 <Compass className="w-4 h-4" />
-                <h3 className="text-base text-gray-900">লক্ষ্য (Mission)</h3>
+                <h3 className="text-base text-gray-900">{siteSettings.aboutMissionTitle || 'লক্ষ্য (Mission)'}</h3>
               </div>
               <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
                 {missionText}
@@ -97,7 +97,7 @@ export const AboutSection: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 text-emerald-700 font-bold mb-2">
                 <Bookmark className="w-4 h-4" />
-                <h3 className="text-base text-gray-900">দৃষ্টি (Vision)</h3>
+                <h3 className="text-base text-gray-900">{siteSettings.aboutVisionTitle || 'দৃষ্টি (Vision)'}</h3>
               </div>
               <p className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
                 {visionText}
@@ -110,10 +110,12 @@ export const AboutSection: React.FC = () => {
         <div className="lg:col-span-4 bg-[#0f5338] text-white p-6 sm:p-7 rounded-2xl shadow-md flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-amber-300 font-bold text-xs uppercase tracking-wider">সুবিধা</span>
+              <span className="text-amber-300 font-bold text-xs uppercase tracking-wider">
+                {siteSettings.whyUsBadge || 'সুবিধা'}
+              </span>
             </div>
             <h3 className="text-lg font-bold text-white mb-4">
-              কেন আমাদের বেছে নিবেন
+              {siteSettings.whyUsTitle || 'কেন আমাদের বেছে নিবেন'}
             </h3>
 
             <ul className="space-y-2.5 text-xs text-emerald-100">
@@ -132,7 +134,7 @@ export const AboutSection: React.FC = () => {
               onClick={() => setIsAdmissionModalOpen(true)}
               className="w-full inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-bold px-4 py-2.5 rounded-xl text-xs transition cursor-pointer shadow-md"
             >
-              <span>অনলাইনে ভর্তি আবেদন করুন</span>
+              <span>{siteSettings.aboutCtaText || 'অনলাইনে ভর্তি আবেদন করুন'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

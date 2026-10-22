@@ -166,7 +166,12 @@ export const buildFormHtml = (
   const email = siteSettings?.email || 'info@dadrahs.edu.bd';
   const estd = siteSettings?.establishedYear || '১৯৮২';
   const eiin = siteSettings?.eiin || '121820';
-  const logo = siteSettings?.logoUrl || '/assets/aistudio/image_08094a8b.png';
+  const logo = siteSettings?.logoUrl || '/assets/aistudio/Logo_a3f5277a.png';
+  const headmasterName = siteSettings?.headmasterName || 'মো: সাদেকুল ইসলাম';
+  const headmasterDesignation = siteSettings?.headmasterDesignation || 'প্রধান শিক্ষক';
+  const headmasterSigHtml = siteSettings?.headmasterSignatureUrl
+    ? `<img src="${siteSettings.headmasterSignatureUrl}" alt="Signature" style="height: 36px; max-width: 140px; object-fit: contain; margin-bottom: 2px;" crossOrigin="anonymous" />`
+    : `<div style="font-family: cursive, sans-serif; font-size: 15px; color: ${theme.primaryColor}; font-weight: bold; margin-bottom: 2px;">${headmasterName}</div>`;
 
   // Common Header Template
   const renderHeader = () => `
@@ -378,11 +383,10 @@ export const buildFormHtml = (
         অতএব, মহোদয়ের নিকট বিনীত প্রার্থনা, উক্ত দিনগুলোর ছুটি মঞ্জুর করে বাধিত করবেন।
       </p>
 
-      <!-- Teacher Recommendation Box -->
+      <!-- Recommendation Box -->
       <div style="border: 1px solid ${theme.borderColor}; background: #f8fafc; padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; font-size: 11px;">
-        <strong style="color: ${theme.primaryColor};">শ্রেণি শিক্ষকের মতামত ও উপস্থিতি প্রতিবেদন:</strong><br/>
-        শিক্ষার্থীর আচরণ সন্তোষজনক। বিগত মাসে মোট উপস্থিতি: ........ দিন। ছুটি মঞ্জুর করা যেতে পারে / পারে না।<br/>
-        শ্রেণি শিক্ষকের স্বাক্ষর ও তারিখ: .................................................................
+        <strong style="color: ${theme.primaryColor};">উপস্থিতি ও আচরণ প্রতিবেদন:</strong><br/>
+        শিক্ষার্থীর আচরণ সন্তোষজনক। বিগত মাসে মোট উপস্থিতি: ........ দিন। ছুটি মঞ্জুর করা যেতে পারে / পারে না।
       </div>
     `;
   } else if (kind === 'tc') {
@@ -608,9 +612,8 @@ export const buildFormHtml = (
       </p>
 
       <div style="border: 1px solid ${theme.borderColor}; background: #f0fdf4; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 11px;">
-        <strong style="color: ${theme.primaryColor};">শ্রেণি শিক্ষকের মন্তব্য:</strong><br/>
-        শিক্ষার্থীর নাম, পিতার নাম ও জন্ম তারিখ বিদ্যালয়ের ভর্তি রেজিস্টারের সাথে যাচাই করা হলো। প্রত্যয়নপত্র প্রদান সমীচীন।<br/>
-        শ্রেণি শিক্ষকের স্বাক্ষর ও তারিখ: .................................................................
+        <strong style="color: ${theme.primaryColor};">অফিসিয়াল যাচাই প্রতিবেদন:</strong><br/>
+        শিক্ষার্থীর নাম, পিতার নাম ও জন্ম তারিখ বিদ্যালয়ের ভর্তি রেজিস্টারের সাথে যাচাই করা হলো। প্রত্যয়নপত্র প্রদান সমীচীন।
       </div>
     `;
   } else if (kind === 'subject_change') {
@@ -688,8 +691,7 @@ export const buildFormHtml = (
 
       <!-- Teachers Consent -->
       <div style="border: 1px dashed ${theme.primaryColor}; background: #fafafa; padding: 6px 10px; margin-bottom: 8px; font-size: 10.5px;">
-        <strong>সংশ্লিষ্ট বিষয় শিক্ষকের মতামত:</strong> শিক্ষার্থীর প্রস্তুতি অনুযায়ী পরিবর্তন মঞ্জুর করা যুক্তিযুক্ত।<br/>
-        বিষয় শিক্ষকের স্বাক্ষর: ....................................... &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; শ্রেণি শিক্ষকের স্বাক্ষর: .......................................
+        <strong>সংশ্লিষ্ট বিষয় শিক্ষকের মতামত:</strong> শিক্ষার্থীর প্রস্তুতি অনুযায়ী পরিবর্তন মঞ্জুর করা যুক্তিযুক্ত।
       </div>
     `;
   } else {
@@ -759,46 +761,35 @@ export const buildFormHtml = (
     `;
   }
 
-  // Common Signature & Official Seal Footer
+  // Common Signature Footer (Headmaster & Applicant Only, Seal & Class Teacher Removed)
   const renderSignatures = () => `
-    <div style="flex-shrink: 0; margin-top: 18px;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px;">
-        <div style="text-align: center; width: 160px;">
-          <div style="border-bottom: 1px dashed #64748b; height: 32px; margin-bottom: 3px;"></div>
-          <span style="font-size: 10.5px; font-weight: bold; color: #334155;">অভিভাবকের স্বাক্ষর ও তারিখ</span>
+    <div style="flex-shrink: 0; margin-top: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 8px; border-top: 1px solid #e2e8f0;">
+        <div style="text-align: center; width: 170px;">
+          <div style="border-bottom: 1px dashed #64748b; height: 26px; margin-bottom: 4px;"></div>
+          <span style="font-size: 10.5px; font-weight: bold; color: #334155;">অভিভাবক / আবেদনকারীর স্বাক্ষর</span>
         </div>
 
-        <div style="width: 72px; height: 72px; border: 2px dashed ${theme.primaryColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 8px; font-weight: 800; color: ${theme.primaryColor}; transform: rotate(-7deg); opacity: 0.85;">
-          বিদ্যালয়<br/>অফিসিয়াল<br/>সিলমোহর
-        </div>
-
-        <div style="text-align: center; width: 160px;">
-          <div style="border-bottom: 1px dashed #64748b; height: 32px; margin-bottom: 3px;"></div>
-          <span style="font-size: 10.5px; font-weight: bold; color: #334155;">আবেদনকারীর স্বাক্ষর ও তারিখ</span>
-        </div>
-      </div>
-
-      <div style="border-top: 1px solid #e2e8f0; padding-top: 12px; display: flex; justify-content: space-between; align-items: flex-end;">
-        <div>
-          <span style="font-size: 10px; color: #64748b;">শ্রেণি শিক্ষকের মন্তব্য ও প্রতিস্বাক্ষর: .......................................</span>
-        </div>
-        <div style="text-align: right;">
-          <p style="margin: 0; font-size: 11.5px; font-weight: bold; color: ${theme.primaryColor};">প্রধান শিক্ষক</p>
-          <p style="margin: 0; font-size: 10px; color: #64748b;">${schoolNameBn}</p>
+        <div style="text-align: center; min-width: 170px;">
+          ${headmasterSigHtml}
+          <div style="width: 140px; border-bottom: 1.5px solid #0f172a; margin: 0 auto 3px auto;"></div>
+          <span style="font-size: 11px; font-weight: 800; color: #0f172a; display: block;">${headmasterName}</span>
+          <span style="font-size: 10px; font-weight: 600; color: #475569; display: block;">${headmasterDesignation}</span>
+          <span style="font-size: 9.5px; color: #64748b; display: block;">${schoolNameBn}</span>
         </div>
       </div>
     </div>
   `;
 
   return `
-    <div class="official-form-sheet" style="font-family: 'Hind Siliguri', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #0f172a; line-height: 1.5; width: 794px; max-width: 794px; min-height: 1123px; margin: 0 auto; background: #ffffff; padding: 34px 42px; box-sizing: border-box; text-align: left; display: flex; flex-direction: column; justify-content: space-between; border: 1.5px solid ${theme.borderColor}; position: relative;">
+    <div class="official-form-sheet" style="font-family: 'Hind Siliguri', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #0f172a; line-height: 1.45; width: 794px; max-width: 794px; min-height: 1123px; margin: 0 auto; background: #ffffff; padding: 22px 28px; box-sizing: border-box; text-align: left; display: flex; flex-direction: column; justify-content: space-between; border: 1.5px solid ${theme.borderColor}; position: relative;">
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&display=swap');
         @page {
           size: portrait !important;
           size: A4 portrait !important;
           size: 210mm 297mm !important;
-          margin: 10mm !important;
+          margin: 7mm !important;
         }
         .official-form-sheet {
           width: 794px !important;
@@ -869,36 +860,40 @@ export const downloadEditableForm = (
       <meta charset='utf-8'>
       <title>${form.title}</title>
       <style>
+        @page {
+          size: A4 portrait;
+          margin: 10mm 12mm 10mm 12mm;
+        }
         body {
           font-family: 'Calibri', 'Hind Siliguri', 'SolaimanLipi', Arial, sans-serif;
-          font-size: 11pt;
-          line-height: 1.5;
+          font-size: 10pt;
+          line-height: 1.35;
           color: #000000;
-          margin: 20mm;
+          margin: 10mm 12mm 10mm 12mm;
         }
-        h1 { font-size: 18pt; color: ${theme.primaryColor}; margin: 0; text-align: center; }
-        h2 { font-size: 12pt; color: #475569; margin: 2pt 0; text-align: center; text-transform: uppercase; }
-        .meta-p { font-size: 9pt; color: #64748b; margin: 3pt 0 8pt 0; text-align: center; }
+        h1 { font-size: 16pt; color: ${theme.primaryColor}; margin: 0; text-align: center; }
+        h2 { font-size: 11pt; color: #475569; margin: 1pt 0; text-align: center; text-transform: uppercase; }
+        .meta-p { font-size: 8.5pt; color: #64748b; margin: 2pt 0 6pt 0; text-align: center; }
         .title-box {
           background-color: ${theme.primaryColor};
           color: #ffffff;
-          padding: 6pt 16pt;
+          padding: 5pt 14pt;
           text-align: center;
-          font-size: 13pt;
+          font-size: 12pt;
           font-weight: bold;
-          margin: 10pt auto;
+          margin: 8pt auto;
           display: block;
         }
         table {
           width: 100%;
           border-collapse: collapse;
-          margin-top: 8pt;
-          margin-bottom: 10pt;
+          margin-top: 6pt;
+          margin-bottom: 8pt;
         }
         th, td {
           border: 1px solid #777777;
-          padding: 6pt 8pt;
-          font-size: 10pt;
+          padding: 5pt 7pt;
+          font-size: 9.5pt;
         }
         .header-cell {
           background-color: ${theme.accentBg};
@@ -915,13 +910,13 @@ export const downloadEditableForm = (
 
       <div class="title-box">${form.title}</div>
 
-      <p><strong>ক্যাটাগরি:</strong> ${form.category} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>আপডেট:</strong> ${form.updatedDate || '২০২৬'}</p>
-      ${form.description ? `<p><strong>নির্দেশনা:</strong> ${form.description}</p>` : ''}
+      <p style="margin: 4pt 0;"><strong>ক্যাটাগরি:</strong> ${form.category} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>আপডেট:</strong> ${form.updatedDate || '২০২৬'}</p>
+      ${form.description ? `<p style="margin: 4pt 0;"><strong>নির্দেশনা:</strong> ${form.description}</p>` : ''}
 
-      <p style="margin-top: 14pt;"><strong>বরাবর,</strong><br/>প্রধান শিক্ষক<br/>${schoolNameBn}, জয়পুরহাট।</p>
-      <p><strong>বিষয়:</strong> ${form.title} প্রসঙ্গে আবেদন।</p>
+      <p style="margin-top: 10pt; margin-bottom: 4pt;"><strong>বরাবর,</strong><br/>প্রধান শিক্ষক<br/>${schoolNameBn}, জয়পুরহাট।</p>
+      <p style="margin: 4pt 0;"><strong>বিষয়:</strong> ${form.title} প্রসঙ্গে আবেদন।</p>
 
-      <p>মহোদয়,<br/>বিনীত নিবেদন এই যে, আমি আপনার বিদ্যালয়ের একজন শিক্ষার্থী/অভিভাবক। আমার প্রয়োজনীয় তথ্যাবলী নিচে দেওয়া হলো:</p>
+      <p style="margin: 4pt 0;">মহোদয়,<br/>বিনীত নিবেদন এই যে, আমি আপনার বিদ্যালয়ের একজন শিক্ষার্থী/অভিভাবক। আমার প্রয়োজনীয় তথ্যাবলী নিচে দেওয়া হলো:</p>
 
       <table>
         <tr>
@@ -946,29 +941,24 @@ export const downloadEditableForm = (
         </tr>
         <tr>
           <td class="header-cell">আবেদনের কারণ ও বিবরণ:</td>
-          <td style="height: 50pt;">&nbsp;</td>
+          <td style="height: 40pt;">&nbsp;</td>
         </tr>
       </table>
 
-      <p>অতএব, মহোদয়ের নিকট প্রার্থনা, অনুগ্রহপূর্বক আমার উক্ত আবেদনটি মঞ্জুর করতে মর্জি হয়।</p>
+      <p style="margin: 6pt 0;">অতএব, মহোদয়ের নিকট প্রার্থনা, অনুগ্রহপূর্বক আমার উক্ত আবেদনটি মঞ্জুর করতে মর্জি হয়।</p>
 
-      <br/><br/>
-      <table style="border: none; margin-top: 25pt;">
+      <table style="border: none; margin-top: 18pt;">
         <tr style="border: none;">
           <td style="border: none; text-align: left; width: 50%;">
             ____________________________<br/>
-            <strong>অভিভাবকের স্বাক্ষর ও তারিখ</strong>
+            <strong>অভিভাবক / আবেদনকারীর স্বাক্ষর</strong>
           </td>
           <td style="border: none; text-align: right; width: 50%;">
-            ____________________________<br/>
-            <strong>শিক্ষার্থীর স্বাক্ষর ও তারিখ</strong>
-          </td>
-        </tr>
-        <tr style="border: none;">
-          <td colspan="2" style="border: none; text-align: right; padding-top: 35pt;">
-            <p>
+            <p style="margin: 0; line-height: 1.35;">
+              ${siteSettings?.headmasterSignatureUrl ? `<img src="${siteSettings.headmasterSignatureUrl}" height="32" style="display:block; margin-left:auto;" /><br/>` : ''}
               ____________________________<br/>
-              <strong>প্রধান শিক্ষক</strong><br/>
+              <strong>${siteSettings?.headmasterName || 'মো: সাদেকুল ইসলাম'}</strong><br/>
+              ${siteSettings?.headmasterDesignation || 'প্রধান শিক্ষক'}<br/>
               ${schoolNameBn}
             </p>
           </td>

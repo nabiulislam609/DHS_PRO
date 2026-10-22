@@ -693,7 +693,7 @@ export const ManageNotices: React.FC = () => {
               <div className="text-center pb-4 border-b-2 border-emerald-800/30 space-y-1">
                 <div className="flex items-center justify-center gap-3">
                   <img
-                    src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+                    src={siteSettings.logoUrl || '/assets/aistudio/Logo_a3f5277a.png'}
                     alt="Logo"
                     className="w-12 h-12 rounded-full object-cover border-[2.5px] border-[#F59E0B] bg-[#00A859] shadow-xs"
                   />
@@ -861,17 +861,22 @@ export const ManageNotices: React.FC = () => {
               </div>
 
               {/* Signature Block */}
-              <div className="flex justify-between items-end pt-6 border-t border-gray-200">
-                <div className="w-20 h-20 rounded-full border-2 border-dashed border-emerald-800 flex items-center justify-center text-[10px] font-bold text-emerald-800 text-center transform -rotate-12 opacity-80">
-                  বিদ্যালয়<br />সিলমোহর
-                </div>
-
+              <div className="flex justify-end items-end pt-6 border-t border-gray-200">
                 <div className="text-center space-y-1">
-                  <div className="w-28 h-6 border-b border-gray-400 mx-auto flex items-end justify-center text-xs text-gray-500 italic">
-                    স্বাক্ষরিত
-                  </div>
-                  <p className="text-xs font-bold text-gray-900">প্রধান শিক্ষক</p>
-                  <p className="text-[11px] text-gray-500">{siteSettings.schoolNameBangla}</p>
+                  {siteSettings.headmasterSignatureUrl ? (
+                    <img
+                      src={siteSettings.headmasterSignatureUrl}
+                      alt="স্বাক্ষর"
+                      className="h-10 mx-auto object-contain mb-1"
+                    />
+                  ) : (
+                    <div className="w-28 h-6 border-b border-gray-400 mx-auto flex items-end justify-center text-xs text-gray-500 italic">
+                      স্বাক্ষরিত
+                    </div>
+                  )}
+                  <p className="text-xs font-bold text-gray-900">{siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}</p>
+                  <p className="text-[11px] font-semibold text-emerald-800">{siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}</p>
+                  <p className="text-[10px] text-gray-500">{siteSettings.schoolNameBangla}</p>
                 </div>
               </div>
             </div>

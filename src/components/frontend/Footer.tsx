@@ -74,7 +74,7 @@ export const Footer: React.FC = () => {
           <div className="lg:col-span-4 space-y-4">
             <div className="flex items-center gap-3">
               <img
-                src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+                src={siteSettings.logoUrl || '/assets/aistudio/Logo_a3f5277a.png'}
                 alt="Logo"
                 className="w-11 h-11 rounded-full object-cover border-[2.5px] border-[#F59E0B] bg-[#00A859] shadow-xs"
               />
@@ -143,7 +143,9 @@ export const Footer: React.FC = () => {
 
           {/* Col 2: Quick Links (3 cols) */}
           <div className="lg:col-span-3 space-y-3">
-            <h4 className="text-sm font-bold text-white tracking-wide uppercase">অনলাইন সেবা ও লিংক</h4>
+            <h4 className="text-sm font-bold text-white tracking-wide uppercase">
+              {siteSettings.footerCol2Title || 'অনলাইন সেবা ও লিংক'}
+            </h4>
             <ul className="space-y-2 text-xs text-gray-400">
               <li>
                 <button onClick={navigateToAdmitCard} className="hover:text-amber-300 transition cursor-pointer flex items-center gap-1.5 text-emerald-300 font-medium">
@@ -187,7 +189,9 @@ export const Footer: React.FC = () => {
 
           {/* Col 3: Menu (2 cols) */}
           <div className="lg:col-span-2 space-y-3">
-            <h4 className="text-sm font-bold text-white tracking-wide uppercase">মেনু নেভিগেশন</h4>
+            <h4 className="text-sm font-bold text-white tracking-wide uppercase">
+              {siteSettings.footerCol3Title || 'মেনু নেভিগেশন'}
+            </h4>
             <ul className="space-y-2 text-xs text-gray-400">
               <li><button onClick={() => scrollTo('hero')} className="hover:text-amber-300 transition cursor-pointer">হোম পেজ</button></li>
               <li><button onClick={() => scrollTo('about')} className="hover:text-amber-300 transition cursor-pointer">পরিচিতি ও ইতিহাস</button></li>
@@ -202,7 +206,9 @@ export const Footer: React.FC = () => {
 
           {/* Col 4: Contact (3 cols) */}
           <div className="lg:col-span-3 space-y-3">
-            <h4 className="text-sm font-bold text-white tracking-wide uppercase">যোগাযোগ</h4>
+            <h4 className="text-sm font-bold text-white tracking-wide uppercase">
+              {siteSettings.footerCol4Title || 'যোগাযোগ'}
+            </h4>
             <div className="space-y-2.5 text-xs text-gray-400">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
@@ -226,8 +232,10 @@ export const Footer: React.FC = () => {
             <p>
               {siteSettings.copyrightText || `© 2026 ${siteSettings.schoolNameBangla} (${siteSettings.schoolNameEnglish})। সর্বস্বত্ব সংরক্ষিত।`}
             </p>
-            <p className="text-[11px] text-emerald-400/80 mt-0.5">
-              স্থাপিত: {siteSettings.establishedYear || '১৯৮২'}
+            <p className="text-[11px] text-emerald-400/80 mt-0.5 flex items-center gap-2 justify-center md:justify-start">
+              <span>স্থাপিত: {siteSettings.establishedYear || '১৯৮২'}</span>
+              <span>•</span>
+              <span className="font-mono text-emerald-300 font-semibold">EIIN: {siteSettings.eiin || '121820'}</span>
             </p>
           </div>
 

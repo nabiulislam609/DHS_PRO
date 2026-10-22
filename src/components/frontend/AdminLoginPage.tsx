@@ -67,7 +67,7 @@ export const AdminLoginPage: React.FC = () => {
             className="flex items-center gap-2.5 cursor-pointer group"
           >
             <img
-              src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+              src={siteSettings.logoUrl || '/assets/aistudio/Logo_a3f5277a.png'}
               alt="Logo"
               className="w-8 h-8 rounded-full object-cover border-[2px] border-[#F59E0B] shadow-sm bg-[#00A859]"
             />
@@ -95,7 +95,7 @@ export const AdminLoginPage: React.FC = () => {
           <div className="w-64 h-64 sm:w-72 sm:h-72 rounded-3xl bg-[#090307]/90 border border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-md p-8 flex flex-col items-center justify-center text-center transition transform hover:scale-[1.02] duration-300 group">
             <div className="space-y-4">
               <img
-                src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+                src={siteSettings.logoUrl || '/assets/aistudio/Logo_a3f5277a.png'}
                 alt="School Emblem"
                 className="w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-full object-cover border-[3px] border-[#F59E0B] shadow-2xl bg-[#00A859] p-0.5"
               />

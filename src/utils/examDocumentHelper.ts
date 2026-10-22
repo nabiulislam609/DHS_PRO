@@ -48,6 +48,18 @@ export const getEnrolledStudentCount = (exam: ActiveExam, students: Student[]): 
 export const getExamRoutineSchedule = (exam: ActiveExam): ExamRoutineItem[] => {
   const classesText = getEligibleClassesText(exam);
 
+  if (exam.subjectSchedules && exam.subjectSchedules.length > 0) {
+    return exam.subjectSchedules.map((item, idx) => ({
+      sl: idx + 1,
+      date: item.date,
+      day: '',
+      time: item.time,
+      subject: item.subject,
+      subjectCode: item.code || `${idx + 101}`,
+      classes: classesText,
+    }));
+  }
+
   return [
     {
       sl: 1,
@@ -171,8 +183,8 @@ export const buildExamNoticeHtml = (
           <tr>
             <td style="width: 80px; vertical-align: middle; text-align: left;">
               ${
-                (siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png')
-                  ? `<img src="${siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}" alt="Logo" style="width: 74px; height: 74px; object-fit: contain; border-radius: 50%; border: 2.5px solid #F59E0B; background-color: #00A859;" />`
+                (siteSettings.logoUrl || '/assets/aistudio/Logo_a3f5277a.png')
+                  ? `<img src="${siteSettings.logoUrl || '/assets/aistudio/Logo_a3f5277a.png'}" alt="Logo" style="width: 74px; height: 74px; object-fit: contain; border-radius: 50%; border: 2.5px solid #F59E0B; background-color: #00A859;" />`
                   : `<div style="width: 70px; height: 70px; border-radius: 50%; background: #00A859; border: 2.5px solid #F59E0B; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fde047; font-size: 20px;">দা.উ.বি</div>`
               }
             </td>
@@ -319,28 +331,29 @@ export const buildExamNoticeHtml = (
       </div>
 
       <!-- Signature Section -->
-      <div style="margin-top: 36px;">
+      <div style="margin-top: 30px;">
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
-            <td style="width: 33%; text-align: center; vertical-align: bottom;">
-              <div style="width: 140px; margin: 0 auto; border-top: 1.5px solid #6b7280; padding-top: 4px;">
+            <td style="width: 45%; text-align: center; vertical-align: bottom;">
+              <div style="width: 160px; margin: 0 auto; border-top: 1.5px solid #6b7280; padding-top: 4px;">
                 <div style="font-weight: 700; font-size: 11.5px; color: #111827;">পরীক্ষা নিয়ন্ত্রক / আহ্বায়ক</div>
                 <div style="font-size: 10px; color: #6b7280;">পরীক্ষা পরিচালনা কমিটি</div>
                 <div style="font-size: 9.5px; color: #9ca3af;">${schoolNameBn}</div>
               </div>
             </td>
-            <td style="width: 34%; text-align: center; vertical-align: middle;">
-              <div style="width: 75px; height: 75px; border-radius: 50%; border: 1.5px dashed #047857; margin: 0 auto; display: flex; align-items: center; justify-content: center; background: #f0fdf4;">
-                <span style="font-size: 9.5px; font-weight: 700; color: #047857; text-align: center;">
-                  বিদ্যালয়ের<br/>প্রাতিষ্ঠানিক সিল
-                </span>
-              </div>
-            </td>
-            <td style="width: 33%; text-align: center; vertical-align: bottom;">
-              <div style="width: 140px; margin: 0 auto; border-top: 1.5px solid #6b7280; padding-top: 4px;">
-                <div style="font-weight: 700; font-size: 11.5px; color: #111827;">প্রধান শিক্ষক / অধ্যক্ষ</div>
-                <div style="font-size: 10px; color: #6b7280;">${schoolNameBn}</div>
-                <div style="font-size: 9.5px; color: #9ca3af;">সখিপুর, টাঙ্গাইল</div>
+            <td style="width: 10%;"></td>
+            <td style="width: 45%; text-align: center; vertical-align: bottom;">
+              <div style="width: 160px; margin: 0 auto; text-align: center;">
+                ${
+                  siteSettings.headmasterSignatureUrl
+                    ? `<img src="${siteSettings.headmasterSignatureUrl}" alt="Signature" style="height: 34px; max-width: 130px; object-fit: contain; margin: 0 auto 2px auto; display: block;" crossOrigin="anonymous" />`
+                    : `<div style="font-family: cursive, sans-serif; font-size: 13.5px; color: #047857; font-weight: bold; margin-bottom: 2px;">${siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}</div>`
+                }
+                <div style="border-top: 1.5px solid #111827; padding-top: 4px;">
+                  <div style="font-weight: 800; font-size: 11.5px; color: #111827;">${siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}</div>
+                  <div style="font-weight: 600; font-size: 10px; color: #4b5563;">${siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}</div>
+                  <div style="font-size: 9.5px; color: #6b7280;">${schoolNameBn}</div>
+                </div>
               </div>
             </td>
           </tr>

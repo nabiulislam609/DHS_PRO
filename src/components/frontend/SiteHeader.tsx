@@ -62,7 +62,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
           title="হোম পেজে ফিরুন"
         >
           <img
-            src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+            src={siteSettings.logoUrl || '/assets/aistudio/Logo_a3f5277a.png'}
             alt={siteSettings.schoolNameBangla || SITE_CONFIG.schoolNameBangla}
             className="w-12 h-12 rounded-full object-cover border-[2.5px] border-[#F59E0B] shadow-xs bg-[#00A859] shrink-0 aspect-square group-hover:scale-105 transition-transform duration-200"
             loading="lazy"

@@ -569,7 +569,7 @@ export const AcademicResultsSearch: React.FC = () => {
                         {/* Left Crest */}
                         <div className="flex items-center gap-3 text-left">
                           <img
-                            src={siteSettings.logoUrl || '/assets/aistudio/image_08094a8b.png'}
+                            src={siteSettings.logoUrl || '/assets/aistudio/Logo_a3f5277a.png'}
                             alt="Logo"
                             className="w-14 h-14 rounded-full object-cover border-[2.5px] border-[#F59E0B] bg-[#00A859] shadow-xs shrink-0"
                           />
@@ -797,31 +797,39 @@ export const AcademicResultsSearch: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Institutional Signatures & Official Stamp */}
-                    <div className="pt-2.5 border-t border-gray-200 grid grid-cols-2 gap-8 items-end text-xs">
-                      {/* Left: Class Teacher Signature */}
-                      <div className="text-center space-y-1">
-                        <div className="h-8 flex items-end justify-center">
-                          <span className="font-serif italic text-sm text-gray-700 tracking-wider">A. Rahman</span>
-                        </div>
-                        <div className="w-32 border-b-2 border-gray-600 mx-auto" />
-                        <span className="text-[10.5px] font-bold text-gray-800 block">শ্রেণি শিক্ষকের স্বাক্ষর</span>
-                        <span className="text-[9.5px] text-gray-500">তারিখ: ২৪/০২/২০২৬</span>
+                    {/* Institutional Signatures - Headmaster Only */}
+                    <div className="pt-3 border-t border-gray-200 flex items-end justify-between text-xs">
+                      {/* Left: Validation Note */}
+                      <div className="text-left space-y-0.5 text-gray-500 text-[10px]">
+                        <p className="font-semibold text-emerald-900">
+                          ✓ প্রাতিষ্ঠানিক ডিজিটাল নম্বরপত্র যাচাইকৃত
+                        </p>
+                        <p>ইস্যু তারিখ: {new Date().toLocaleDateString('bn-BD')}</p>
                       </div>
 
-                      {/* Right: Headmaster Signature with Official Stamp Seal */}
-                      <div className="text-center space-y-1 relative">
-                        {/* Circular Institutional Stamp Seal Graphic */}
-                        <div className="w-16 h-16 rounded-full border-2 border-emerald-900/80 p-1 mx-auto flex flex-col items-center justify-center transform -rotate-6 text-emerald-950 pointer-events-none mb-1 bg-emerald-50/30 shadow-2xs">
-                          <div className="w-full h-full rounded-full border border-dashed border-emerald-800/70 flex flex-col items-center justify-center p-0.5 leading-none text-center">
-                            <span className="text-[6.5px] font-black uppercase tracking-tighter">DADRA HIGH SCHOOL</span>
-                            <span className="text-[7.5px] font-black text-emerald-900 my-0.5">★ SEAL ★</span>
-                            <span className="text-[6.5px] font-bold uppercase tracking-tight text-emerald-800">JOYPURHAT</span>
+                      {/* Right: Headmaster Signature */}
+                      <div className="text-center space-y-1 min-w-[160px]">
+                        {siteSettings.headmasterSignatureUrl ? (
+                          <img
+                            src={siteSettings.headmasterSignatureUrl}
+                            alt="প্রধান শিক্ষকের স্বাক্ষর"
+                            className="h-10 max-w-[140px] mx-auto object-contain mb-0.5"
+                          />
+                        ) : (
+                          <div className="font-serif italic text-emerald-950 text-sm font-bold opacity-90 mb-0.5">
+                            {siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}
                           </div>
-                        </div>
+                        )}
                         <div className="w-36 border-b-2 border-gray-700 mx-auto" />
-                        <span className="text-[10.5px] font-bold text-gray-950 block">প্রধান শিক্ষকের স্বাক্ষর ও সীল</span>
-                        <span className="text-[9.5px] text-gray-600 font-medium">দাদরা উচ্চ বিদ্যালয়, জয়পুরহাট</span>
+                        <span className="text-[11px] font-bold text-gray-950 block">
+                          {siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}
+                        </span>
+                        <span className="text-[10px] font-medium text-gray-700 block">
+                          {siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}
+                        </span>
+                        <span className="text-[9.5px] text-gray-500 block">
+                          {siteSettings.schoolNameBangla || 'দাদরা উচ্চ বিদ্যালয়'}
+                        </span>
                       </div>
                     </div>
 

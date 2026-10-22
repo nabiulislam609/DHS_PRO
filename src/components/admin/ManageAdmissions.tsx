@@ -545,8 +545,11 @@ export const ManageAdmissions: React.FC = () => {
   </table>
   <div class="signatures">
     <div class="sign-box">অভিভাবকের স্বাক্ষর</div>
-    <div class="sign-box">আবেদন যাচাইকারীর স্বাক্ষর</div>
-    <div class="sign-box">প্রধান শিক্ষকের অনুমোদন ও সিল</div>
+    <div class="sign-box">
+      ${siteSettings.headmasterSignatureUrl ? `<img src="${siteSettings.headmasterSignatureUrl}" height="30" style="display:block; margin:0 auto;" /><br/>` : ''}
+      <strong>${siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}</strong><br/>
+      ${siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}
+    </div>
   </div>
 </body>
 </html>`;
@@ -1400,14 +1403,13 @@ export const ManageAdmissions: React.FC = () => {
                         অভিভাবকের স্বাক্ষর
                       </div>
                     </div>
-                    <div className="text-center">
-                      <div className="w-32 border-t border-gray-400 pt-1 font-semibold text-gray-700">
-                        আবেদন যাচাইকারীর স্বাক্ষর
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-36 border-t border-gray-400 pt-1 font-semibold text-gray-700">
-                        প্রধান শিক্ষকের অনুমোদন ও সিল
+                    <div className="text-center min-w-[150px]">
+                      {siteSettings.headmasterSignatureUrl && (
+                        <img src={siteSettings.headmasterSignatureUrl} alt="Signature" className="h-8 max-w-[120px] mx-auto object-contain mb-1" />
+                      )}
+                      <div className="w-36 border-t border-gray-400 pt-1">
+                        <span className="font-bold text-gray-900 block text-xs">{siteSettings.headmasterName || 'মো: সাদেকুল ইসলাম'}</span>
+                        <span className="text-[10px] text-gray-600 font-medium">{siteSettings.headmasterDesignation || 'প্রধান শিক্ষক'}</span>
                       </div>
                     </div>
                   </div>
