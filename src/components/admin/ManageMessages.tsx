@@ -1,18 +1,28 @@
 import React, { useState } from 'react';
 import { useSchool } from '../../context/SchoolContext';
-import { Mail, MailOpen, Trash2, X, Phone, Calendar, Check, Send } from 'lucide-react';
+import { Mail, MailOpen, Trash2, X, Phone, Calendar, Check, Send, RotateCcw } from 'lucide-react';
 import { ContactMessage } from '../../types';
 
 export const ManageMessages: React.FC = () => {
-  const { messages, markMessageRead, deleteMessage } = useSchool();
+  const { messages, markMessageRead, deleteMessage, refreshAdminData } = useSchool();
   const [selectedMsg, setSelectedMsg] = useState<ContactMessage | null>(null);
   const [replyText, setReplyText] = useState('');
   const [replySent, setReplySent] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const openMsg = (msg: ContactMessage) => {
     setSelectedMsg(msg);
     if (!msg.read) {
       markMessageRead(msg.id, true);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshAdminData();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
     }
   };
 
@@ -36,6 +46,20 @@ export const ManageMessages: React.FC = () => {
           <p className="text-xs text-gray-500">
             ওয়েবসাইট ভিজিটর ও অভিভাবকদের প্রেরিত সকল অনুসন্ধান বার্তা
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="text-xs font-semibold bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-lg border border-emerald-100">
+            মোট বার্তা: {messages.length} টি (অপঠিত: {messages.filter((m) => !m.read).length})
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold shadow-2xs transition cursor-pointer disabled:opacity-50"
+            title="নতুন কোনো বার্তা এসেছে কিনা রিফ্রেশ করুন"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 text-emerald-700 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>রিফ্রেশ</span>
+          </button>
         </div>
       </div>
 

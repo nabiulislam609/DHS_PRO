@@ -32,6 +32,7 @@ import { Eye, Bell, ShieldCheck, LogOut, AlertTriangle, X } from 'lucide-react';
 export const AdminPanel: React.FC = () => {
   const {
     adminTab,
+    setAdminTab,
     setViewMode,
     unreadMessageCount,
     admissions,
@@ -131,12 +132,27 @@ export const AdminPanel: React.FC = () => {
             </button>
 
             {/* Notification bell */}
-            <div className="relative cursor-pointer" onClick={() => setViewMode('backend')}>
+            <button
+              type="button"
+              className="relative p-1.5 rounded-lg hover:bg-gray-100 transition cursor-pointer"
+              onClick={() => {
+                if (unreadMessageCount > 0) {
+                  setAdminTab('messages');
+                } else if (admissions.some((a) => a.status === 'অপেক্ষমাণ')) {
+                  setAdminTab('admissions');
+                } else {
+                  setAdminTab('messages');
+                }
+              }}
+              title="নতুন বার্তা ও ভর্তি আবেদন দেখুন"
+            >
               <Bell className="w-5 h-5 text-gray-500 hover:text-emerald-700" />
-              {(unreadMessageCount > 0 || admissions.length > 0) && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse" />
+              {(unreadMessageCount > 0 || admissions.some((a) => a.status === 'অপেক্ষমাণ')) && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-rose-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center animate-pulse">
+                  {unreadMessageCount + admissions.filter((a) => a.status === 'অপেক্ষমাণ').length}
+                </span>
               )}
-            </div>
+            </button>
 
             {/* Admin Avatar & Logout */}
             <div className="flex items-center gap-2 pl-2 border-l border-gray-200">

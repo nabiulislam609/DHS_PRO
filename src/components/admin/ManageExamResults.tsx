@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { ExamResult, SubjectMark, Student } from '../../types';
 import { getStudentResultImage, getStudentPhoto } from '../../utils/studentPhoto';
-import { BulkImportResultsModal } from './BulkImportResultsModal';
+import { BulkImportResultsModal, isNonSubjectColumn } from './BulkImportResultsModal';
 
 export { getStudentResultImage, getStudentPhoto };
 import {
@@ -474,7 +474,7 @@ export const ManageExamResults: React.FC = () => {
 
     setSubjects(
       result.subjects && result.subjects.length > 0
-        ? result.subjects.map((s) => ({ ...s }))
+        ? result.subjects.filter((s) => !isNonSubjectColumn(s.subject)).map((s) => ({ ...s }))
         : generateDefaultSubjectMarks(baseClass, group)
     );
 
@@ -493,11 +493,14 @@ export const ManageExamResults: React.FC = () => {
       ? form.customTerm.trim() || form.examTerm
       : form.examTerm;
 
-    const totalMarks = subjects.reduce((sum, s) => sum + Number(s.marks || 0), 0);
-    const hasFailed = subjects.some((s) => s.grade === 'F');
+    const validSubjects = subjects.filter((s) => !isNonSubjectColumn(s.subject));
+    const totalMarks = validSubjects.reduce((sum, s) => sum + Number(s.marks || 0), 0);
+    const hasFailed = validSubjects.some((s) => s.grade === 'F');
     const avgGp = hasFailed
       ? 0.0
-      : Number((subjects.reduce((sum, s) => sum + s.gradePoint, 0) / subjects.length).toFixed(2));
+      : validSubjects.length > 0
+      ? Number((validSubjects.reduce((sum, s) => sum + s.gradePoint, 0) / validSubjects.length).toFixed(2))
+      : 0.0;
 
     let overallGrade = 'F';
     if (avgGp >= 5.0) overallGrade = 'A+';
@@ -539,7 +542,7 @@ export const ManageExamResults: React.FC = () => {
           gpa: avgGp,
           grade: overallGrade,
           status: form.status,
-          subjects,
+          subjects: validSubjects,
         });
       } else {
         await addExamResult({
@@ -554,7 +557,7 @@ export const ManageExamResults: React.FC = () => {
           gpa: avgGp,
           grade: overallGrade,
           status: form.status,
-          subjects,
+          subjects: validSubjects,
           publishedDate: new Date().toISOString().split('T')[0],
         });
       }
@@ -1368,7 +1371,9 @@ export const ManageExamResults: React.FC = () => {
             </div>
 
             <div className="space-y-1.5 max-h-48 overflow-y-auto text-xs">
-              {viewingResult.subjects.map((s, i) => (
+              {viewingResult.subjects
+                .filter((s) => !isNonSubjectColumn(s.subject))
+                .map((s, i) => (
                 <div key={i} className="flex justify-between items-center py-1 border-b border-gray-100">
                   <span className="text-gray-700">{s.subject}</span>
                   <div className="flex gap-2">

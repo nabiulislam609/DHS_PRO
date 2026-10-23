@@ -68,7 +68,9 @@ export const ManageAdmissions: React.FC = () => {
     students,
     siteSettings,
     updateSiteSettings,
+    refreshAdminData,
   } = useSchool();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedApp, setSelectedApp] = useState<AdmissionApplication | null>(null);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -684,6 +686,23 @@ export const ManageAdmissions: React.FC = () => {
           <div className="text-xs font-semibold bg-blue-50 text-blue-800 px-3 py-1.5 rounded-lg border border-blue-100">
             তালিকাভুক্ত শিক্ষার্থী: {students.length} জন
           </div>
+          <button
+            type="button"
+            onClick={async () => {
+              setIsRefreshing(true);
+              try {
+                await refreshAdminData();
+              } finally {
+                setTimeout(() => setIsRefreshing(false), 500);
+              }
+            }}
+            disabled={isRefreshing}
+            className="text-xs font-semibold bg-white hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 flex items-center gap-1.5 transition cursor-pointer shadow-2xs disabled:opacity-50"
+            title="নতুন কোনো আবেদন জমা হয়েছে কিনা রিফ্রেশ করুন"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 text-emerald-700 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>রিফ্রেশ</span>
+          </button>
           <button
             type="button"
             onClick={openSettingsModal}

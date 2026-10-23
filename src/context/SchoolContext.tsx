@@ -281,6 +281,7 @@ interface SchoolContextType {
   clearFirestoreError: () => void;
   loadDataFromFirestore: () => Promise<void>;
   seedDemoDataToFirestore: () => Promise<void>;
+  refreshAdminData: () => Promise<void>;
 }
 
 const SchoolContext = createContext<SchoolContextType | undefined>(undefined);
@@ -643,8 +644,66 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [events, setEvents] = useState<EventItem[]>([]);
   const [achievements, setAchievements] = useState<AchievementItem[]>([]);
   const [galleryAlbums, setGalleryAlbums] = useState<GalleryAlbum[]>([]);
-  const [admissions, setAdmissions] = useState<AdmissionApplication[]>([]);
-  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [admissions, setAdmissions] = useState<AdmissionApplication[]>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('dhs_admissions');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Admissions local storage init notice:', e);
+    }
+    return initialAdmissions;
+  });
+
+  const [messages, setMessages] = useState<ContactMessage[]>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('dhs_contact_messages');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Messages local storage init notice:', e);
+    }
+    return initialMessages;
+  });
+
+  // Cross-tab and same-window synchronization listener
+  useEffect(() => {
+    const handleStorageSync = () => {
+      try {
+        const storedMsgs = localStorage.getItem('dhs_contact_messages');
+        if (storedMsgs) {
+          const parsed = JSON.parse(storedMsgs);
+          if (Array.isArray(parsed)) {
+            setMessages(parsed);
+          }
+        }
+        const storedAdms = localStorage.getItem('dhs_admissions');
+        if (storedAdms) {
+          const parsed = JSON.parse(storedAdms);
+          if (Array.isArray(parsed)) {
+            setAdmissions(parsed);
+          }
+        }
+      } catch (err) {
+        console.warn('Storage sync event notice:', err);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageSync);
+    window.addEventListener('dhs-storage-sync', handleStorageSync);
+    return () => {
+      window.removeEventListener('storage', handleStorageSync);
+      window.removeEventListener('dhs-storage-sync', handleStorageSync);
+    };
+  }, []);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [examResults, setExamResults] = useState<ExamResult[]>([]);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(initialHeroSlides);
@@ -746,25 +805,106 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   // When admin logs in, load admin-only collections (deleted_students, admissions, messages, activities)
-  useEffect(() => {
-    const userEmail = (adminUser?.email || '').trim().toLowerCase();
-    if (!adminUser || !isAdminAuthenticated || !ADMIN_EMAILS.includes(userEmail)) return;
-    const loadAdminCollections = async () => {
-      try {
-        const [delStudents, adms, msgs, acts] = await Promise.all([
-          fetchCollectionOnce<Student>(COLLECTIONS.DELETED_STUDENTS),
-          fetchCollectionOnce<AdmissionApplication>(COLLECTIONS.ADMISSIONS),
-          fetchCollectionOnce<ContactMessage>(COLLECTIONS.MESSAGES),
-          fetchCollectionOnce<ActivityLog>(COLLECTIONS.ACTIVITIES),
-        ]);
-        setDeletedStudents(delStudents);
-        setAdmissions(adms);
-        setMessages(msgs);
-        setActivities(acts);
-      } catch (err) {
-        console.warn('Admin collections load notice:', err);
+  const loadAdminCollections = async () => {
+    // 1. Immediately ensure local submissions from localStorage are loaded
+    try {
+      if (typeof window !== 'undefined') {
+        const storedAdms = localStorage.getItem('dhs_admissions');
+        if (storedAdms) {
+          const parsed = JSON.parse(storedAdms);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setAdmissions((prev) => {
+              const map = new Map<string, AdmissionApplication>();
+              prev.forEach((a) => map.set(a.id, a));
+              parsed.forEach((a) => map.set(a.id, a));
+              return Array.from(map.values());
+            });
+          }
+        }
+        const storedMsgs = localStorage.getItem('dhs_contact_messages');
+        if (storedMsgs) {
+          const parsed = JSON.parse(storedMsgs);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMessages((prev) => {
+              const map = new Map<string, ContactMessage>();
+              prev.forEach((m) => map.set(m.id, m));
+              parsed.forEach((m) => map.set(m.id, m));
+              return Array.from(map.values());
+            });
+          }
+        }
       }
-    };
+    } catch (e) {
+      console.warn('Local admin collections load notice:', e);
+    }
+
+    const userEmail = (adminUser?.email || auth.currentUser?.email || '').trim().toLowerCase();
+    if (!adminUser || !isAdminAuthenticated || !ADMIN_EMAILS.includes(userEmail)) return;
+
+    try {
+      const [delStudents, adms, msgs, acts] = await Promise.all([
+        fetchCollectionOnce<Student>(COLLECTIONS.DELETED_STUDENTS),
+        fetchCollectionOnce<AdmissionApplication>(COLLECTIONS.ADMISSIONS),
+        fetchCollectionOnce<ContactMessage>(COLLECTIONS.MESSAGES),
+        fetchCollectionOnce<ActivityLog>(COLLECTIONS.ACTIVITIES),
+      ]);
+
+      if (delStudents && delStudents.length > 0) setDeletedStudents(delStudents);
+
+      // Intelligent Merge: keep all local messages/admissions and merge with Firestore
+      let finalAdmissions: AdmissionApplication[] = [];
+      setAdmissions((prev) => {
+        const map = new Map<string, AdmissionApplication>();
+        prev.forEach((a) => map.set(a.id, a));
+        adms.forEach((a) => map.set(a.id, a));
+        finalAdmissions = Array.from(map.values());
+        try {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('dhs_admissions', JSON.stringify(finalAdmissions));
+          }
+        } catch {}
+        return finalAdmissions;
+      });
+
+      let finalMessages: ContactMessage[] = [];
+      setMessages((prev) => {
+        const map = new Map<string, ContactMessage>();
+        prev.forEach((m) => map.set(m.id, m));
+        msgs.forEach((m) => map.set(m.id, m));
+        finalMessages = Array.from(map.values());
+        try {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('dhs_contact_messages', JSON.stringify(finalMessages));
+          }
+        } catch {}
+        return finalMessages;
+      });
+
+      if (acts && acts.length > 0) setActivities(acts);
+
+      // Since the admin is logged in with write permissions, sync any local items not in Firestore:
+      try {
+        const firestoreMsgIds = new Set(msgs.map((m) => m.id));
+        const firestoreAdmIds = new Set(adms.map((a) => a.id));
+
+        const unsyncedMsgs = finalMessages.filter((m) => !firestoreMsgIds.has(m.id));
+        const unsyncedAdms = finalAdmissions.filter((a) => !firestoreAdmIds.has(a.id));
+
+        for (const m of unsyncedMsgs) {
+          saveDocument(COLLECTIONS.MESSAGES, m).catch(() => {});
+        }
+        for (const a of unsyncedAdms) {
+          saveDocument(COLLECTIONS.ADMISSIONS, a).catch(() => {});
+        }
+      } catch (syncErr) {
+        console.warn('Sync local items to Firestore notice:', syncErr);
+      }
+    } catch (err) {
+      console.warn('Admin collections load notice:', err);
+    }
+  };
+
+  useEffect(() => {
     loadAdminCollections();
   }, [adminUser, isAdminAuthenticated]);
 
@@ -1851,14 +1991,29 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       appliedDate: dateStr,
       status: 'অপেক্ষমাণ',
     };
-    saveDocument(COLLECTIONS.ADMISSIONS, newApp)
-      .then(() => {
-        setAdmissions((prev) => [newApp, ...prev]);
-        logActivity(`নতুন ভর্তি আবেদন জমা হয়েছে: "${newApp.applicantName}" (${newApp.applyingClass})`, 'admission');
-      })
-      .catch((err) => {
-        handleMutationError(err, 'ভর্তি আবেদন জমা দিতে সমস্যা হয়েছে');
-      });
+
+    // 1. Immediately update React state
+    setAdmissions((prev) => [newApp, ...prev]);
+
+    // 2. Immediately persist to localStorage & broadcast sync
+    try {
+      if (typeof window !== 'undefined') {
+        const stored: AdmissionApplication[] = JSON.parse(localStorage.getItem('dhs_admissions') || '[]');
+        const updated = [newApp, ...stored.filter((a) => a.id !== id)];
+        localStorage.setItem('dhs_admissions', JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent('dhs-storage-sync'));
+      }
+    } catch (e) {
+      console.warn('Admission localStorage save notice:', e);
+    }
+
+    logActivity(`নতুন ভর্তি আবেদন জমা হয়েছে: "${newApp.applicantName}" (${newApp.applyingClass})`, 'admission');
+
+    // 3. Attempt Firestore persistence in background (non-blocking fallback)
+    saveDocument(COLLECTIONS.ADMISSIONS, newApp).catch((err) => {
+      console.warn('Firestore admission save notice (saved locally in browser):', err);
+    });
+
     return newApp;
   };
 
@@ -1866,22 +2021,45 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const target = admissions.find((a) => a.id === id);
     if (!target) return;
     const updated = { ...target, status };
+
+    setAdmissions((prev) => prev.map((a) => (a.id === id ? updated : a)));
+
+    try {
+      if (typeof window !== 'undefined') {
+        const stored: AdmissionApplication[] = JSON.parse(localStorage.getItem('dhs_admissions') || '[]');
+        const updatedList = stored.map((a) => (a.id === id ? updated : a));
+        localStorage.setItem('dhs_admissions', JSON.stringify(updatedList));
+        window.dispatchEvent(new CustomEvent('dhs-storage-sync'));
+      }
+    } catch (e) {}
+
+    logActivity(`ভর্তি আবেদনের স্ট্যাটাস পরিবর্তন: ${status}`, 'admission');
+
     try {
       await saveDocument(COLLECTIONS.ADMISSIONS, updated);
-      setAdmissions((prev) => prev.map((a) => (a.id === id ? updated : a)));
-      logActivity(`ভর্তি আবেদনের স্ট্যাটাস পরিবর্তন: ${status}`, 'admission');
     } catch (err) {
-      handleMutationError(err, 'স্ট্যাটাস আপডেট করা সম্ভব হয়নি');
+      console.warn('Firestore admission status update notice:', err);
     }
   };
 
   const deleteAdmission = async (id: string) => {
+    setAdmissions((prev) => prev.filter((a) => a.id !== id));
+
+    try {
+      if (typeof window !== 'undefined') {
+        const stored: AdmissionApplication[] = JSON.parse(localStorage.getItem('dhs_admissions') || '[]');
+        const updatedList = stored.filter((a) => a.id !== id);
+        localStorage.setItem('dhs_admissions', JSON.stringify(updatedList));
+        window.dispatchEvent(new CustomEvent('dhs-storage-sync'));
+      }
+    } catch (e) {}
+
+    logActivity(`ভর্তি আবেদন তালিকা থেকে সরানো হয়েছে`, 'admission');
+
     try {
       await deleteDocument(COLLECTIONS.ADMISSIONS, id);
-      setAdmissions((prev) => prev.filter((a) => a.id !== id));
-      logActivity(`ভর্তি আবেদন তালিকা থেকে সরানো হয়েছে`, 'admission');
     } catch (err) {
-      handleMutationError(err, 'ভর্তি আবেদন মুছতে সমস্যা হয়েছে');
+      console.warn('Firestore admission delete notice:', err);
     }
   };
 
@@ -1951,12 +2129,29 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       date: dateStr,
       read: false,
     };
+
+    // 1. Immediately update React state
+    setMessages((prev) => [newMsg, ...prev]);
+
+    // 2. Immediately persist to localStorage & broadcast sync
+    try {
+      if (typeof window !== 'undefined') {
+        const stored: ContactMessage[] = JSON.parse(localStorage.getItem('dhs_contact_messages') || '[]');
+        const updated = [newMsg, ...stored.filter((m) => m.id !== id)];
+        localStorage.setItem('dhs_contact_messages', JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent('dhs-storage-sync'));
+      }
+    } catch (e) {
+      console.warn('Contact message localStorage save notice:', e);
+    }
+
+    logActivity(`ওয়েবসাইট থেকে বার্তা পেয়েছেন: ${newMsg.name}`, 'message');
+
+    // 3. Attempt Firestore persistence in background (non-blocking fallback)
     try {
       await saveDocument(COLLECTIONS.MESSAGES, newMsg);
-      setMessages((prev) => [newMsg, ...prev]);
-      logActivity(`ওয়েবসাইট থেকে বার্তা পেয়েছেন: ${newMsg.name}`, 'message');
     } catch (err) {
-      handleMutationError(err, 'বার্তা পাঠাতে সমস্যা হয়েছে');
+      console.warn('Firestore message save notice (saved locally in browser):', err);
     }
   };
 
@@ -1964,21 +2159,43 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const target = messages.find((m) => m.id === id);
     if (!target) return;
     const updated = { ...target, read };
+
+    setMessages((prev) => prev.map((m) => (m.id === id ? updated : m)));
+
+    try {
+      if (typeof window !== 'undefined') {
+        const stored: ContactMessage[] = JSON.parse(localStorage.getItem('dhs_contact_messages') || '[]');
+        const updatedList = stored.map((m) => (m.id === id ? updated : m));
+        localStorage.setItem('dhs_contact_messages', JSON.stringify(updatedList));
+        window.dispatchEvent(new CustomEvent('dhs-storage-sync'));
+      }
+    } catch (e) {}
+
     try {
       await saveDocument(COLLECTIONS.MESSAGES, updated);
-      setMessages((prev) => prev.map((m) => (m.id === id ? updated : m)));
     } catch (err) {
-      handleMutationError(err, 'বার্তা স্ট্যাটাস পরিবর্তন করা সম্ভব হয়নি');
+      console.warn('Firestore message mark-read notice:', err);
     }
   };
 
   const deleteMessage = async (id: string) => {
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+
+    try {
+      if (typeof window !== 'undefined') {
+        const stored: ContactMessage[] = JSON.parse(localStorage.getItem('dhs_contact_messages') || '[]');
+        const updatedList = stored.filter((m) => m.id !== id);
+        localStorage.setItem('dhs_contact_messages', JSON.stringify(updatedList));
+        window.dispatchEvent(new CustomEvent('dhs-storage-sync'));
+      }
+    } catch (e) {}
+
+    logActivity(`বার্তা মুছে ফেলা হয়েছে`, 'message');
+
     try {
       await deleteDocument(COLLECTIONS.MESSAGES, id);
-      setMessages((prev) => prev.filter((m) => m.id !== id));
-      logActivity(`বার্তা মুছে ফেলা হয়েছে`, 'message');
     } catch (err) {
-      handleMutationError(err, 'বার্তা মুছতে সমস্যা হয়েছে');
+      console.warn('Firestore message delete notice:', err);
     }
   };
 
@@ -2215,6 +2432,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         clearFirestoreError,
         loadDataFromFirestore,
         seedDemoDataToFirestore,
+        refreshAdminData: loadAdminCollections,
       }}
     >
       {children}

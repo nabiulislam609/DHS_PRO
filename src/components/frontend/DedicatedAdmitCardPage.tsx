@@ -432,17 +432,33 @@ export const DedicatedAdmitCardPage: React.FC = () => {
       return String(n).replace(/\d/g, (d) => bnDigits[Number(d)]);
     };
 
-    return activeValidatedSubjects.map((subItem, idx) => {
-      const dayOffset = idx * 2;
-      const examDate = new Date(startYear, startMonth, startDay + dayOffset);
-      const dayBn = enToBnDigits(examDate.getDate());
-      const monthBn = bnMonths[examDate.getMonth()];
-      const yearBn = enToBnDigits(examDate.getFullYear());
-      const dateFormatted = `${dayBn} ${monthBn} ${yearBn}`;
+    const schedules = currentExam?.subjectSchedules || [];
 
-      const isIct = subItem.name.includes('তথ্য ও যোগাযোগ') || subItem.name.includes('ICT');
-      const configuredTime = currentExam?.examTime?.trim() || admitCardConfig?.examTime?.trim();
-      const timeStr = isIct ? 'সকাল ১০:০০ - দুপুর ১২:০০' : (configuredTime || 'সকাল ১০:০০ - দুপুর ০১:০০');
+    return activeValidatedSubjects.map((subItem, idx) => {
+      // Find matching custom schedule for this subject
+      const matchedSchedule = schedules.find((sch) => {
+        const schNorm = sch.subject.toLowerCase().replace(/[^a-z0-9\u0980-\u09FF]/gi, '');
+        const subNorm = subItem.name.toLowerCase().replace(/[^a-z0-9\u0980-\u09FF]/gi, '');
+        return schNorm === subNorm || schNorm.includes(subNorm) || subNorm.includes(schNorm);
+      }) || (idx < schedules.length ? schedules[idx] : null);
+
+      let dateFormatted = matchedSchedule?.date?.trim();
+      let timeStr = matchedSchedule?.time?.trim();
+
+      if (!dateFormatted) {
+        const dayOffset = idx * 2;
+        const examDate = new Date(startYear, startMonth, startDay + dayOffset);
+        const dayBn = enToBnDigits(examDate.getDate());
+        const monthBn = bnMonths[examDate.getMonth()];
+        const yearBn = enToBnDigits(examDate.getFullYear());
+        dateFormatted = `${dayBn} ${monthBn} ${yearBn}`;
+      }
+
+      if (!timeStr) {
+        const isIct = subItem.name.includes('তথ্য ও যোগাযোগ') || subItem.name.includes('ICT');
+        const configuredTime = currentExam?.examTime?.trim() || admitCardConfig?.examTime?.trim();
+        timeStr = isIct ? 'সকাল ১০:০০ - দুপুর ১২:০০' : (configuredTime || 'সকাল ১০:০০ - দুপুর ০১:০০');
+      }
 
       return {
         serial: idx + 1,
@@ -454,7 +470,7 @@ export const DedicatedAdmitCardPage: React.FC = () => {
         time: timeStr,
       };
     });
-  }, [activeValidatedSubjects, currentExam?.examStartDate, currentExam?.examTime, admitCardConfig?.examStartDate, admitCardConfig?.examTime]);
+  }, [activeValidatedSubjects, currentExam?.examStartDate, currentExam?.examTime, currentExam?.subjectSchedules, admitCardConfig?.examStartDate, admitCardConfig?.examTime]);
 
   const studentImage = foundStudent
     ? foundStudent.image || getStudentResultImage({ studentName: foundStudent.name, roll: foundStudent.roll, studentId: foundStudent.id }, students)
@@ -659,59 +675,15 @@ export const DedicatedAdmitCardPage: React.FC = () => {
           )}
         </div>
 
-        {/* 3-Step Guide Card when not searched yet */}
+        {/* Clean Minimal Notice when not searched yet */}
         {!searched && (
-          <div className="bg-white rounded-2xl border border-[#E2E8E4] p-6 sm:p-8 space-y-6 print:hidden shadow-xs">
-            <div className="text-center max-w-lg mx-auto space-y-1.5">
-              <span className="text-[11px] font-bold text-[#0B7A55] tracking-wider uppercase bg-[#E8F5EE] px-3 py-1 rounded-full">
-                সহজ ৩ ধাপের নির্দেশিকা
-              </span>
-              <h3 className="text-lg font-bold text-[#14211B] pt-1">
-                প্রবেশপত্র সংগ্রহের সহজ নিয়মাবলী
-              </h3>
-              <p className="text-xs text-[#5B6B63] leading-relaxed">
-                অনলাইনে মাত্র ৩টি তথ্য প্রদান করে পরীক্ষার অফিশিয়াল প্রবেশপত্র ডাউনলোড ও প্রিন্ট করুন।
-              </p>
+          <div className="bg-white rounded-2xl border border-gray-200/80 p-5 sm:p-6 text-center text-xs text-gray-600 print:hidden shadow-xs flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+              <CreditCard className="w-4 h-4" />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-              <div className="bg-gray-50/80 rounded-xl p-4 border border-[#E2E8E4] text-center space-y-2 hover:border-[#0B7A55]/40 transition">
-                <div className="w-10 h-10 rounded-full bg-[#E8F5EE] text-[#0B7A55] font-black text-sm flex items-center justify-center mx-auto">
-                  ১
-                </div>
-                <h4 className="font-bold text-sm text-[#14211B]">শ্রেণি বাছুন</h4>
-                <p className="text-xs text-[#5B6B63] leading-relaxed">
-                  ড্রপডাউন তালিকা থেকে শিক্ষার্থীর অধ্যয়নরত শ্রেণি ও বিভাগ নির্বাচন করুন।
-                </p>
-              </div>
-
-              <div className="bg-gray-50/80 rounded-xl p-4 border border-[#E2E8E4] text-center space-y-2 hover:border-[#0B7A55]/40 transition">
-                <div className="w-10 h-10 rounded-full bg-[#E8F5EE] text-[#0B7A55] font-black text-sm flex items-center justify-center mx-auto">
-                  ২
-                </div>
-                <h4 className="font-bold text-sm text-[#14211B]">রোল নম্বর দিন</h4>
-                <p className="text-xs text-[#5B6B63] leading-relaxed">
-                  শ্রেণি শিক্ষকের দেওয়া সঠিক ক্লাস রোল নম্বর ইনপুট বক্সে লিখুন।
-                </p>
-              </div>
-
-              <div className="bg-gray-50/80 rounded-xl p-4 border border-[#E2E8E4] text-center space-y-2 hover:border-[#0B7A55]/40 transition">
-                <div className="w-10 h-10 rounded-full bg-[#E8F5EE] text-[#0B7A55] font-black text-sm flex items-center justify-center mx-auto">
-                  ৩
-                </div>
-                <h4 className="font-bold text-sm text-[#14211B]">পরীক্ষা বাছুন</h4>
-                <p className="text-xs text-[#5B6B63] leading-relaxed">
-                  চলতি পরীক্ষার নাম বাছাই করে অনুসন্ধান বাটনে ক্লিক করলেই কার্ড প্রস্তুত হবে।
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-emerald-50/50 rounded-xl p-3.5 border border-emerald-200/60 text-xs text-emerald-900 flex items-start gap-2.5">
-              <CreditCard className="w-4 h-4 text-[#0B7A55] shrink-0 mt-0.5" />
-              <span>
-                <strong>জরুরি নির্দেশনা:</strong> পরীক্ষা কক্ষে অবশ্যই প্রবেশপত্রের রঙ্গিন বা সাদাকালো স্পষ্ট প্রিন্ট কপি সঙ্গে আনতে হবে। কোনো অসঙ্গতি পরিলক্ষিত হলে দ্রুত শ্রেণি শিক্ষকের সাথে যোগাযোগ করুন।
-              </span>
-            </div>
+            <span className="leading-relaxed">
+              সঠিক শ্রেণি ও রোল নম্বর দিয়ে প্রবেশপত্র ও পরীক্ষার রুটিন অনুসন্ধান করুন। পরীক্ষা কক্ষে প্রবেশপত্রের স্পষ্ট প্রিন্ট কপি সঙ্গে আনা আবশ্যক।
+            </span>
           </div>
         )}
 

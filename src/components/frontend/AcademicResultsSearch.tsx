@@ -20,6 +20,7 @@ import { toPng } from 'html-to-image';
 import { ExamResult } from '../../types';
 import { getStudentResultImage, getStudentPhoto } from '../../utils/studentPhoto';
 import { generatePdfFromElement } from '../../utils/universalPdfGenerator';
+import { isNonSubjectColumn } from '../admin/BulkImportResultsModal';
 
 // Convert Bengali numerals to English digits for flexible search
 const toEnglishDigits = (str: string): string => {
@@ -735,7 +736,9 @@ export const AcademicResultsSearch: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-200">
-                            {searchedResult.subjects.map((sub, idx) => {
+                            {searchedResult.subjects
+                              .filter((sub) => !isNonSubjectColumn(sub.subject))
+                              .map((sub, idx) => {
                               const fullMarks = sub.marks > 100 ? 200 : 100;
                               return (
                                 <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/80'}>
