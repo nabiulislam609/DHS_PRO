@@ -66,6 +66,74 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 }
 
+const SEOManager: React.FC = () => {
+  const { siteSettings, currentFrontendPage } = useSchool();
+
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    // 1. Dynamic page title
+    let pageTitle = siteSettings.metaTitle || `${siteSettings.schoolNameBangla} | ${siteSettings.schoolNameEnglish} — জয়পুরহাট`;
+    if (currentFrontendPage === 'results') {
+      pageTitle = `একাডেমিক ফলাফল ও নম্বরপত্র | ${siteSettings.schoolNameBangla}`;
+    } else if (currentFrontendPage === 'notices') {
+      pageTitle = `নোটিশ বোর্ড ও সার্কুলার | ${siteSettings.schoolNameBangla}`;
+    } else if (currentFrontendPage === 'admit-card') {
+      pageTitle = `অনলাইন প্রবেশপত্র (Admit Card) | ${siteSettings.schoolNameBangla}`;
+    } else if (currentFrontendPage === 'important-forms' || currentFrontendPage === 'downloads') {
+      pageTitle = `ফরম ও ডাউনলোড পোর্টাল | ${siteSettings.schoolNameBangla}`;
+    } else if (currentFrontendPage === 'teachers') {
+      pageTitle = `শিক্ষক মণ্ডলী | ${siteSettings.schoolNameBangla}`;
+    } else if (currentFrontendPage === 'staff') {
+      pageTitle = `কর্মকর্তা ও কর্মচারী | ${siteSettings.schoolNameBangla}`;
+    } else if (currentFrontendPage === 'admin-login') {
+      pageTitle = `অ্যাডমিন লগইন | ${siteSettings.schoolNameBangla}`;
+    }
+
+    document.title = pageTitle;
+
+    // 2. OpenGraph & Meta Tag sync
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const defaultOgImage = `${origin}/assets/og-preview.png`;
+    const ogImage = siteSettings.ogImageUrl
+      ? (siteSettings.ogImageUrl.startsWith('http') ? siteSettings.ogImageUrl : `${origin}${siteSettings.ogImageUrl}`)
+      : defaultOgImage;
+
+    const description =
+      siteSettings.metaDescription ||
+      siteSettings.tagline ||
+      'দাদরা উচ্চ বিদ্যালয়ের অফিসিয়াল ওয়েব পোর্টাল ও ম্যানেজমেন্ট সিস্টেম — অনলাইন প্রবেশপত্র, পরীক্ষার ফলাফল, নোটিশ বোর্ড ও ভর্তি কার্যক্রম।';
+
+    const setMetaTag = (attr: 'name' | 'property', key: string, content: string) => {
+      let tag = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute(attr, key);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', content);
+    };
+
+    setMetaTag('name', 'description', description);
+    setMetaTag('property', 'og:title', pageTitle);
+    setMetaTag('property', 'og:description', description);
+    if (currentUrl) setMetaTag('property', 'og:url', currentUrl);
+    setMetaTag('property', 'og:image', ogImage);
+    setMetaTag('property', 'og:image:secure_url', ogImage);
+    setMetaTag('name', 'twitter:title', pageTitle);
+    setMetaTag('name', 'twitter:description', description);
+    setMetaTag('name', 'twitter:image', ogImage);
+
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (canonical && currentUrl) {
+      canonical.setAttribute('href', currentUrl);
+    }
+  }, [siteSettings, currentFrontendPage]);
+
+  return null;
+};
+
 const MainApp: React.FC = () => {
   const {
     viewMode,
@@ -120,6 +188,9 @@ const MainApp: React.FC = () => {
 
   return (
     <div className="relative">
+      {/* Dynamic SEO & Social Share Meta Manager */}
+      <SEOManager />
+
       {/* Main View Router */}
       {renderContent()}
 
