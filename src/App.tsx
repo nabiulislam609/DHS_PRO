@@ -93,11 +93,25 @@ const SEOManager: React.FC = () => {
     document.title = pageTitle;
 
     // 2. OpenGraph & Meta Tag sync
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const origin =
+      typeof window !== 'undefined' &&
+      window.location.origin &&
+      !window.location.origin.includes('localhost') &&
+      !window.location.origin.includes('run.app')
+        ? window.location.origin
+        : 'https://dhsedu.vercel.app';
+    const currentUrl =
+      typeof window !== 'undefined' &&
+      window.location.origin &&
+      !window.location.origin.includes('localhost') &&
+      !window.location.origin.includes('run.app')
+        ? window.location.href
+        : `https://dhsedu.vercel.app${typeof window !== 'undefined' ? window.location.search : ''}`;
     const defaultOgImage = `${origin}/assets/og-preview.png`;
     const ogImage = siteSettings.ogImageUrl
-      ? (siteSettings.ogImageUrl.startsWith('http') ? siteSettings.ogImageUrl : `${origin}${siteSettings.ogImageUrl}`)
+      ? siteSettings.ogImageUrl.startsWith('http')
+        ? siteSettings.ogImageUrl
+        : `${origin}${siteSettings.ogImageUrl}`
       : defaultOgImage;
 
     const description =
