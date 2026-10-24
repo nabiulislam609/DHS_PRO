@@ -148,6 +148,49 @@ const SEOManager: React.FC = () => {
   return null;
 };
 
+const AnalyticsManager: React.FC = () => {
+  const { siteSettings, currentFrontendPage } = useSchool();
+  const gaId = (siteSettings.googleAnalyticsId || (import.meta as any).env?.VITE_GA_MEASUREMENT_ID || '').trim();
+
+  React.useEffect(() => {
+    if (!gaId || !gaId.startsWith('G-') || typeof window === 'undefined') return;
+
+    // 1. Inject Google Analytics 4 gtag.js script if not present
+    const scriptId = 'google-analytics-gtag';
+    let scriptTag = document.getElementById(scriptId) as HTMLScriptElement | null;
+    if (!scriptTag) {
+      scriptTag = document.createElement('script');
+      scriptTag.id = scriptId;
+      scriptTag.async = true;
+      scriptTag.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
+      document.head.appendChild(scriptTag);
+
+      (window as any).dataLayer = (window as any).dataLayer || [];
+      function gtag(...args: any[]) {
+        (window as any).dataLayer.push(args);
+      }
+      (window as any).gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', gaId, {
+        send_page_view: true,
+      });
+    }
+
+    // 2. Track SPA page navigation
+    if ((window as any).gtag) {
+      const pagePath = window.location.pathname + window.location.search;
+      (window as any).gtag('event', 'page_view', {
+        page_title: document.title,
+        page_location: window.location.href,
+        page_path: pagePath,
+        section: currentFrontendPage,
+      });
+    }
+  }, [gaId, currentFrontendPage]);
+
+  return null;
+};
+
 const MainApp: React.FC = () => {
   const {
     viewMode,
@@ -204,6 +247,9 @@ const MainApp: React.FC = () => {
     <div className="relative">
       {/* Dynamic SEO & Social Share Meta Manager */}
       <SEOManager />
+
+      {/* Google Analytics 4 (GA4) Tracker */}
+      <AnalyticsManager />
 
       {/* Main View Router */}
       {renderContent()}

@@ -16,6 +16,7 @@ import {
   ExternalLink,
   AlertCircle,
   PenTool,
+  BarChart3,
 } from 'lucide-react';
 
 export const ManageSiteSettings: React.FC = () => {
@@ -704,6 +705,34 @@ export const ManageSiteSettings: React.FC = () => {
                   className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-mono focus:outline-hidden focus:border-emerald-600"
                 />
               </div>
+            </div>
+
+            {/* Google Analytics 4 (GA4) Configuration */}
+            <div className="bg-amber-50/70 p-4 rounded-xl border border-amber-200/80 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-gray-800 flex items-center gap-1.5 text-xs">
+                  <BarChart3 className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Google Analytics Measurement ID (গুগল অ্যানালিটিক্স ট্র্যাকিং)</span>
+                </label>
+                {form.googleAnalyticsId?.trim().startsWith('G-') ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                    সক্রিয় (Active)
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-gray-500 font-medium">ঐচ্ছিক (Optional)</span>
+                )}
+              </div>
+              <input
+                type="text"
+                placeholder="যেমন: G-XXXXXXXXXX (Google Analytics 4 Measurement ID)"
+                value={form.googleAnalyticsId || ''}
+                onChange={(e) => setForm({ ...form, googleAnalyticsId: e.target.value.trim() })}
+                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-mono font-medium focus:outline-hidden focus:border-amber-600"
+              />
+              <p className="text-[11px] text-gray-600 leading-relaxed">
+                💡 <strong>সহজ নির্দেশনা</strong>: গুগল অ্যানালিটিক্স (GA4) থেকে আপনার প্রপার্টির <em>Data Streams</em> থেকে <strong>Measurement ID</strong> (যা দেখতে <code>G-XXXXXXXXXX</code> এর মতো) কপি করে এখানে পেস্ট করে সংরক্ষণ করুন। কোনো কোডিং প্রয়োজন নেই—ওয়েবসাইটের সকল ভিজিটর, পেজ ভিউ ও ট্রাফিক তথ্য স্বয়ংক্রিয়ভাবে আপনার গুগল অ্যানালিটিক্স ড্যাশবোর্ডে জমা হবে।
+              </p>
             </div>
 
             <div>
