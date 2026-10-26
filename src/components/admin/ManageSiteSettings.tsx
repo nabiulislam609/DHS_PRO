@@ -799,6 +799,34 @@ export const ManageSiteSettings: React.FC = () => {
               </div>
             </div>
 
+            {/* Google Tag Manager (GTM) Configuration */}
+            <div className="bg-sky-50/70 p-4 rounded-xl border border-sky-200/80 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-gray-800 flex items-center gap-1.5 text-xs">
+                  <Sliders className="w-3.5 h-3.5 text-sky-600" />
+                  <span>Google Tag Manager (GTM) Container ID</span>
+                </label>
+                {form.googleTagManagerId?.trim().startsWith('GTM-') ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                    সক্রিয় (GTM Active)
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-gray-500 font-medium">ঐচ্ছিক (Optional)</span>
+                )}
+              </div>
+              <input
+                type="text"
+                placeholder="যেমন: GTM-XXXXXXX (Google Tag Manager Container ID)"
+                value={form.googleTagManagerId || ''}
+                onChange={(e) => setForm({ ...form, googleTagManagerId: e.target.value.trim().toUpperCase() })}
+                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-mono font-medium focus:outline-hidden focus:border-sky-600"
+              />
+              <p className="text-[11px] text-gray-600 leading-relaxed">
+                💡 <strong>GTM ব্যবহারের নিয়ম</strong>: আপনার Google Tag Manager অ্যাকাউন্ট থেকে কন্টেইনার আইডিটি (যেমন: <code>GTM-XXXXXXX</code>) এখানে পেস্ট করে সংরক্ষণ করুন। এটি সক্রিয় হলে GTM-এর সম্পূর্ণ হেড ও বডি স্ক্রিপ্ট স্বয়ংক্রিয়ভাবে লোড হবে এবং ফেসবুক পিক্সেল বা অন্যান্য ট্যাগ GTM দিয়ে সরাসরি কন্ট্রোল করতে পারবেন।
+              </p>
+            </div>
+
             <div>
               <label className="block font-semibold text-gray-700 mb-1">কপিরাইট টেক্সট (Copyright Text)</label>
               <input

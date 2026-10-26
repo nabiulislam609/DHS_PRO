@@ -12,21 +12,33 @@ declare global {
 }
 
 /**
- * Generic custom event dispatcher for Google Analytics
+ * Generic custom event dispatcher for Google Analytics and Google Tag Manager
  */
 export const trackEvent = (eventName: string, params: Record<string, any> = {}) => {
-  if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-    try {
-      window.gtag('event', eventName, {
-        timestamp: new Date().toISOString(),
-        ...params,
-      });
-      // Debug in development mode
-      if (import.meta.env.DEV) {
-        console.log(`[GA4 Event] ${eventName}:`, params);
+  const payload = {
+    event: eventName,
+    timestamp: new Date().toISOString(),
+    ...params,
+  };
+
+  if (typeof window !== 'undefined') {
+    // 1. Google Tag Manager dataLayer push
+    if (Array.isArray(window.dataLayer)) {
+      window.dataLayer.push(payload);
+    }
+
+    // 2. Google Analytics direct gtag dispatch
+    if (typeof window.gtag === 'function') {
+      try {
+        window.gtag('event', eventName, payload);
+      } catch (err) {
+        console.warn(`[GA4 Error] Failed to track ${eventName}:`, err);
       }
-    } catch (err) {
-      console.warn(`[GA4 Error] Failed to track ${eventName}:`, err);
+    }
+
+    // Debug in development mode
+    if (import.meta.env.DEV) {
+      console.log(`[Analytics & GTM Event] ${eventName}:`, payload);
     }
   }
 };

@@ -151,42 +151,89 @@ const SEOManager: React.FC = () => {
 const AnalyticsManager: React.FC = () => {
   const { siteSettings, currentFrontendPage } = useSchool();
   const gaId = (siteSettings.googleAnalyticsId || (import.meta as any).env?.VITE_GA_MEASUREMENT_ID || '').trim();
+  const gtmId = (siteSettings.googleTagManagerId || (import.meta as any).env?.VITE_GTM_ID || '').trim();
 
+  // 1. Google Tag Manager (GTM) Container Injection
   React.useEffect(() => {
-    if (!gaId || !gaId.startsWith('G-') || typeof window === 'undefined') return;
+    if (!gtmId || !gtmId.startsWith('GTM-') || typeof window === 'undefined') return;
 
-    // 1. Inject Google Analytics 4 gtag.js script if not present
-    const scriptId = 'google-analytics-gtag';
-    let scriptTag = document.getElementById(scriptId) as HTMLScriptElement | null;
-    if (!scriptTag) {
-      scriptTag = document.createElement('script');
-      scriptTag.id = scriptId;
-      scriptTag.async = true;
-      scriptTag.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
-      document.head.appendChild(scriptTag);
+    const gtmScriptId = 'google-tag-manager-script';
+    let gtmScript = document.getElementById(gtmScriptId) as HTMLScriptElement | null;
+    if (!gtmScript) {
+      gtmScript = document.createElement('script');
+      gtmScript.id = gtmScriptId;
+      gtmScript.innerHTML = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','${gtmId}');`;
+      document.head.appendChild(gtmScript);
 
-      (window as any).dataLayer = (window as any).dataLayer || [];
-      function gtag(...args: any[]) {
-        (window as any).dataLayer.push(args);
+      const gtmNoscriptId = 'google-tag-manager-noscript';
+      if (!document.getElementById(gtmNoscriptId)) {
+        const noscript = document.createElement('noscript');
+        noscript.id = gtmNoscriptId;
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.googletagmanager.com/ns.html?id=${encodeURIComponent(gtmId)}`;
+        iframe.height = '0';
+        iframe.width = '0';
+        iframe.style.display = 'none';
+        iframe.style.visibility = 'hidden';
+        noscript.appendChild(iframe);
+        document.body.insertBefore(noscript, document.body.firstChild);
       }
-      (window as any).gtag = gtag;
-      gtag('js', new Date());
-      gtag('config', gaId, {
-        send_page_view: true,
-      });
+    }
+  }, [gtmId]);
+
+  // 2. Google Analytics 4 (GA4) Tag & SPA Virtual Pageview
+  React.useEffect(() => {
+    // Inject gtag if GA4 Measurement ID is provided and not already present
+    if (gaId && gaId.startsWith('G-') && typeof window !== 'undefined') {
+      const scriptId = 'google-analytics-gtag';
+      let scriptTag = document.getElementById(scriptId) as HTMLScriptElement | null;
+      if (!scriptTag && !(window as any).gtag) {
+        scriptTag = document.createElement('script');
+        scriptTag.id = scriptId;
+        scriptTag.async = true;
+        scriptTag.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
+        document.head.appendChild(scriptTag);
+
+        (window as any).dataLayer = (window as any).dataLayer || [];
+        function gtag(...args: any[]) {
+          (window as any).dataLayer.push(args);
+        }
+        (window as any).gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', gaId, {
+          send_page_view: true,
+        });
+      }
     }
 
-    // 2. Track SPA page navigation
-    if ((window as any).gtag) {
+    // Track SPA page navigation in both GA4 and GTM dataLayer
+    if (typeof window !== 'undefined') {
       const pagePath = window.location.pathname + window.location.search;
-      (window as any).gtag('event', 'page_view', {
-        page_title: document.title,
-        page_location: window.location.href,
-        page_path: pagePath,
-        section: currentFrontendPage,
-      });
+
+      if ((window as any).gtag) {
+        (window as any).gtag('event', 'page_view', {
+          page_title: document.title,
+          page_location: window.location.href,
+          page_path: pagePath,
+          section: currentFrontendPage,
+        });
+      }
+
+      if ((window as any).dataLayer) {
+        (window as any).dataLayer.push({
+          event: 'virtual_page_view',
+          page_title: document.title,
+          page_location: window.location.href,
+          page_path: pagePath,
+          page_section: currentFrontendPage,
+        });
+      }
     }
-  }, [gaId, currentFrontendPage]);
+  }, [gaId, gtmId, currentFrontendPage]);
 
   return null;
 };

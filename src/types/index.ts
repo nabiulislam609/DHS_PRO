@@ -290,6 +290,7 @@ export interface SiteSettings {
   metaDescription?: string;
   ogImageUrl?: string;
   googleAnalyticsId?: string;
+  googleTagManagerId?: string;
   copyrightText?: string;
   boardAffiliation?: string;
   footerCreditPrefix?: string;
