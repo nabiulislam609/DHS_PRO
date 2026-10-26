@@ -21,6 +21,7 @@ import { ExamResult } from '../../types';
 import { getStudentResultImage, getStudentPhoto } from '../../utils/studentPhoto';
 import { generatePdfFromElement } from '../../utils/universalPdfGenerator';
 import { isNonSubjectColumn } from '../admin/BulkImportResultsModal';
+import { trackResultSearch, trackResultDownload } from '../../utils/analytics';
 
 // Convert Bengali numerals to English digits for flexible search
 const toEnglishDigits = (str: string): string => {
@@ -287,6 +288,14 @@ export const AcademicResultsSearch: React.FC = () => {
 
     // ABSOLUTELY NO FALLBACK: If roll, class, or exam does not match, return null
     setSearchedResult(match || null);
+
+    // Track search event in Google Analytics
+    trackResultSearch({
+      roll: searchRoll.trim(),
+      studentClass: selectedClass,
+      examTerm: selectedTerm,
+      found: Boolean(match),
+    });
   };
 
 
@@ -298,6 +307,14 @@ export const AcademicResultsSearch: React.FC = () => {
     if (!marksheetRef.current || !searchedResult) return;
     setIsGeneratingPdf(true);
     try {
+      // Track marksheet download event in Google Analytics
+      trackResultDownload({
+        roll: searchedResult.roll,
+        studentClass: searchedResult.studentClass,
+        studentName: searchedResult.studentName,
+        gpa: searchedResult.gpa,
+      });
+
       const safeRoll = searchedResult.roll.replace(/[^a-zA-Z0-9]/g, '_');
       const safeName = searchedResult.studentName.replace(/[\s/\\?%*:|"<>]/g, '_').slice(0, 30);
       const fileName = `Dadra_High_School_Marksheet_${safeName}_Roll_${safeRoll || 'Student'}.pdf`;

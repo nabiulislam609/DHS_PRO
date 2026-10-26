@@ -35,11 +35,19 @@ import {
   GENERAL_SUBJECTS_CLASS_6_8,
 } from '../../data/curriculumSubjects';
 import { AdmissionApplication } from '../../types';
+import { trackAdmissionSubmit, trackAdmissionModalOpen } from '../../utils/analytics';
 
 export const AdmissionModal: React.FC = () => {
   const { isAdmissionModalOpen, setIsAdmissionModalOpen, submitAdmission, siteSettings } = useSchool();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Track admission modal open event
+  React.useEffect(() => {
+    if (isAdmissionModalOpen) {
+      trackAdmissionModalOpen();
+    }
+  }, [isAdmissionModalOpen]);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -270,6 +278,14 @@ export const AdmissionModal: React.FC = () => {
       previousSchool: formData.previousSchool.trim(),
       gpaOrGrade: formData.gpaOrGrade.trim(),
       presentAddress: formData.presentAddress.trim(),
+    });
+
+    // Fire Google Analytics 4 Custom Event
+    trackAdmissionSubmit({
+      applicantName: formData.applicantName.trim(),
+      applyingClass: formData.applyingClass,
+      group: isClass910 ? formData.group : 'সাধারণ',
+      phone: formData.phone.trim(),
     });
 
     setSubmittedApp(newApplication);

@@ -3,6 +3,7 @@ import { useSchool } from '../../context/SchoolContext';
 import { DownloadableForm } from '../../types';
 import { DedicatedHeader } from './DedicatedHeader';
 import { PageHero } from './PageHero';
+import { trackFormDownload } from '../../utils/analytics';
 import {
   FileText,
   Download,
@@ -55,6 +56,14 @@ export const DedicatedFormsPage: React.FC = () => {
   const handleDownloadPdf = async (form: DownloadableForm) => {
     try {
       setGeneratingPdfId(form.id);
+
+      // Fire Google Analytics 4 Custom Event
+      trackFormDownload({
+        formTitle: form.title,
+        category: form.category,
+        fileType: form.fileType || 'PDF',
+      });
+
       await downloadFormPdf(form, siteSettings);
     } finally {
       setGeneratingPdfId(null);

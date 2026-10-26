@@ -46,6 +46,7 @@ import {
   downloadExamRoutinePdf,
 } from '../../utils/examDocumentHelper';
 import { Footer } from './Footer';
+import { trackAdmitCardSearch, trackAdmitCardDownload } from '../../utils/analytics';
 
 export const DedicatedAdmitCardPage: React.FC = () => {
   const { siteSettings, students, admitCardConfig, setCurrentFrontendPage } = useSchool();
@@ -346,6 +347,14 @@ export const DedicatedAdmitCardPage: React.FC = () => {
       setInputError(null);
       setNotFoundReason('সঠিক রোল নম্বর ও শ্রেণি মিলিয়ে পুনরায় অনুসন্ধান করুন।');
     }
+
+    // Fire Google Analytics 4 Custom Event
+    trackAdmitCardSearch({
+      roll: rollInput.trim(),
+      studentClass: selectedClass,
+      examTerm: currentExam?.examTerm,
+      found: Boolean(match),
+    });
   };
 
 
@@ -361,6 +370,15 @@ export const DedicatedAdmitCardPage: React.FC = () => {
     }
     setIsDownloadingPdf(true);
     try {
+      if (foundStudent) {
+        // Fire Google Analytics 4 Custom Event
+        trackAdmitCardDownload({
+          roll: foundStudent.roll,
+          studentClass: foundStudent.studentClass || selectedClass,
+          studentName: foundStudent.name,
+        });
+      }
+
       const studentName = (foundStudent?.name || 'Student').replace(/[\s/\\?%*:|"<>]/g, '_').slice(0, 30);
       const fileName = `Admit_Card_${studentName}_Roll_${rollInput || 'Admit'}.pdf`;
 

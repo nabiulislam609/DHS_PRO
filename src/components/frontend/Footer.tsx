@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSchool } from '../../context/SchoolContext';
 import { GraduationCap, MapPin, Phone, Mail, Heart } from 'lucide-react';
+import { trackSocialClick } from '../../utils/analytics';
 
 // Authentic Brand Icons
 const FacebookIcon = ({ className = 'w-4 h-4' }: { className?: string }) => (
@@ -137,6 +138,7 @@ export const Footer: React.FC = () => {
                   href={siteSettings.facebook}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackSocialClick('facebook')}
                   className="w-8 h-8 rounded-full bg-white/10 hover:bg-[#1877F2] flex items-center justify-center transition-all duration-200 cursor-pointer text-white/90 hover:text-white shadow-xs hover:scale-110"
                   title="Facebook"
                   aria-label="Facebook"
@@ -149,6 +151,7 @@ export const Footer: React.FC = () => {
                   href={siteSettings.youtube}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackSocialClick('youtube')}
                   className="w-8 h-8 rounded-full bg-white/10 hover:bg-[#FF0000] flex items-center justify-center transition-all duration-200 cursor-pointer text-white/90 hover:text-white shadow-xs hover:scale-110"
                   title="YouTube"
                   aria-label="YouTube"
@@ -161,6 +164,7 @@ export const Footer: React.FC = () => {
                   href={siteSettings.instagram}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackSocialClick('instagram')}
                   className="w-8 h-8 rounded-full bg-white/10 hover:bg-gradient-to-tr hover:from-[#F58529] hover:via-[#DD2A7B] hover:to-[#8134AF] flex items-center justify-center transition-all duration-200 cursor-pointer text-white/90 hover:text-white shadow-xs hover:scale-110"
                   title="Instagram"
                   aria-label="Instagram"
@@ -173,6 +177,7 @@ export const Footer: React.FC = () => {
                   href={getWhatsAppUrl(siteSettings.whatsapp)}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackSocialClick('whatsapp')}
                   className="w-8 h-8 rounded-full bg-white/10 hover:bg-[#25D366] flex items-center justify-center transition-all duration-200 cursor-pointer text-white/90 hover:text-white shadow-xs hover:scale-110"
                   title="WhatsApp"
                   aria-label="WhatsApp"
@@ -185,6 +190,7 @@ export const Footer: React.FC = () => {
                   href={siteSettings.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackSocialClick('linkedin')}
                   className="w-8 h-8 rounded-full bg-white/10 hover:bg-[#0A66C2] flex items-center justify-center transition-all duration-200 cursor-pointer text-white/90 hover:text-white shadow-xs hover:scale-110"
                   title="LinkedIn"
                   aria-label="LinkedIn"

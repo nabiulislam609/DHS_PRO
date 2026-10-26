@@ -733,6 +733,39 @@ export const ManageSiteSettings: React.FC = () => {
               <p className="text-[11px] text-gray-600 leading-relaxed">
                 💡 <strong>সহজ নির্দেশনা</strong>: গুগল অ্যানালিটিক্স (GA4) থেকে আপনার প্রপার্টির <em>Data Streams</em> থেকে <strong>Measurement ID</strong> (যা দেখতে <code>G-XXXXXXXXXX</code> এর মতো) কপি করে এখানে পেস্ট করে সংরক্ষণ করুন। কোনো কোডিং প্রয়োজন নেই—ওয়েবসাইটের সকল ভিজিটর, পেজ ভিউ ও ট্রাফিক তথ্য স্বয়ংক্রিয়ভাবে আপনার গুগল অ্যানালিটিক্স ড্যাশবোর্ডে জমা হবে।
               </p>
+
+              {/* Active Custom Events List */}
+              <div className="pt-2 border-t border-amber-200/60">
+                <span className="text-[11px] font-bold text-gray-800 block mb-1.5">
+                  🔥 স্বয়ংক্রিয়ভাবে সক্রিয় কাস্টম ইভেন্টস (Auto-tracked Custom Events):
+                </span>
+                <div className="flex flex-wrap gap-1.5 text-[10px]">
+                  <span className="bg-white/90 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md font-mono">
+                    admission_form_submit (ভর্তি আবেদন)
+                  </span>
+                  <span className="bg-white/90 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md font-mono">
+                    result_search (ফলাফল অনুসন্ধান)
+                  </span>
+                  <span className="bg-white/90 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md font-mono">
+                    result_download (মার্কশীট ডাউনলোড)
+                  </span>
+                  <span className="bg-white/90 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md font-mono">
+                    admit_card_search (প্রবেশপত্র অনুসন্ধান)
+                  </span>
+                  <span className="bg-white/90 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md font-mono">
+                    admit_card_download (প্রবেশপত্র ডাউনলোড)
+                  </span>
+                  <span className="bg-white/90 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md font-mono">
+                    file_download (ফরম ডাউনলোড)
+                  </span>
+                  <span className="bg-white/90 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md font-mono">
+                    contact_form_submit (মেসেজ জমা)
+                  </span>
+                  <span className="bg-white/90 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md font-mono">
+                    social_click (সোশ্যাল লিঙ্ক ক্লিক)
+                  </span>
+                </div>
+              </div>
             </div>
 
             <div>

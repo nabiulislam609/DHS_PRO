@@ -10,6 +10,7 @@ import {
   Share2,
   ExternalLink,
 } from 'lucide-react';
+import { trackContactSubmit } from '../../utils/analytics';
 
 export const ContactSection: React.FC = () => {
   const { siteSettings, submitContactMessage } = useSchool();
@@ -61,6 +62,12 @@ export const ContactSection: React.FC = () => {
       phone: formData.phone,
       subject: formData.subject || 'সাধারণ অনুসন্ধান',
       message: formData.message,
+    });
+
+    // Fire Google Analytics 4 Custom Event
+    trackContactSubmit({
+      name: formData.name,
+      subject: formData.subject || 'General Inquiry',
     });
 
     setSubmitted(true);
