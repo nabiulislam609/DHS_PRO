@@ -1,18 +1,22 @@
 /**
- * Google Analytics 4 (GA4) Custom Event Tracking Utilities
- * Automatically dispatches events to window.gtag if active.
+ * Unified Analytics & Pixel Dispatcher
+ * Dispatches to:
+ * 1. Google Tag Manager (window.dataLayer)
+ * 2. Meta / Facebook Pixel (window.fbq)
+ * 3. Google Analytics 4 (window.gtag)
  */
 
-// Declare global window gtag
 declare global {
   interface Window {
     dataLayer?: any[];
     gtag?: (...args: any[]) => void;
+    fbq?: (...args: any[]) => void;
+    _fbq?: any;
   }
 }
 
 /**
- * Generic custom event dispatcher for Google Analytics and Google Tag Manager
+ * Generic custom event dispatcher for GTM, Facebook Pixel & GA4
  */
 export const trackEvent = (eventName: string, params: Record<string, any> = {}) => {
   const payload = {
@@ -23,11 +27,10 @@ export const trackEvent = (eventName: string, params: Record<string, any> = {}) 
 
   if (typeof window !== 'undefined') {
     // 1. Google Tag Manager dataLayer push
-    if (Array.isArray(window.dataLayer)) {
-      window.dataLayer.push(payload);
-    }
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push(payload);
 
-    // 2. Google Analytics direct gtag dispatch
+    // 2. Google Analytics 4 direct gtag dispatch
     if (typeof window.gtag === 'function') {
       try {
         window.gtag('event', eventName, payload);
@@ -36,9 +39,72 @@ export const trackEvent = (eventName: string, params: Record<string, any> = {}) 
       }
     }
 
+    // 3. Meta / Facebook Pixel custom event dispatch
+    if (typeof window.fbq === 'function') {
+      try {
+        window.fbq('trackCustom', eventName, payload);
+      } catch (err) {
+        console.warn(`[Facebook Pixel Error] Failed to track ${eventName}:`, err);
+      }
+    }
+
     // Debug in development mode
     if (import.meta.env.DEV) {
-      console.log(`[Analytics & GTM Event] ${eventName}:`, payload);
+      console.log(`[Unified Analytics Event] ${eventName}:`, payload);
+    }
+  }
+};
+
+/**
+ * Dispatch Meta / Facebook standard event (e.g. Lead, Search, Contact, ViewContent)
+ */
+export const trackFacebookStandard = (standardEvent: string, params: Record<string, any> = {}) => {
+  if (typeof window !== 'undefined' && typeof window.fbq === 'function') {
+    try {
+      window.fbq('track', standardEvent, params);
+      if (import.meta.env.DEV) {
+        console.log(`[Facebook Pixel Standard] ${standardEvent}:`, params);
+      }
+    } catch (err) {
+      console.warn(`[Facebook Pixel Standard Error] Failed to track ${standardEvent}:`, err);
+    }
+  }
+};
+
+/**
+ * 0. Per-Page Custom Event Tracker for both Facebook & Tag Manager
+ */
+export const trackPageVisit = (pageKey: string, pageTitle?: string) => {
+  const normalizedKey = (pageKey || 'home').replace(/[^a-zA-Z0-9_]/g, '_');
+  const title = pageTitle || document.title || normalizedKey;
+
+  // 1. GTM & GA4 Page Specific Event
+  trackEvent(`page_view_${normalizedKey}`, {
+    page_key: pageKey,
+    page_title: title,
+    page_location: typeof window !== 'undefined' ? window.location.href : '',
+  });
+
+  // 2. GTM Virtual Page View
+  if (typeof window !== 'undefined') {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'virtual_page_view',
+      page_section: pageKey,
+      page_title: title,
+    });
+  }
+
+  // 3. Facebook Pixel PageView & Custom Page Event
+  trackFacebookStandard('PageView');
+  if (typeof window !== 'undefined' && typeof window.fbq === 'function') {
+    try {
+      window.fbq('trackCustom', `View_Page_${normalizedKey}`, {
+        page_section: pageKey,
+        page_title: title,
+      });
+    } catch (e) {
+      // ignore
     }
   }
 };
@@ -59,6 +125,12 @@ export const trackResultSearch = (details: {
     roll_number: details.roll,
     result_found: details.found ? 'yes' : 'no',
   });
+
+  // Facebook Standard Search Event
+  trackFacebookStandard('Search', {
+    search_string: `Class ${details.studentClass} Roll ${details.roll}`,
+    content_category: 'Academic Results',
+  });
 };
 
 /**
@@ -76,6 +148,11 @@ export const trackResultDownload = (details: {
     roll_number: details.roll,
     student_name: details.studentName || 'Student',
     gpa: details.gpa || 'N/A',
+  });
+
+  trackFacebookStandard('ViewContent', {
+    content_name: `Marksheet - ${details.studentName || 'Student'}`,
+    content_category: details.studentClass,
   });
 };
 
@@ -95,6 +172,11 @@ export const trackAdmitCardSearch = (details: {
     exam_term: details.examTerm || 'Current Exam',
     found: details.found ? 'yes' : 'no',
   });
+
+  trackFacebookStandard('Search', {
+    search_string: `Admit Card ${details.studentClass} Roll ${details.roll}`,
+    content_category: 'Admit Card',
+  });
 };
 
 export const trackAdmitCardDownload = (details: {
@@ -108,10 +190,15 @@ export const trackAdmitCardDownload = (details: {
     roll_number: details.roll,
     student_name: details.studentName || 'Student',
   });
+
+  trackFacebookStandard('ViewContent', {
+    content_name: `Admit Card - ${details.studentName || 'Student'}`,
+    content_category: details.studentClass,
+  });
 };
 
 /**
- * 4. Track Online Admission Form Submissions
+ * 4. Track Online Admission Form Submissions & Modal Open
  */
 export const trackAdmissionSubmit = (details: {
   applicantName: string;
@@ -126,11 +213,29 @@ export const trackAdmissionSubmit = (details: {
     academic_group: details.group || 'General',
     value: 1,
   });
+
+  // Facebook High-Value Standard Lead Event
+  trackFacebookStandard('Lead', {
+    content_name: 'Online Admission Application',
+    content_category: details.applyingClass,
+    value: 1,
+    currency: 'BDT',
+  });
+
+  trackFacebookStandard('SubmitApplication', {
+    content_name: details.applicantName,
+    content_category: details.applyingClass,
+  });
 };
 
 export const trackAdmissionModalOpen = () => {
   trackEvent('admission_modal_open', {
     event_category: 'Admissions',
+  });
+
+  trackFacebookStandard('InitiateCheckout', {
+    content_name: 'Online Admission Modal Open',
+    content_category: 'Admissions',
   });
 };
 
@@ -146,6 +251,11 @@ export const trackContactSubmit = (details?: {
     sender_name: details?.name || 'Visitor',
     message_subject: details?.subject || 'General Inquiry',
     value: 1,
+  });
+
+  // Facebook Standard Contact Event
+  trackFacebookStandard('Contact', {
+    content_name: details?.subject || 'General Inquiry',
   });
 };
 
@@ -163,6 +273,11 @@ export const trackFormDownload = (details: {
     form_category: details.category || 'Forms',
     file_type: details.fileType || 'PDF',
   });
+
+  trackFacebookStandard('ViewContent', {
+    content_name: details.formTitle,
+    content_category: details.category || 'Forms',
+  });
 };
 
 /**
@@ -179,6 +294,11 @@ export const trackNoticeView = (details: {
     notice_title: details.noticeTitle,
     notice_category: details.category || 'General',
   });
+
+  trackFacebookStandard('ViewContent', {
+    content_name: details.noticeTitle,
+    content_category: 'Notices',
+  });
 };
 
 /**
@@ -189,6 +309,10 @@ export const trackSocialClick = (platform: 'facebook' | 'youtube' | 'instagram' 
     event_category: 'Social Media',
     platform_name: platform,
   });
+
+  if (typeof window !== 'undefined' && typeof window.fbq === 'function') {
+    window.fbq('trackCustom', 'Click_Social_Link', { platform });
+  }
 };
 
 /**

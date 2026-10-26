@@ -53,6 +53,7 @@ export const initialSiteSettings: SiteSettings = {
   ogImageUrl: '/assets/og-preview.png',
   googleAnalyticsId: 'G-5PR05CVHN2',
   googleTagManagerId: 'GTM-M5L3F9DS',
+  facebookPixelId: '1672750902853465',
   copyrightText: '© 2026 দাদরা উচ্চ বিদ্যালয় | Dadra High School. সর্বস্বত্ব সংরক্ষিত।',
   boardAffiliation: 'মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড, রাজশাহী অনুমোদিত',
   footerCreditPrefix: 'সাথে',

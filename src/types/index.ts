@@ -291,6 +291,7 @@ export interface SiteSettings {
   ogImageUrl?: string;
   googleAnalyticsId?: string;
   googleTagManagerId?: string;
+  facebookPixelId?: string;
   copyrightText?: string;
   boardAffiliation?: string;
   footerCreditPrefix?: string;

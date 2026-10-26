@@ -33,6 +33,8 @@ export const ManageSiteSettings: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
   const [testPingSent, setTestPingSent] = useState(false);
+  const [gtmTestPingSent, setGtmTestPingSent] = useState(false);
+  const [fbTestPingSent, setFbTestPingSent] = useState(false);
 
   const handleSendTestPing = () => {
     trackEvent('test_admin_ping', {
@@ -42,6 +44,26 @@ export const ManageSiteSettings: React.FC = () => {
     });
     setTestPingSent(true);
     setTimeout(() => setTestPingSent(false), 6000);
+  };
+
+  const handleSendGtmTestPing = () => {
+    trackEvent('gtm_custom_test_ping', {
+      source: 'Admin GTM Settings Test',
+      school: form.schoolNameBangla || 'Dadra High School',
+      sent_at: new Date().toLocaleTimeString(),
+    });
+    setGtmTestPingSent(true);
+    setTimeout(() => setGtmTestPingSent(false), 6000);
+  };
+
+  const handleSendFbTestPing = () => {
+    trackEvent('fb_custom_test_ping', {
+      source: 'Admin Facebook Pixel Settings Test',
+      school: form.schoolNameBangla || 'Dadra High School',
+      sent_at: new Date().toLocaleTimeString(),
+    });
+    setFbTestPingSent(true);
+    setTimeout(() => setFbTestPingSent(false), 6000);
   };
 
   const logoFileRef = useRef<HTMLInputElement | null>(null);
@@ -825,6 +847,148 @@ export const ManageSiteSettings: React.FC = () => {
               <p className="text-[11px] text-gray-600 leading-relaxed">
                 💡 <strong>GTM ব্যবহারের নিয়ম</strong>: আপনার Google Tag Manager অ্যাকাউন্ট থেকে কন্টেইনার আইডিটি (যেমন: <code>GTM-XXXXXXX</code>) এখানে পেস্ট করে সংরক্ষণ করুন। এটি সক্রিয় হলে GTM-এর সম্পূর্ণ হেড ও বডি স্ক্রিপ্ট স্বয়ংক্রিয়ভাবে লোড হবে এবং ফেসবুক পিক্সেল বা অন্যান্য ট্যাগ GTM দিয়ে সরাসরি কন্ট্রোল করতে পারবেন।
               </p>
+
+              {/* Active GTM Custom Events */}
+              <div className="pt-2 border-t border-sky-200/60">
+                <span className="text-[11px] font-bold text-gray-800 block mb-1.5">
+                  ⚡ GTM-এ প্রস্তুত কাস্টম ইভেন্টস (dataLayer Event Triggers):
+                </span>
+                <div className="flex flex-wrap gap-1.5 text-[10px]">
+                  <span className="bg-white/90 text-sky-900 border border-sky-300 px-2 py-0.5 rounded-md font-mono">
+                    admission_form_submit (ভর্তি আবেদন)
+                  </span>
+                  <span className="bg-white/90 text-sky-900 border border-sky-300 px-2 py-0.5 rounded-md font-mono">
+                    result_search (ফলাফল অনুসন্ধান)
+                  </span>
+                  <span className="bg-white/90 text-sky-900 border border-sky-300 px-2 py-0.5 rounded-md font-mono">
+                    result_download (মার্কশীট ডাউনলোড)
+                  </span>
+                  <span className="bg-white/90 text-sky-900 border border-sky-300 px-2 py-0.5 rounded-md font-mono">
+                    admit_card_search (প্রবেশপত্র অনুসন্ধান)
+                  </span>
+                  <span className="bg-white/90 text-sky-900 border border-sky-300 px-2 py-0.5 rounded-md font-mono">
+                    admit_card_download (প্রবেশপত্র ডাউনলোড)
+                  </span>
+                  <span className="bg-white/90 text-sky-900 border border-sky-300 px-2 py-0.5 rounded-md font-mono">
+                    file_download (ফরম ডাউনলোড)
+                  </span>
+                  <span className="bg-white/90 text-sky-900 border border-sky-300 px-2 py-0.5 rounded-md font-mono">
+                    contact_form_submit (মেসেজ জমা)
+                  </span>
+                  <span className="bg-white/90 text-sky-900 border border-sky-300 px-2 py-0.5 rounded-md font-mono">
+                    social_click (সোশ্যাল লিঙ্ক ক্লিক)
+                  </span>
+                  <span className="bg-white/90 text-sky-900 border border-sky-300 px-2 py-0.5 rounded-md font-mono">
+                    virtual_page_view (ভার্চুয়াল পেজভিউ)
+                  </span>
+                </div>
+              </div>
+
+              {/* Live Test Trigger Button for GTM */}
+              <div className="pt-2 border-t border-sky-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={handleSendGtmTestPing}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>GTM dataLayer-এ টেস্ট ইভেন্ট পুশ করুন</span>
+                </button>
+                {gtmTestPingSent && (
+                  <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1.5 animate-fadeIn">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>টেস্ট ইভেন্ট dataLayer-এ পুশ হয়েছে! (ইভেন্ট: 'gtm_custom_test_ping')</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Meta / Facebook Pixel Configuration */}
+            <div className="bg-indigo-50/70 p-4 rounded-xl border border-indigo-200/80 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-gray-800 flex items-center gap-1.5 text-xs">
+                  <Share2 className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Facebook Pixel / Dataset ID (ফেসবুক পিক্সেল ট্র্যাকিং)</span>
+                </label>
+                {form.facebookPixelId?.trim() ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                    সক্রিয় (Pixel Active)
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-gray-500 font-medium">ঐচ্ছিক (Optional)</span>
+                )}
+              </div>
+              <input
+                type="text"
+                placeholder="যেমন: 1672750902853465 (Meta / Facebook Pixel ID)"
+                value={form.facebookPixelId || ''}
+                onChange={(e) => setForm({ ...form, facebookPixelId: e.target.value.trim() })}
+                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-mono font-medium focus:outline-hidden focus:border-indigo-600"
+              />
+              <p className="text-[11px] text-gray-600 leading-relaxed">
+                💡 <strong>ফেসবুক পিক্সেল সংযোগ</strong>: আপনার Facebook Event Manager থেকে Pixel ID টি (যেমন: <code>1672750902853465</code>) এখানে সংযুক্ত করা হয়েছে। এটি ওয়েবসাইটের প্রতিটি পেজে ভিজিট, ভর্তি আবেদন (Lead), ফলাফল ও প্রবেশপত্র সার্চ এবং নোটিশ ভিউ স্বয়ংক্রিয়ভাবে ফেসবুক ইভেন্ট ম্যানেজারে পাঠাবে।
+              </p>
+
+              {/* Active Facebook Custom Events */}
+              <div className="pt-2 border-t border-indigo-200/60">
+                <span className="text-[11px] font-bold text-gray-800 block mb-1.5">
+                  📱 ফেসবুকে স্বয়ংক্রিয়ভাবে সক্রিয় ইভেন্টস (Meta Pixel Events):
+                </span>
+                <div className="flex flex-wrap gap-1.5 text-[10px]">
+                  <span className="bg-white/90 text-indigo-900 border border-indigo-300 px-2 py-0.5 rounded-md font-mono">
+                    PageView (সকল পেজভিউ)
+                  </span>
+                  <span className="bg-white/90 text-indigo-900 border border-indigo-300 px-2 py-0.5 rounded-md font-mono">
+                    View_Page_home (হোমপেজ)
+                  </span>
+                  <span className="bg-white/90 text-indigo-900 border border-indigo-300 px-2 py-0.5 rounded-md font-mono">
+                    View_Page_results (ফলাফল পেজ)
+                  </span>
+                  <span className="bg-white/90 text-indigo-900 border border-indigo-300 px-2 py-0.5 rounded-md font-mono">
+                    View_Page_notices (নোটিশ বোর্ড)
+                  </span>
+                  <span className="bg-white/90 text-indigo-900 border border-indigo-300 px-2 py-0.5 rounded-md font-mono">
+                    View_Page_admit_card (প্রবেশপত্র পোর্টাল)
+                  </span>
+                  <span className="bg-white/90 text-indigo-900 border border-indigo-300 px-2 py-0.5 rounded-md font-mono">
+                    View_Page_teachers (শিক্ষক তালিকা)
+                  </span>
+                  <span className="bg-white/90 text-indigo-900 border border-indigo-300 px-2 py-0.5 rounded-md font-mono">
+                    View_Page_staff (কর্মচারী তালিকা)
+                  </span>
+                  <span className="bg-white/90 text-indigo-900 border border-indigo-300 px-2 py-0.5 rounded-md font-mono">
+                    View_Page_downloads (ডাউনলোড পোর্টাল)
+                  </span>
+                  <span className="bg-white/90 text-indigo-900 border border-indigo-300 px-2 py-0.5 rounded-md font-mono">
+                    Lead / SubmitApplication (ভর্তি আবেদন)
+                  </span>
+                  <span className="bg-white/90 text-indigo-900 border border-indigo-300 px-2 py-0.5 rounded-md font-mono">
+                    Search (ফলাফল ও প্রবেশপত্র অনুসন্ধান)
+                  </span>
+                  <span className="bg-white/90 text-indigo-900 border border-indigo-300 px-2 py-0.5 rounded-md font-mono">
+                    Contact (মেসেজ জমা)
+                  </span>
+                </div>
+              </div>
+
+              {/* Live Test Trigger Button for Facebook Pixel */}
+              <div className="pt-2 border-t border-indigo-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={handleSendFbTestPing}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>ফেসবুক পিক্সেলে একটি লাইভ টেস্ট ইভেন্ট পাঠান</span>
+                </button>
+                {fbTestPingSent && (
+                  <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1.5 animate-fadeIn">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>টেস্ট ইভেন্ট পাঠানো হয়েছে! (Event: 'fb_custom_test_ping')</span>
+                  </span>
+                )}
+              </div>
             </div>
 
             <div>

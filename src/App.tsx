@@ -11,6 +11,7 @@ import { DedicatedFormsPage } from './components/frontend/DedicatedFormsPage';
 import { AdminLoginPage } from './components/frontend/AdminLoginPage';
 import { AdmissionModal } from './components/frontend/AdmissionModal';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { trackPageVisit } from './utils/analytics';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -152,6 +153,7 @@ const AnalyticsManager: React.FC = () => {
   const { siteSettings, currentFrontendPage } = useSchool();
   const gaId = (siteSettings.googleAnalyticsId || (import.meta as any).env?.VITE_GA_MEASUREMENT_ID || '').trim();
   const gtmId = (siteSettings.googleTagManagerId || (import.meta as any).env?.VITE_GTM_ID || '').trim();
+  const fbPixelId = (siteSettings.facebookPixelId || (import.meta as any).env?.VITE_FB_PIXEL_ID || '1672750902853465').trim();
 
   // 1. Google Tag Manager (GTM) Container Injection
   React.useEffect(() => {
@@ -189,9 +191,30 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
   }, [gtmId]);
 
-  // 2. Google Analytics 4 (GA4) Tag & SPA Virtual Pageview
+  // 2. Meta / Facebook Pixel Dynamic Injection
   React.useEffect(() => {
-    // Inject gtag if GA4 Measurement ID is provided and not already present
+    if (!fbPixelId || typeof window === 'undefined') return;
+
+    const isAlreadyInHtml = document.querySelector('script[src*="connect.facebook.net"]');
+    if (isAlreadyInHtml || (window as any).fbq) return;
+
+    const script = document.createElement('script');
+    script.id = 'meta-pixel-script';
+    script.innerHTML = `!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '${fbPixelId}');
+fbq('track', 'PageView');`;
+    document.head.appendChild(script);
+  }, [fbPixelId]);
+
+  // 3. Google Analytics 4 (GA4) Tag Injection
+  React.useEffect(() => {
     if (gaId && gaId.startsWith('G-') && typeof window !== 'undefined') {
       const scriptId = 'google-analytics-gtag';
       let scriptTag = document.getElementById(scriptId) as HTMLScriptElement | null;
@@ -213,31 +236,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         });
       }
     }
+  }, [gaId]);
 
-    // Track SPA page navigation in both GA4 and GTM dataLayer
-    if (typeof window !== 'undefined') {
-      const pagePath = window.location.pathname + window.location.search;
-
-      if ((window as any).gtag) {
-        (window as any).gtag('event', 'page_view', {
-          page_title: document.title,
-          page_location: window.location.href,
-          page_path: pagePath,
-          section: currentFrontendPage,
-        });
-      }
-
-      if ((window as any).dataLayer) {
-        (window as any).dataLayer.push({
-          event: 'virtual_page_view',
-          page_title: document.title,
-          page_location: window.location.href,
-          page_path: pagePath,
-          page_section: currentFrontendPage,
-        });
-      }
-    }
-  }, [gaId, gtmId, currentFrontendPage]);
+  // 4. Per-Page Custom Event Dispatcher (Fires to Facebook Pixel, GTM dataLayer & GA4)
+  React.useEffect(() => {
+    trackPageVisit(currentFrontendPage);
+  }, [currentFrontendPage]);
 
   return null;
 };
