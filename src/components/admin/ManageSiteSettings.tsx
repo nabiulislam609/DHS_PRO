@@ -17,7 +17,9 @@ import {
   AlertCircle,
   PenTool,
   BarChart3,
+  Sparkles,
 } from 'lucide-react';
+import { trackEvent } from '../../utils/analytics';
 
 export const ManageSiteSettings: React.FC = () => {
   const { siteSettings, updateSiteSettings, setAdminTab } = useSchool();
@@ -30,6 +32,17 @@ export const ManageSiteSettings: React.FC = () => {
   const [saved, setSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
+  const [testPingSent, setTestPingSent] = useState(false);
+
+  const handleSendTestPing = () => {
+    trackEvent('test_admin_ping', {
+      source: 'Admin Settings Test',
+      school: form.schoolNameBangla || 'Dadra High School',
+      sent_at: new Date().toLocaleTimeString(),
+    });
+    setTestPingSent(true);
+    setTimeout(() => setTestPingSent(false), 6000);
+  };
 
   const logoFileRef = useRef<HTMLInputElement | null>(null);
   const faviconFileRef = useRef<HTMLInputElement | null>(null);
@@ -765,6 +778,24 @@ export const ManageSiteSettings: React.FC = () => {
                     social_click (সোশ্যাল লিঙ্ক ক্লিক)
                   </span>
                 </div>
+              </div>
+
+              {/* Live Test Trigger Button */}
+              <div className="pt-2 border-t border-amber-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={handleSendTestPing}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>গুগল অ্যানালিটিক্সে একটি লাইভ টেস্ট ইভেন্ট পাঠান</span>
+                </button>
+                {testPingSent && (
+                  <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1.5 animate-fadeIn">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>টেস্ট ইভেন্ট সফলভাবে পাঠানো হয়েছে! Google Analytics-এর Realtime পেজে দেখুন।</span>
+                  </span>
+                )}
               </div>
             </div>
 
