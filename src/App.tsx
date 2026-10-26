@@ -243,6 +243,28 @@ fbq('track', 'PageView');`;
     trackPageVisit(currentFrontendPage);
   }, [currentFrontendPage]);
 
+  // 5. Browser Console Tracking Diagnostics
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        const isFbqAvailable = typeof (window as any).fbq === 'function';
+        const isDataLayerAvailable = Array.isArray((window as any).dataLayer);
+        const isGtagAvailable = typeof (window as any).gtag === 'function';
+        console.log(
+          '%c[DHS Tracking Diagnostic]',
+          'background: #14211B; color: #10B981; font-weight: bold; padding: 3px 6px; border-radius: 4px;',
+          {
+            'Meta Facebook Pixel': isFbqAvailable ? 'Active ✅' : 'Blocked by AdBlocker/Extension ❌',
+            'Google Tag Manager': isDataLayerAvailable ? 'Active ✅' : 'Unavailable ❌',
+            'Google Analytics': isGtagAvailable ? 'Active ✅' : 'Unavailable ❌',
+            'Pixel ID': fbPixelId,
+            'GTM ID': gtmId || 'GTM-M5L3F9DS',
+          }
+        );
+      }, 1500);
+    }
+  }, [fbPixelId, gtmId]);
+
   return null;
 };
 
