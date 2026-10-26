@@ -157,6 +157,10 @@ const AnalyticsManager: React.FC = () => {
   React.useEffect(() => {
     if (!gtmId || !gtmId.startsWith('GTM-') || typeof window === 'undefined') return;
 
+    // Skip dynamic injection if already embedded in static HTML head
+    const isAlreadyInHtml = document.querySelector('script[src*="googletagmanager.com/gtm.js"]');
+    if (isAlreadyInHtml) return;
+
     const gtmScriptId = 'google-tag-manager-script';
     let gtmScript = document.getElementById(gtmScriptId) as HTMLScriptElement | null;
     if (!gtmScript) {
